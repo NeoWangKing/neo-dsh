@@ -46,7 +46,11 @@ jobs:
             enabled: ${{ github.event_name != 'workflow_dispatch' || contains(inputs.platforms, 'linux') }}
           - name: macos-arm64
             os: macos-14
-            build: --mac
+            build: --mac --arm64
+            enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'mac') }}
+          - name: macos-x64
+            os: macos-13
+            build: --mac --x64
             enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'mac') }}
           - name: windows-x64
             os: windows-latest

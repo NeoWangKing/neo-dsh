@@ -98,11 +98,11 @@ deb:
     - libasound2
 
 mac:
+  # No arch list: the harness's native modules are installed per runner, so each
+  # arch is packaged on its own machine (ci passes --arm64 / --x64). Building both
+  # from one runner would ship the other arch's binaries.
   target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
+    - dmg
   category: public.app-category.developer-tools
   icon: build/icon.png
   # Unsigned builds: hardened runtime and notarization are opt-in.
