@@ -1,0 +1,12 @@
+# Seeded into $DSH_HOME/settings.yaml on first launch ONLY (an existing
+# settings.yaml is never touched). Edit the real file, not this one.
+agent-default-model:
+  provider: deepseek-official
+  model: deepseek-flash
+  reasoningEffort: medium
+agent-presets:
+  default: liangshen
+ui-theme:
+  preference: dark
+ui-chat:
+  transcriptView: compact

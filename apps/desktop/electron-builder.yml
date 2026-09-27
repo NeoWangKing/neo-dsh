@@ -1,0 +1,130 @@
+# electron-builder configuration for the Neo DSH desktop app.
+#
+# Two decisions worth knowing before editing:
+#
+#   asar: false    The harness host is a PLAIN NODE child process, so it must
+#                  read `node_modules/@deepseek-ai/dsh/**` as real files. Inside
+#                  an asar archive only Electron's own runtime can see them, and
+#                  the bundled Node runtime cannot. Packing unarchived costs
+#                  install size but removes a whole class of "works in dev, fails
+#                  when installed" bugs.
+#
+#   extraResources Everything the app ships *beside* its code: the Node runtime,
+#                  the web profile, the agent preset and the default settings.
+#                  Assembled by scripts/build-resources.mjs and
+#                  scripts/fetch-node.mjs; see docs/packaging.md.
+#
+# Signing is off by default (no certificates in the box). Provide the usual
+# electron-builder environment variables to sign:
+#   macOS   CSC_LINK + CSC_KEY_PASSWORD, and set mac.hardenedRuntime true plus
+#           notarize credentials (APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID)
+#   Windows CSC_LINK + CSC_KEY_PASSWORD
+# An unsigned macOS build needs a right-click → Open the first time; an unsigned
+# Windows build shows SmartScreen's "unknown publisher".
+appId: dev.neowang.neodsh
+productName: Neo DSH
+copyright: Copyright © 2026 Neo Wang
+
+directories:
+  output: release
+  buildResources: build
+
+asar: false
+
+# Space-free, predictable artifact names for release uploads.
+artifactName: neo-dsh-${version}-${os}-${arch}.${ext}
+
+# Deliberately conservative: the harness reads its own Markdown (prompts, skills)
+# at runtime, so only sourcemaps are dropped. A too-clever filter here produces an
+# app that starts and then fails on first use.
+files:
+  - src/**/*
+  - assets/**/*
+  - package.json
+  - node_modules/**/*
+  - '!**/*.map'
+
+# Files placed at the application root (inside the zip, next to the executable).
+extraFiles:
+  - from: ../../packaging/linux
+    to: .
+
+extraResources:
+  - from: resources/node
+    to: node
+  # Icon for the user-install script's .desktop entry.
+  - from: assets/icon.png
+    to: icon.png
+  - from: resources/profile-web
+    to: profile-web
+  - from: resources/presets
+    to: presets
+  - from: resources/settings.defaults.yaml
+    to: settings.defaults.yaml
+
+linux:
+  executableName: neo-dsh
+  # zip is the "no installer" option: extract it and run ./install.sh, which
+  # copies the tree under ~/.local and wires up a launcher, icon and menu entry.
+  target:
+    - AppImage
+    - deb
+    - zip
+  category: Development
+  synopsis: Neo DSH desktop
+  description: >-
+    Neo DSH in a native window: the harness host runs as a managed
+    child process and the UI is served on a fixed loopback port.
+  icon: build/icon.png
+  desktop:
+    entry:
+      Name: Neo DSH
+      StartupWMClass: Neo DSH
+
+deb:
+  # electron-builder refuses to build a .deb without a maintainer.
+  maintainer: Neo Wang <3245938285@qq.com>
+  # Electron's own runtime requirements; the app additionally needs a
+  # system-agnostic list, so keep this minimal and let missing pieces surface.
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libsecret-1-0
+    - libasound2
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  # Unsigned builds: hardened runtime and notarization are opt-in.
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  identity: null
+  darkModeSupport: true
+
+dmg:
+  title: Neo DSH
+
+win:
+  executableName: neo-dsh
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: Neo DSH

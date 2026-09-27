@@ -1,0 +1,23 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build output
+apps/desktop/release/
+apps/desktop/dist/
+out/
+
+# assembled resources (produced by scripts/build-resources.mjs / fetch-node.mjs)
+apps/desktop/resources/node/
+apps/desktop/resources/profile-web/node_modules/
+apps/desktop/resources/profile-web/vendor/
+apps/desktop/resources/presets/
+
+# npm pack output
+*.tgz
+
+# never ship user state
+*.credentials.yaml
+.credentials.yaml
+sessions/
+*.log

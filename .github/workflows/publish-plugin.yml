@@ -1,0 +1,74 @@
+# Publish dsh-activity-line to npm.
+#
+#   git tag plugin-v1.0.0 && git push origin plugin-v1.0.0
+#
+# Needs an npm automation token in the repository secret NPM_TOKEN. Publishing
+# uses --provenance, so the npm page carries a verifiable link back to the commit
+# and workflow that produced the tarball.
+#
+# The dry run on every push keeps the packaging honest: it fails when the tarball
+# would be missing a file the plugin needs at runtime (client.js, index.js,
+# cordis.patch.yml), which is exactly the class of mistake npm publish would
+# otherwise reveal to users.
+name: plugin
+
+on:
+  push:
+    branches: [main]
+    paths: ['plugins/activity-line/**', '.github/workflows/publish-plugin.yml']
+    tags: ['plugin-v*']
+  pull_request:
+    paths: ['plugins/activity-line/**']
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: test + pack
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/activity-line
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Pack
+        run: npm pack --dry-run
+      - name: Assert the tarball carries every runtime file
+        run: |
+          npm pack --json > pack.json
+          node -e '
+            const { files } = require("./pack.json")[0]
+            const names = files.map((f) => f.path)
+            const required = ["index.js", "client.js", "cordis.patch.yml", "README.md"]
+            const missing = required.filter((r) => !names.includes(r))
+            if (missing.length) {
+              console.error("tarball is missing:", missing.join(", "))
+              process.exit(1)
+            }
+            console.log("tarball ok:", names.join(", "))
+          '
+
+  publish:
+    name: publish
+    if: startsWith(github.ref, 'refs/tags/plugin-v')
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: plugins/activity-line
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm test
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

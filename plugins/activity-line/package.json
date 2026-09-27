@@ -1,0 +1,67 @@
+{
+  "name": "dsh-activity-line",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness web plugin: a live activity line under the composer that says what the turn is actually doing (tool running / waiting on you / retrying / model thinking).",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "plugin",
+    "client",
+    "status",
+    "activity"
+  ],
+  "license": "MIT",
+  "author": "Neo Wang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ymh0000123/neo-dsh.git",
+    "directory": "plugins/activity-line"
+  },
+  "homepage": "https://github.com/ymh0000123/neo-dsh/tree/main/plugins/activity-line",
+  "bugs": {
+    "url": "https://github.com/ymh0000123/neo-dsh/issues"
+  },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node test/activity.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19 || >=24"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

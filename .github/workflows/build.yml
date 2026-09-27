@@ -1,0 +1,101 @@
+# Build and package the desktop app.
+#
+# Each platform is packaged ON ITS OWN RUNNER on purpose: the harness depends on
+# platform-specific optional binaries (Landlock for Linux, node-addon-system,
+# sharp, koffi, ripgrep), so a Linux runner cannot assemble a correct macOS or
+# Windows payload. The matrix is the only way this works.
+#
+# Order of delivery: Linux is the verified target. The macOS and Windows jobs are
+# present and expected to work, but until a run on those runners has been checked
+# they stay behind `workflow_dispatch` input `platforms` (default: linux).
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Comma-separated targets to build'
+        default: linux
+        type: string
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  target:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            os: ubuntu-latest
+            build: --linux
+            enabled: ${{ github.event_name != 'workflow_dispatch' || contains(inputs.platforms, 'linux') }}
+          - name: macos-arm64
+            os: macos-14
+            build: --mac
+            enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'mac') }}
+          - name: windows-x64
+            os: windows-latest
+            build: --win
+            enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'win') }}
+    steps:
+      - name: Skip when not selected
+        if: ${{ !matrix.enabled }}
+        run: echo "${{ matrix.name }} not selected; skipping"
+      - uses: actions/checkout@v4
+        if: ${{ matrix.enabled }}
+      - uses: pnpm/action-setup@v4
+        if: ${{ matrix.enabled }}
+      - uses: actions/setup-node@v4
+        if: ${{ matrix.enabled }}
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/desktop/pnpm-lock.yaml
+      - name: Install the app
+        if: ${{ matrix.enabled }}
+        run: pnpm --dir apps/desktop install --frozen-lockfile
+      - name: Assemble shipped resources
+        if: ${{ matrix.enabled }}
+        run: node scripts/build-resources.mjs
+      - name: Fetch the Node runtime this platform ships
+        if: ${{ matrix.enabled }}
+        run: node scripts/fetch-node.mjs
+      - name: Package
+        if: ${{ matrix.enabled }}
+        shell: bash
+        env:
+          # Unsigned by default. Provide CSC_LINK/CSC_KEY_PASSWORD (and the
+          # notarization variables) to sign, and drop this line.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: pnpm --dir apps/desktop exec electron-builder ${{ matrix.build }} --publish never
+      - name: Upload artifacts
+        if: ${{ matrix.enabled }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: neo-dsh-${{ matrix.name }}
+          # electron-builder names artifacts from productName/version.
+          path: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Attach to the release
+        if: ${{ matrix.enabled && startsWith(github.ref, 'refs/tags/v') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.exe

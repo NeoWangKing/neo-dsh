@@ -1,0 +1,17 @@
+{
+  "name": "neo-dsh-profile-web",
+  "private": true,
+  "dependencies": {
+    "dsh-activity-line": "file:vendor/dsh-activity-line"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-activity-line"
+      ],
+      "patchReload": "startup"
+    }
+  }
+}

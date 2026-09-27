@@ -1,0 +1,21 @@
+{
+  "name": "neo-dsh",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neo DSH: my own DeepSeek Harness desktop suite — Electron shell, client plugins, agent preset and the profile they ship with.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "install:app": "pnpm --dir apps/desktop install",
+    "resources": "node scripts/build-resources.mjs",
+    "fetch-node": "node scripts/fetch-node.mjs",
+    "start": "pnpm run resources && pnpm --dir apps/desktop run start",
+    "probe": "pnpm --dir apps/desktop run probe",
+    "pack": "pnpm run resources && pnpm --dir apps/desktop exec electron-builder --dir",
+    "dist:linux": "pnpm run resources && pnpm --dir apps/desktop exec electron-builder --linux",
+    "dist:mac": "pnpm run resources && pnpm --dir apps/desktop exec electron-builder --mac",
+    "dist:win": "pnpm run resources && pnpm --dir apps/desktop exec electron-builder --win",
+    "test": "node plugins/activity-line/test/activity.test.mjs && node presets/liangshen/todo-closer.test.mjs"
+  },
+  "packageManager": "pnpm@11.13.0"
+}
