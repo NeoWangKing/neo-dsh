@@ -1,23 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Neo DSH">
   <title>Neo DSH</title>
-  <desc>An N drawn as a node graph on an ink plate, with a spark. The project's own mark: the harness is a tree of plugins, and N is for Neo.</desc>
+  <desc>A DeepSeek Harness derivative: a whale (the DeepSeek anchor) carries an N drawn as a node graph — the harness is a tree of plugins, and N is for Neo — with a spark for 灵.</desc>
   <defs>
     <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1A2130"/>
-      <stop offset="0.55" stop-color="#121722"/>
-      <stop offset="1" stop-color="#0A0D13"/>
+      <stop offset="0" stop-color="#141B28"/>
+      <stop offset="0.55" stop-color="#0F141D"/>
+      <stop offset="1" stop-color="#080A0F"/>
+    </linearGradient>
+    <linearGradient id="whale" gradientUnits="userSpaceOnUse" x1="180" y1="420" x2="880" y2="880">
+      <stop offset="0" stop-color="#4D6BFE"/>
+      <stop offset="1" stop-color="#2E3FA8"/>
     </linearGradient>
     <linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="300" y1="320" x2="700" y2="740">
-      <stop offset="0" stop-color="#F4F7FB"/>
-      <stop offset="1" stop-color="#AEBACB"/>
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C3CEDE"/>
     </linearGradient>
     <linearGradient id="spark" gradientUnits="userSpaceOnUse" x1="760" y1="150" x2="900" y2="300">
       <stop offset="0" stop-color="#FFE07A"/>
       <stop offset="1" stop-color="#FF9B3D"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.62">
-      <stop offset="0" stop-color="#3AA0FF" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#3AA0FF" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.5" cy="0.75" r="0.75">
+      <stop offset="0" stop-color="#4D6BFE" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#4D6BFE" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
@@ -26,19 +30,39 @@
   <rect x="0" y="0" width="1024" height="1024" rx="228" fill="url(#glow)"/>
   <rect x="30" y="30" width="964" height="964" rx="200" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="6"/>
 
+  <!-- the whale: DeepSeek's anchor, redrawn as our own silhouette -->
+  <g opacity="0.55" transform="translate(6 52)">
+    <path fill="url(#whale)" d="M150 636
+      C 150 528 282 452 430 452
+      C 566 452 676 496 748 566
+      L 828 512
+      C 852 496 880 490 906 496
+      C 886 548 862 590 826 618
+      C 860 640 888 672 906 712
+      C 878 722 846 720 820 706
+      L 742 660
+      C 664 726 552 760 430 760
+      C 282 760 150 744 150 636 Z"/>
+    <path fill="url(#whale)" d="M392 742
+      C 414 792 462 818 512 812
+      C 474 786 440 764 418 738 Z"/>
+  </g>
+  <!-- eye, punched out of the whale -->
+  <circle cx="252" cy="646" r="19" fill="#080A0F" opacity="0.8"/>
+
   <!-- the N, drawn as a node graph: two uprights joined by a diagonal -->
-  <g stroke="url(#ink)" stroke-width="92" stroke-linecap="round" fill="none">
-    <path d="M320 704 V344"/>
-    <path d="M664 704 V344"/>
-    <path d="M320 344 L664 704"/>
+  <g stroke="url(#ink)" stroke-width="84" stroke-linecap="round" fill="none">
+    <path d="M372 690 V336"/>
+    <path d="M680 690 V336"/>
+    <path d="M372 336 L680 690"/>
   </g>
 
-  <!-- nodes -->
+  <!-- nodes: the plugin tree -->
   <g fill="url(#ink)">
-    <circle cx="320" cy="344" r="64"/>
-    <circle cx="664" cy="344" r="64"/>
-    <circle cx="320" cy="704" r="64"/>
-    <circle cx="664" cy="704" r="64"/>
+    <circle cx="372" cy="336" r="54"/>
+    <circle cx="680" cy="336" r="54"/>
+    <circle cx="372" cy="690" r="54"/>
+    <circle cx="680" cy="690" r="54"/>
   </g>
 
   <!-- spark: the 灵 in 灵其啊 -->

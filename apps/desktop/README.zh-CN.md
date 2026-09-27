@@ -21,6 +21,7 @@ DSH_HOME=/tmp/check DSH_DESKTOP_PORT=3199 DSH_DESKTOP_SMOKE=1 pnpm start
 | `electron-builder.yml` | 目标（`AppImage`/`deb`/`zip`、`dmg`、`nsis`）、`extraResources`、签名钩子 |
 | `resources/` | 随包附带的资源（profile、preset、默认设置、Node 运行时） |
 | `scripts/` | `probe-host.mjs`（host 就绪探测）、`install.sh`/`uninstall.sh`（开发态安装）、`gen-icon.mjs` |
-| `build/icon.png` | 1024px 图标；electron-builder 由它派生 `.icns`/`.ico` |
+| `assets/icon.svg` | 本项目标识：**鲸鱼（DeepSeek 的视觉锚点）** + 节点图构成的 N + 琥珀色星芒。手写 SVG，不用官方 logo，但刻意保留鲸鱼 |
+| `build/icon.png` | 由 `scripts/gen-icon.mjs` 从上面那份 SVG 渲染的 1024px 图；electron-builder 由它派生 `.icns`/`.ico` |
 
 环境变量：`DSH_HOME`、`DSH_NODE`、`DSH_DESKTOP_PORT`、`DSH_DESKTOP_MIN_WIDTH`/`_HEIGHT`、`DSH_DESKTOP_NO_SEED`、`DSH_DESKTOP_SMOKE`、`DSH_DESKTOP_SMOKE_CRASH`。
