@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
-import { isNewer, pickAsset, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
+import { describeNetworkError, fetchLatestRelease, isNewer, pickAsset, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
 
 let failures = 0
 function check(name, actual, expected) {
@@ -49,6 +49,24 @@ check('两个 mac 架构时按当前架构挑', pickAsset(bothArches, { platform
 check('发行版里没有匹配资源 → undefined', pickAsset([{ name: 'notes.txt' }], { platform: 'linux', arch: 'x64' }), undefined)
 check('资源列表缺失 → undefined', pickAsset(undefined, { platform: 'linux', arch: 'x64' }), undefined)
 check('仓库指向本项目', UPDATE_REPO, 'NeoWangKing/neo-dsh')
+
+// ---- release lookup: retry + readable failure ----------------------------
+let calls = 0
+const flakyFetch = async () => {
+  calls += 1
+  if (calls < 3) throw Object.assign(new Error('fetch failed'), { cause: { code: 'ECONNRESET' } })
+  return { ok: true, json: async () => ({ tag_name: 'v9.9.9' }) }
+}
+const release = await fetchLatestRelease(flakyFetch, { sleep: async () => {} })
+check('瞬时失败会重试，第三次成功', [release.tag_name, calls], ['v9.9.9', 3])
+
+let attempts = 0
+let thrown = ''
+try {
+  await fetchLatestRelease(async () => { attempts += 1; throw Object.assign(new Error('fetch failed'), { cause: { code: 'ENOTFOUND' } }) }, { sleep: async () => {} })
+} catch (error) { thrown = String(error.message) }
+check('一直失败 → 报出原因码，而不是裸的 fetch failed', [attempts, thrown.includes('ENOTFOUND'), thrown.includes('fetch failed')], [3, true, true])
+check('HTTP 错误带状态码', describeNetworkError(new Error('GitHub API 500 Internal Server Error')).includes('500'), true)
 
 // ---- download ------------------------------------------------------------
 const payload = new Uint8Array(4096).fill(7)

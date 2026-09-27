@@ -72,16 +72,50 @@ export function pickAsset(assets, target) {
 }
 
 /**
+ * Turn a fetch failure into something a person can act on.
+ *
+ * undici rejects with a bare "fetch failed" and hides the reason in `cause`, which
+ * is useless in a settings row: the code (ENOTFOUND, ECONNRESET, a connect timeout)
+ * is the part that says whether it is worth retrying.
+ * @param error - whatever fetch rejected with.
+ * @returns a message that names the underlying cause when there is one.
+ */
+export function describeNetworkError(error) {
+  const cause = error?.cause
+  const code = cause?.code ?? cause?.errno ?? error?.code ?? ''
+  const base = String(error?.message ?? error)
+  return code === '' ? `无法连接 GitHub：${base}` : `无法连接 GitHub：${base}（${code}）`
+}
+
+/**
  * Ask GitHub for this project's newest release.
+ *
+ * Retries a couple of times: on a laptop network a single DNS hiccup or dropped
+ * SYN was enough to leave the settings row in an error state until the next
+ * scheduled check. Each attempt is bounded, so a black-holed route cannot leave
+ * the row spinning either.
  * @param fetchImpl - fetch implementation (injectable for tests).
+ * @param options - `attempts`, `timeoutMs`, `sleep` (injectable for tests).
  * @returns the release JSON.
  */
-export async function fetchLatestRelease(fetchImpl = fetch) {
-  const response = await fetchImpl(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
-    headers: { accept: 'application/vnd.github+json', 'user-agent': 'neo-dsh-updater' },
-  })
-  if (!response.ok) throw new Error(`GitHub API ${response.status} ${response.statusText}`)
-  return await response.json()
+export async function fetchLatestRelease(fetchImpl = fetch, options = {}) {
+  const { attempts = 3, timeoutMs = 15000, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = options
+  const url = `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`
+  let lastError
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetchImpl(url, {
+        headers: { accept: 'application/vnd.github+json', 'user-agent': 'neo-dsh-updater' },
+        signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(timeoutMs) : undefined,
+      })
+      if (!response.ok) throw new Error(`GitHub API ${response.status} ${response.statusText}`)
+      return await response.json()
+    } catch (error) {
+      lastError = error
+      if (attempt < attempts) await sleep(attempt * 750)
+    }
+  }
+  throw new Error(describeNetworkError(lastError))
 }
 
 /**
