@@ -837,11 +837,19 @@ async function handleUpdateCommand(action) {
       const release = await fetchLatestRelease()
       const latest = String(release.tag_name ?? '').replace(/^v/i, '')
       const current = app.getVersion()
+      const checkAsset = pickAsset(release.assets, {
+        platform: process.platform,
+        arch: process.arch,
+        appImage: process.env.APPIMAGE,
+      })
       sendUpdateState({
         phase: 'checked',
         version: current,
         latest,
         hasUpdate: isNewer(latest, current),
+        // A GitHub release appears before its installers finish uploading, so
+        // "newer version, no asset yet" is a normal state to report, not an error.
+        assetReady: checkAsset !== undefined,
         notes: typeof release.body === 'string' ? release.body.slice(0, 4000) : '',
         url: release.html_url ?? `https://github.com/${UPDATE_REPO}/releases`,
       })
@@ -861,8 +869,23 @@ async function handleUpdateCommand(action) {
         })
         return
       }
-      const asset = pickAsset(release.assets, { platform: process.platform, arch: process.arch, appImage: process.env.APPIMAGE })
-      if (asset === undefined) throw new Error(`release ${latest} 里没有匹配本平台的安装包`)
+      const asset = pickAsset(release.assets, {
+        platform: process.platform,
+        arch: process.arch,
+        appImage: process.env.APPIMAGE,
+      })
+      if (asset === undefined) {
+        // Still uploading: stay in "update available", so the button retries.
+        sendUpdateState({
+          phase: 'checked',
+          version: current,
+          latest,
+          hasUpdate: true,
+          assetReady: false,
+          url: release.html_url ?? `https://github.com/${UPDATE_REPO}/releases`,
+        })
+        return
+      }
       await downloadUpdate({ version: latest }, asset)
       return
     }

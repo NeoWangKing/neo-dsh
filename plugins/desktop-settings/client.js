@@ -26,6 +26,7 @@
     checking: '正在检查更新…',
     upToDate: '已是最新版本',
     available: '发现新版本',
+    assetPending: '安装包仍在上传，稍后再试',
     downloading: '正在下载',
     downloaded: '已下载，可以安装',
     installing: '正在安装并重启…',
@@ -54,6 +55,7 @@
     checking: 'Checking for updates…',
     upToDate: 'Up to date',
     available: 'Update available',
+    assetPending: 'the installer is still uploading — try again shortly',
     downloading: 'Downloading',
     downloaded: 'Downloaded — ready to install',
     installing: 'Installing and restarting…',
@@ -200,7 +202,11 @@
     const phase = state?.phase ?? 'idle';
     if (phase === 'checking') return t('checking');
     if (phase === 'checked') {
-      return state.hasUpdate ? `${t('available')} v${state.latest}` : t('upToDate');
+      if (!state.hasUpdate) return t('upToDate');
+      // A release shows up on GitHub before its installers finish uploading.
+      return state.assetReady === false
+        ? `${t('available')} v${state.latest}（${t('assetPending')}）`
+        : `${t('available')} v${state.latest}`;
     }
     if (phase === 'downloading') {
       const percent = state.percent === null || state.percent === undefined ? '' : ` ${state.percent}%`;
