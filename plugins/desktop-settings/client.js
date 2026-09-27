@@ -75,50 +75,60 @@
     snoozed: 'neo-dsh.update.snoozedVersion',
   };
 
+  // Numbers come from the shipped settings rows (figma "Setting-Cell": gap 8,
+  // pad 16/0, hairline separator; selector pill h36 r18), so this row sits in the
+  // section like a native one instead of looking bolted on.
   const STYLE = `
-  #dsh-desktop-settings { display: flex; flex-direction: column; gap: 8px; }
-  #dsh-desktop-settings .dsk-main { display: flex; align-items: center; gap: 12px; }
-  #dsh-desktop-settings .dsk-text { flex: 1 1 auto; min-width: 0; }
-  #dsh-desktop-settings .dsk-title { font-size: 14px; color: var(--dsw-alias-label-primary, inherit); }
-  #dsh-desktop-settings .dsk-desc { margin-top: 2px; font-size: 12px; color: var(--dsw-alias-label-secondary, #6b7280); }
-  #dsh-desktop-settings .dsk-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-  #dsh-desktop-settings button {
-    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 8px; cursor: pointer;
-    border: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,.14));
-    background: var(--dsw-alias-bg-layer-3, #fff); color: var(--dsw-alias-label-primary, #333);
+  #dsh-desktop-settings .dsk-row {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px 0; border-bottom: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08));
   }
-  #dsh-desktop-settings button:disabled { opacity: .55; cursor: default; }
-  #dsh-desktop-settings button.dsk-primary {
-    border-color: transparent; background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff;
+  #dsh-desktop-settings .dsk-main { display: flex; align-items: center; gap: 8px; }
+  #dsh-desktop-settings .dsk-text {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 48px;
   }
-  #dsh-desktop-settings .dsk-opts { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 12px; color: var(--dsw-alias-label-secondary, #6b7280); }
-  #dsh-desktop-settings .dsk-opts label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-  #dsh-desktop-settings select {
-    font: inherit; font-size: 12px; border-radius: 6px; padding: 2px 4px;
-    border: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,.14));
-    background: var(--dsw-alias-bg-layer-3, #fff); color: inherit;
+  #dsh-desktop-settings .dsk-title {
+    font-size: 14px; font-weight: 400; line-height: 22px; color: var(--dsw-alias-label-primary, inherit);
   }
-  #dsh-desktop-settings .dsk-bar { height: 4px; border-radius: 2px; background: var(--dsw-alias-bg-layer-2, rgba(0,0,0,.08)); overflow: hidden; }
+  #dsh-desktop-settings .dsk-desc {
+    font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8b8f97);
+  }
+  #dsh-desktop-settings .dsk-actions { display: inline-flex; flex: none; gap: 8px; }
+  #dsh-desktop-settings .dsk-btn {
+    display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
+    border: none; border-radius: 18px; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
+    font: inherit; font-size: 14px; line-height: 22px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
+  }
+  #dsh-desktop-settings .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover, rgba(127,127,127,.2)); }
+  #dsh-desktop-settings .dsk-btn:disabled { cursor: default; opacity: .55; }
+  #dsh-desktop-settings .dsk-primary { background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff; }
+  #dsh-desktop-settings .dsk-opts {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+    font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-secondary, #6b7280);
+  }
+  #dsh-desktop-settings .dsk-opt { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  #dsh-desktop-settings input[type="checkbox"] { margin: 0; accent-color: var(--dsw-alias-brand-primary, #4d6bfe); }
+  #dsh-desktop-settings .dsk-select {
+    height: 26px; padding: 0 8px; border: none; border-radius: 13px;
+    background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
+    font: inherit; font-size: 12px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
+  }
+  #dsh-desktop-settings .dsk-bar {
+    height: 4px; border-radius: 2px; overflow: hidden; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.14));
+  }
   #dsh-desktop-settings .dsk-bar > i { display: block; height: 100%; background: var(--dsw-alias-brand-primary, #4d6bfe); transition: width .3s; }
-  #dsh-desktop-settings .dsk-err { font-size: 12px; color: var(--dsw-alias-label-error, #d94a4a); }
-  .dsk-overlay {
-    position: fixed; inset: 0; z-index: 9998; display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.38);
-  }
+  #dsh-desktop-settings .dsk-err { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-error, #d94a4a); }
+  .dsk-overlay { position: fixed; inset: 0; z-index: 9998; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.38); }
   .dsk-dialog {
     width: min(420px, calc(100vw - 48px)); border-radius: 14px; padding: 18px 20px;
     background: var(--dsw-alias-bg-layer-3, #fff); color: var(--dsw-alias-label-primary, #222);
-    box-shadow: 0 12px 40px rgba(0,0,0,.28); font-size: 13px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.28);
   }
-  .dsk-dialog h3 { margin: 0 0 6px; font-size: 15px; }
-  .dsk-dialog p { margin: 0 0 12px; color: var(--dsw-alias-label-secondary, #6b7280); }
+  .dsk-dialog h3 { margin: 0 0 6px; font-size: 15px; font-weight: 500; line-height: 22px; }
+  .dsk-dialog p { margin: 0 0 14px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8b8f97); }
   .dsk-dialog .dsk-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
-  .dsk-dialog button {
-    font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer;
-    border: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,.14));
-    background: var(--dsw-alias-bg-layer-3, #fff); color: inherit;
-  }
-  .dsk-dialog button.dsk-primary { border-color: transparent; background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff; }
+  .dsk-dialog .dsk-btn { display: inline-flex; align-items: center; height: 32px; padding: 0 16px; border: none; border-radius: 16px; font: inherit; font-size: 13px; cursor: pointer; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12)); color: inherit; }
+  .dsk-dialog .dsk-primary { background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff; }
   `;
 
   function insertStyle() {
@@ -162,8 +172,7 @@
     const phase = state?.phase ?? 'idle';
     if (phase === 'checking') return t('checking');
     if (phase === 'checked') {
-      if (state.hasUpdate) return `${t('available')} v${state.latest}（${t('version')} v${state.version}）`;
-      return `${t('upToDate')}（v${state.version}）`;
+      return state.hasUpdate ? `${t('available')} v${state.latest}` : t('upToDate');
     }
     if (phase === 'downloading') {
       const percent = state.percent === null || state.percent === undefined ? '' : ` ${state.percent}%`;
@@ -257,66 +266,90 @@
         const busy = phase === 'downloading' || phase === 'installing';
         const showPercent = phase === 'downloading' && typeof state.percent === 'number';
 
-        return react.createElement('div', { id: 'dsh-desktop-settings' },
-          react.createElement('div', { className: 'dsk-main' },
-            react.createElement('div', { className: 'dsk-text' },
-              react.createElement('div', { className: 'dsk-title' }, t('title')),
-              react.createElement('div', { className: 'dsk-desc' },
-                `${t('version')} v${info.version}` + (statusText(state, t) === '' ? '' : ` · ${statusText(state, t)}`))),
-            react.createElement('div', { className: 'dsk-actions' },
-              react.createElement('button', { type: 'button', onClick: () => { setState({ phase: 'checking' }); send('check'); }, disabled: busy }, t('check')),
-              phase === 'checked' && state.hasUpdate
-                ? react.createElement('button', { type: 'button', className: 'dsk-primary', onClick: () => send('download') }, t('download'))
-                : null,
-              phase === 'downloaded'
-                ? react.createElement('button', { type: 'button', className: 'dsk-primary', onClick: () => send('install') }, t('install'))
-                : null)),
-          react.createElement('div', { className: 'dsk-opts' },
-            react.createElement('label', null,
-              react.createElement('input', {
-                type: 'checkbox', checked: autoCheck,
-                onChange: (event) => { const next = event.target.checked; setAutoCheck(next); writeFlag(KEY.autoCheck, next); },
-              }),
-              `${t('autoCheck')}（${t('every')} `,
-              react.createElement('select', {
-                value: String(hours),
-                onChange: (event) => {
-                  const next = Number(event.target.value);
-                  setHours(next);
-                  try { localStorage.setItem(KEY.interval, String(next)); } catch { /* ignore */ }
-                },
-              }, [1, 6, 24].map((value) => react.createElement('option', { key: value, value: String(value) }, String(value)))),
-              ` ${t('hours')}）`),
-            react.createElement('label', null,
-              react.createElement('input', {
-                type: 'checkbox', checked: autoDownload,
-                onChange: (event) => { const next = event.target.checked; setAutoDownload(next); writeFlag(KEY.autoDownload, next); },
-              }),
-              t('autoDownload'))),
-          showPercent
-            ? react.createElement('div', { className: 'dsk-bar' }, react.createElement('i', { style: { width: `${state.percent}%` } }))
-            : null,
-          phase === 'error' && state.message
-            ? react.createElement('div', { className: 'dsk-err' }, state.message)
-            : null,
-          dialog && state.phase === 'checked' && state.hasUpdate
-            ? react.createElement('div', { className: 'dsk-overlay', onClick: () => setDialog(false) },
-              react.createElement('div', { className: 'dsk-dialog', onClick: (event) => event.stopPropagation() },
-                react.createElement('h3', null, `${t('foundTitle')} v${state.latest}`),
-                react.createElement('p', null, `${t('foundBody')}（${t('version')} v${state.version}）`),
-                react.createElement('div', { className: 'dsk-dialog-actions' },
-                  react.createElement('button', {
-                    type: 'button',
-                    onClick: () => {
-                      try { localStorage.setItem(KEY.snoozed, state.latest); } catch { /* ignore */ }
-                      setDialog(false);
-                    },
-                  }, t('later')),
-                  react.createElement('button', {
-                    type: 'button', className: 'dsk-primary',
-                    onClick: () => { setDialog(false); send('download'); },
-                  }, t('updateNow')))))
-            : null);
+        const descText = `${t('version')} v${info.version}` + (statusText(state, t) === '' ? '' : ` · ${statusText(state, t)}`)
+        const hourOptions = [1, 6, 24]
+
+        const buttons = [react.createElement('button', {
+          key: 'check', type: 'button', className: 'dsk-btn', disabled: busy,
+          onClick: () => { setState({ phase: 'checking' }); send('check') },
+        }, t('check'))]
+        if (phase === 'checked' && state.hasUpdate) {
+          buttons.push(react.createElement('button', {
+            key: 'download', type: 'button', className: 'dsk-btn dsk-primary',
+            onClick: () => send('download'),
+          }, t('download')))
+        }
+        if (phase === 'downloaded') {
+          buttons.push(react.createElement('button', {
+            key: 'install', type: 'button', className: 'dsk-btn dsk-primary',
+            onClick: () => send('install'),
+          }, t('install')))
+        }
+
+        const mainLine = react.createElement('div', { className: 'dsk-main' }, [
+          react.createElement('div', { className: 'dsk-text', key: 'text' }, [
+            react.createElement('div', { className: 'dsk-title', key: 'title' }, t('title')),
+            react.createElement('div', { className: 'dsk-desc', key: 'desc' }, descText),
+          ]),
+          react.createElement('div', { className: 'dsk-actions', key: 'actions' }, buttons),
+        ])
+
+        const optionsLine = react.createElement('div', { className: 'dsk-opts' }, [
+          react.createElement('label', { className: 'dsk-opt', key: 'auto' }, [
+            react.createElement('input', {
+              type: 'checkbox', checked: autoCheck, key: 'box',
+              onChange: (event) => { const next = event.target.checked; setAutoCheck(next); writeFlag(KEY.autoCheck, next) },
+            }),
+            react.createElement('span', { key: 'label' }, t('autoCheck')),
+            react.createElement('select', {
+              className: 'dsk-select', value: String(hours), disabled: !autoCheck, key: 'every',
+              onChange: (event) => {
+                const next = Number(event.target.value)
+                setHours(next)
+                try { localStorage.setItem(KEY.interval, String(next)) } catch { /* ignore */ }
+              },
+            }, hourOptions.map((value) => react.createElement('option', { key: value, value: String(value) }, `${t('every')} ${value} ${t('hours')}`))),
+          ]),
+          react.createElement('label', { className: 'dsk-opt', key: 'autodownload' }, [
+            react.createElement('input', {
+              type: 'checkbox', checked: autoDownload, key: 'box',
+              onChange: (event) => { const next = event.target.checked; setAutoDownload(next); writeFlag(KEY.autoDownload, next) },
+            }),
+            react.createElement('span', { key: 'label' }, t('autoDownload')),
+          ]),
+        ])
+
+        const extras = []
+        if (showPercent) {
+          extras.push(react.createElement('div', { className: 'dsk-bar', key: 'bar' },
+            react.createElement('i', { style: { width: `${state.percent}%` } })))
+        }
+        if (phase === 'error' && state.message) {
+          extras.push(react.createElement('div', { className: 'dsk-err', key: 'error' }, state.message))
+        }
+
+        const modal = (dialog && phase === 'checked' && state.hasUpdate)
+          ? react.createElement('div', { className: 'dsk-overlay', onClick: () => setDialog(false) },
+            react.createElement('div', { className: 'dsk-dialog', onClick: (event) => event.stopPropagation() }, [
+              react.createElement('h3', { key: 'title' }, `${t('foundTitle')} v${state.latest}`),
+              react.createElement('p', { key: 'body' }, `${t('foundBody')}（${t('version')} v${state.version}）`),
+              react.createElement('div', { className: 'dsk-dialog-actions', key: 'actions' }, [
+                react.createElement('button', {
+                  key: 'later', type: 'button', className: 'dsk-btn',
+                  onClick: () => {
+                    try { localStorage.setItem(KEY.snoozed, state.latest) } catch { /* ignore */ }
+                    setDialog(false)
+                  },
+                }, t('later')),
+                react.createElement('button', {
+                  key: 'now', type: 'button', className: 'dsk-btn dsk-primary',
+                  onClick: () => { setDialog(false); send('download') },
+                }, t('updateNow')),
+              ]),
+            ]))
+          : null
+
+        return react.createElement('div', { id: 'dsh-desktop-settings' }, [mainLine, optionsLine, ...extras, modal])
       }
 
       const entry = {
