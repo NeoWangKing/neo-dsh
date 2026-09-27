@@ -2,6 +2,12 @@
 
 [English](README.md) · **中文**
 
+> **源头仓库：** 本插件的主副本在
+> [NeoWangKing/neo-dsh](https://github.com/NeoWangKing/neo-dsh/tree/main/plugins/activity-line)。
+> <https://github.com/NeoWangKing/dsh-activity-line> 是为了方便发现和
+> `dsh plugin add github:…` 而发布的镜像；issue 和 PR 请提到 monorepo。
+> 用 `scripts/mirror-plugin.sh` 同步镜像。
+
 [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) 的 web 插件：在输入框下方常驻一行，告诉你这一刻 agent 到底在干什么。
 
 ## 安装（装到你自己的 dsh 里）

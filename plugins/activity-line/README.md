@@ -2,6 +2,12 @@
 
 **English** · [中文](README.zh-CN.md)
 
+> **Source of truth:** this plugin lives in
+> [NeoWangKing/neo-dsh](https://github.com/NeoWangKing/neo-dsh/tree/main/plugins/activity-line).
+> <https://github.com/NeoWangKing/dsh-activity-line> is a mirror published for
+> discovery and for `dsh plugin add github:…`; issues and PRs belong on the
+> monorepo. `scripts/mirror-plugin.sh` keeps the mirror in step.
+
 A [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) web plugin: one line under the composer that says what the running turn is actually doing.
 
 ## Install (into your own dsh)
