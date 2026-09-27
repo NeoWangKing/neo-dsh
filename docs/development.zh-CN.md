@@ -92,4 +92,10 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 - **host 会缓存已组装的插件 bundle。** 改完插件只刷新页面是没用的，必须重启 host（⟳）。
 - **绝不要用同一个 `$DSH_HOME` 同时跑两个 host。** 两个写入者会损坏同一个会话日志（这台机器的历史里就有因此产生的 `corrupt-backup` 文件）。端口冲突反而是小问题。
 - **profile 没写 `dsh.profile.patchReload` 时默认是 `live`**，而它需要 Cordis HMR 服务。打包版**故意排除了** `@deepseek-ai/cordis-plugin-hmr`（原因见 [packaging.md](packaging.md)），而它播种的 profile 写的是 `patchReload: "startup"`。
+- **preset 必须是真目录。** harness 用 `readdir(dir, { withFileTypes: true })` 扫描
+  `$DSH_HOME/.agent-presets`，凡是 `child.isDirectory()` 为 false 的一律跳过——而
+  **指向目录的软链就是 false**。这个失败是静默的：`startSession()` 只把错误写进
+  `console.warn("new session failed: …")`，于是点"新建会话"看起来毫无反应，而 host 报的是
+  `agent-preset/not-found`。想保持单一源头，就把 preset 做成**真目录**、把里面的**文件**
+  做成软链（`stat` 会跟随文件软链，加载器读得到）。
 - **仓库需要 Node 22**（`.nvmrc`、`engines`、`scripts/check-node.mjs`）。安装版不受影响：它自带 Node。
