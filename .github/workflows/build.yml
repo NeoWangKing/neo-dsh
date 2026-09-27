@@ -38,6 +38,10 @@ permissions:
 jobs:
   target:
     name: ${{ matrix.name }}
+    # Job-level, not step-level: a step that skips still makes GitHub allocate (and
+    # queue for) the runner, which is how the retired macos-13 label ended up
+    # blocking every push behind it.
+    if: ${{ matrix.enabled }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -51,39 +55,25 @@ jobs:
             os: macos-14
             build: --mac --arm64
             enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'mac') }}
-          - name: macos-x64
-            os: macos-13
-            build: --mac --x64
-            enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'mac') }}
           - name: windows-x64
             os: windows-latest
             build: --win
             enabled: ${{ github.event_name == 'workflow_dispatch' && contains(inputs.platforms, 'win') }}
     steps:
-      - name: Skip when not selected
-        if: ${{ !matrix.enabled }}
-        run: echo "${{ matrix.name }} not selected; skipping"
       - uses: actions/checkout@v4
-        if: ${{ matrix.enabled }}
       - uses: pnpm/action-setup@v4
-        if: ${{ matrix.enabled }}
       - uses: actions/setup-node@v4
-        if: ${{ matrix.enabled }}
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: apps/desktop/pnpm-lock.yaml
       - name: Install the app
-        if: ${{ matrix.enabled }}
         run: pnpm --dir apps/desktop install --frozen-lockfile
       - name: Assemble shipped resources
-        if: ${{ matrix.enabled }}
         run: node scripts/build-resources.mjs
       - name: Fetch the Node runtime this platform ships
-        if: ${{ matrix.enabled }}
         run: node scripts/fetch-node.mjs
       - name: Package
-        if: ${{ matrix.enabled }}
         shell: bash
         env:
           # Unsigned by default. Provide CSC_LINK/CSC_KEY_PASSWORD (and the
@@ -91,7 +81,6 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: pnpm --dir apps/desktop exec electron-builder ${{ matrix.build }} --publish never
       - name: Upload artifacts
-        if: ${{ matrix.enabled }}
         uses: actions/upload-artifact@v4
         with:
           name: neo-dsh-${{ matrix.name }}

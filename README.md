@@ -63,7 +63,8 @@ Artifacts land in `apps/desktop/release/` as `neo-dsh-<version>-<os>-<arch>.<ext
 | Platform | Targets | Status |
 | --- | --- | --- |
 | Linux x64 | AppImage, deb, **zip + install.sh** | **verified end-to-end** — all three artifacts boot, seed `$DSH_HOME`, and load the bundled plugin |
-| macOS arm64/x64 | dmg | configured; not yet built on a Mac runner |
+| macOS arm64 | dmg | **verified on a macos-14 runner** (arm64 `Neo DSH.app`, bundled `darwin-arm64` Node, correct native addons) |
+| macOS x64 | dmg | not built: GitHub's Intel runner label (`macos-13`) is retired and queues forever. Add it with pnpm `supportedArchitectures` on `macos-14` if an Intel build is ever needed |
 | Windows x64 | nsis installer | configured; not yet built on a Windows runner |
 
 The zip is the no-installer option: extract it and run `./install.sh`, which copies
