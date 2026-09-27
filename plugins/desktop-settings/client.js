@@ -98,12 +98,21 @@
   #dsh-desktop-settings .dsk-actions { display: inline-flex; flex: none; gap: 8px; }
   #dsh-desktop-settings .dsk-btn {
     display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
-    border: none; border-radius: 18px; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
+    border: .5px solid var(--dsw-alias-border-l3, rgba(127,127,127,.2)); border-radius: 18px;
+    background: var(--dsw-alias-button-elevated-fill, rgba(127,127,127,.12));
     font: inherit; font-size: 14px; line-height: 22px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
   }
-  #dsh-desktop-settings .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover, rgba(127,127,127,.2)); }
+  #dsh-desktop-settings .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
   #dsh-desktop-settings .dsk-btn:disabled { cursor: default; opacity: .55; }
-  #dsh-desktop-settings .dsk-primary { background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff; }
+  /* Filled primary button. The harness pairs "--dsw-alias-button-primary-fill" with
+     "--dsw-alias-label-primary-inverted": that fill is LIGHT in the dark theme, and
+     "--dsw-alias-brand-primary" is a *text* colour (also light there), so using it as
+     a fill together with a hard-coded white label makes the text disappear. */
+  #dsh-desktop-settings .dsk-primary {
+    background: var(--dsw-alias-button-primary-fill, #4d6bfe);
+    color: var(--dsw-alias-label-primary-inverted, #fff);
+  }
+  #dsh-desktop-settings .dsk-primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
   #dsh-desktop-settings .dsk-opts {
     display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
     font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-secondary, #6b7280);
@@ -129,8 +138,15 @@
   .dsk-dialog h3 { margin: 0 0 6px; font-size: 15px; font-weight: 500; line-height: 22px; }
   .dsk-dialog p { margin: 0 0 14px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8b8f97); }
   .dsk-dialog .dsk-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
-  .dsk-dialog .dsk-btn { display: inline-flex; align-items: center; height: 32px; padding: 0 16px; border: none; border-radius: 16px; font: inherit; font-size: 13px; cursor: pointer; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12)); color: inherit; }
-  .dsk-dialog .dsk-primary { background: var(--dsw-alias-brand-primary, #4d6bfe); color: #fff; }
+  .dsk-dialog .dsk-btn {
+    display: inline-flex; align-items: center; height: 32px; padding: 0 16px;
+    border: .5px solid var(--dsw-alias-border-l3, rgba(127,127,127,.2)); border-radius: 16px;
+    background: var(--dsw-alias-button-elevated-fill, rgba(127,127,127,.12));
+    color: var(--dsw-alias-label-primary, inherit); font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .dsk-dialog .dsk-btn:hover { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
+  .dsk-dialog .dsk-primary { border-color: transparent; background: var(--dsw-alias-button-primary-fill, #4d6bfe); color: var(--dsw-alias-label-primary-inverted, #fff); }
+  .dsk-dialog .dsk-primary:hover { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
   `;
 
   function insertStyle() {
