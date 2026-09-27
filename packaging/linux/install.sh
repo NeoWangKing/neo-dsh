@@ -32,7 +32,7 @@ APP_NAME="Neo DSH"
 BIN_NAME="neo-dsh"
 DEST="${PREFIX}/opt/neo-dsh"
 LAUNCHER="${PREFIX}/bin/${BIN_NAME}"
-DESKTOP_ID="neo-dsh"
+DESKTOP_ID="neo-dsh-desktop"
 
 # --- sanity: this must be the packaged tree, not a source checkout ------------
 EXE="${HERE}/${BIN_NAME}"
@@ -108,7 +108,7 @@ Exec=${LAUNCHER}
 Icon=${ICON_NAME}
 Terminal=false
 Categories=Development;Utility;
-StartupWMClass=DeepSeek Harness
+StartupWMClass=${DESKTOP_ID}
 DESKTOP
   chmod +x "${APPS}/${DESKTOP_ID}.desktop"
   command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "${APPS}" 2>/dev/null || true

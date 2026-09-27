@@ -71,6 +71,10 @@ extraResources:
     to: settings.defaults.yaml
 
 linux:
+  # Name the installed .desktop file after `desktopName` in package.json, so that
+  # Wayland app_id == .desktop filename == StartupWMClass. Without this the shell
+  # cannot associate the window with the entry and falls back to a letter avatar.
+  syncDesktopName: true
   executableName: neo-dsh
   # zip is the "no installer" option: extract it and run ./install.sh, which
   # copies the tree under ~/.local and wires up a launcher, icon and menu entry.
@@ -87,7 +91,6 @@ linux:
   desktop:
     entry:
       Name: Neo DSH
-      StartupWMClass: Neo DSH
 
 deb:
   # electron-builder refuses to build a .deb without a maintainer.

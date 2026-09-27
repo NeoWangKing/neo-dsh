@@ -1,7 +1,8 @@
 {
   "name": "neo-dsh-desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
+  "desktopName": "neo-dsh-desktop.desktop",
   "description": "Neo DSH desktop app: an Electron shell that boots the harness host and shows it in a native window.",
   "type": "module",
   "main": "src/main.mjs",
