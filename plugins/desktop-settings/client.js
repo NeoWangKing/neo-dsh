@@ -37,6 +37,7 @@
     every: '每',
     hours: '小时',
     autoDownload: '发现新版本后自动下载',
+    nativeFrame: '使用系统标题栏',
     foundTitle: '发现新版本',
     foundBody: '更新会覆盖当前安装并自动重启应用。',
     later: '稍后',
@@ -61,6 +62,7 @@
     every: 'every',
     hours: 'h',
     autoDownload: 'Download automatically when an update appears',
+    nativeFrame: 'Use the system title bar',
     foundTitle: 'Update available',
     foundBody: 'Installing replaces the current build and restarts the app.',
     later: 'Later',
@@ -318,6 +320,21 @@
             react.createElement('span', { key: 'label' }, t('autoDownload')),
           ]),
         ])
+
+        // Only Linux offers the choice: macOS and Windows need the native frame to
+        // have any window controls at all, so the shell does not expose a toggle there.
+        if (info.frameChoice === true) {
+          optionsLine.props.children.push(react.createElement('label', { className: 'dsk-opt', key: 'frame' }, [
+            react.createElement('input', {
+              type: 'checkbox', checked: info.nativeFrame === true, key: 'box',
+              onChange: (event) => {
+                const value = event.target.checked ? 'native' : 'none'
+                location.href = `${info.setPath ?? '/__dsh_desktop_set'}?key=frame&value=${value}`
+              },
+            }),
+            react.createElement('span', { key: 'label' }, t('nativeFrame')),
+          ]))
+        }
 
         const extras = []
         if (showPercent) {

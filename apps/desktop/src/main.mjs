@@ -23,7 +23,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
@@ -32,6 +32,7 @@ import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron'
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
+import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
 
 const require = createRequire(import.meta.url)
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -99,6 +100,20 @@ function bundledPlugins() {
 }
 
 /**
+ * Which app version materialised this copy of a bundled plugin.
+ * @param target - the plugin directory in the live profile.
+ * @param marker - marker file name.
+ * @returns the recorded version, or '' when the copy carries no marker.
+ */
+function materialisedVersion(target, marker) {
+  try {
+    return JSON.parse(readFileSync(join(target, marker), 'utf8')).version ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/**
  * Keep the live profile in step with the plugins this app ships: materialise any
  * bundled plugin the profile is missing and append it to the profile's bundle
  * list. It only ever ADDS — a plugin the user installed or upgraded themselves
@@ -113,16 +128,26 @@ function syncBundledPlugins() {
   const names = bundledPlugins()
   if (names.length === 0) return []
 
+  const version = app.getVersion()
+  const marker = '.neo-dsh-bundled.json'
   const added = []
   for (const name of names) {
     const source = join(RESOURCES, 'profile-web', 'vendor', name)
     if (!existsSync(source)) continue
     for (const target of [join(liveDir, 'vendor', name), join(liveDir, 'node_modules', name)]) {
-      if (existsSync(target)) continue
+      let stat = null
+      try { stat = lstatSync(target) } catch { /* absent */ }
+      // A symlink is the user's own install (or a `link:` dependency) — never touched.
+      if (stat !== null && !stat.isDirectory()) continue
+      if (stat !== null && materialisedVersion(target, marker) === version) continue
+      // A real directory here is a copy this app made, so it follows the app: without
+      // this, a plugin that ships with the app would never update with it.
+      rmSync(target, { recursive: true, force: true })
       mkdirSync(dirname(target), { recursive: true })
       cpSync(source, target, { recursive: true, dereference: true })
+      writeFileSync(join(target, marker), `${JSON.stringify({ version }, null, 2)}\n`)
+      added.push(name)
     }
-    added.push(name)
   }
 
   let profile
@@ -353,7 +378,11 @@ function createWindow() {
     title: 'Neo DSH',
     icon: join(projectRoot, 'assets', 'icon.png'),
     show: false,
-    frame: false,
+    // Linux is frameless by default — niri and friends move borderless windows and
+    // the UI draws its own chrome — but Settings can ask for the native title bar.
+    // macOS and Windows always get the native frame: frameless there means no
+    // traffic lights / minimise / close buttons and nothing to drag the window by.
+    ...(windowUsesNativeFrame() ? {} : { frame: false }),
     autoHideMenuBar: true,
     backgroundColor: '#0f1115',
     webPreferences: {
@@ -424,6 +453,19 @@ function createWindow() {
     if (pathname === '/__dsh_desktop_restart') {
       event.preventDefault()
       void restartHost()
+      return
+    }
+    // Settings changes that only the shell can make (currently the window frame).
+    if (pathname === '/__dsh_desktop_set') {
+      event.preventDefault()
+      let key = ''
+      let value = ''
+      try {
+        const params = new URL(url).searchParams
+        key = params.get('key') ?? ''
+        value = params.get('value') ?? ''
+      } catch { /* keep the empties: the handler logs an unknown key */ }
+      handlePreferenceCommand(key, value)
       return
     }
     // Self-update commands from the settings plugin: the renderer cannot touch
@@ -596,6 +638,42 @@ async function restartHost() {
   } finally {
     restarting = false
   }
+}
+
+/** Whether this launch wants the platform's own window frame. */
+function windowUsesNativeFrame() {
+  return wantsNativeFrame(process.platform, readPreferences(DSH_HOME))
+}
+
+/**
+ * Apply one preference change from the settings page.
+ *
+ * Window-level options cannot be changed on a live BrowserWindow, so the frame
+ * choice rebuilds the window (cheap: the host keeps running and the page reloads).
+ * @param key - preference name.
+ * @param value - new value, as a string from the URL.
+ */
+function handlePreferenceCommand(key, value) {
+  try {
+    if (key === 'frame') {
+      const stored = writePreferences(DSH_HOME, { nativeFrame: value === 'native' })
+      log(`preference: nativeFrame=${String(stored.nativeFrame)}`)
+      recreateWindow()
+      return
+    }
+    log(`preference: ignoring unknown key ${String(key)}`)
+  } catch (error) {
+    log(`preference: could not apply ${String(key)}: ${String(error?.message ?? error)}`)
+  }
+}
+
+/** Rebuild the window so creation-time options take effect. */
+function recreateWindow() {
+  const current = mainWindow
+  if (current === null || current.isDestroyed() || resolvedUrl === '') return
+  mainWindow = null
+  current.destroy()
+  createWindow()
 }
 
 /** Inject a floating "restart dsh" button into the page, next to the settings button. */
@@ -826,6 +904,10 @@ function injectDesktopInfo() {
     platform: process.platform,
     arch: process.arch,
     updatePath: '/__dsh_desktop_update',
+    setPath: '/__dsh_desktop_set',
+    // Only Linux gets to choose: elsewhere the native frame is not optional.
+    frameChoice: process.platform === 'linux',
+    nativeFrame: windowUsesNativeFrame(),
   }
   mainWindow.webContents
     .executeJavaScript(`window.__NEO_DSH__ = ${JSON.stringify(info)}; true`)

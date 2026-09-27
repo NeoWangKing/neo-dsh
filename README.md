@@ -98,6 +98,10 @@ DSH_DESKTOP_UPDATE_SMOKE=check  <packaged binary>       # same check from inside
 DSH_DESKTOP_UPDATE_SMOKE=download <packaged binary>
 ```
 
+### Window frame (Linux)
+
+The window is borderless by default: a tiling compositor moves it (niri: Mod+drag) and the UI draws its own chrome. If your desktop expects a real title bar — no modifier to drag, and a close button — tick **Use the system title bar** in Settings → General. The shell stores the choice in `$DSH_HOME/desktop-preferences.json` and rebuilds the window immediately, so no restart is needed. macOS and Windows always use the native frame: a borderless window there has no traffic lights, minimise/close buttons, or anything to drag it by.
+
 ## Operating it
 
 | Task | How |
