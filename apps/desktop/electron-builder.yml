@@ -43,6 +43,14 @@ files:
   - package.json
   - node_modules/**/*
   - '!**/*.map'
+  # `@deepseek-ai/cordis-plugin-hmr` is a hard dependency of dsh-base /
+  # dsh-app-boot since their rc.3, and shipping it makes a profile that does not
+  # set dsh.profile.patchReload (default "live") fatal at boot: the host tries to
+  # watch the patch layer through HMR, finds no service, and exits with
+  # "user patch-layer watching requires the Cordis HMR service" right after the
+  # readiness URL. A packaged app has no use for hot config reload, and without
+  # the package the same attempt fails harmlessly. See docs/packaging.md.
+  - '!node_modules/@deepseek-ai/cordis-plugin-hmr/**'
 
 # Files placed at the application root (inside the zip, next to the executable).
 extraFiles:

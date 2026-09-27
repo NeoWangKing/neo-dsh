@@ -28,6 +28,7 @@ DSH_HOME=/tmp/check DSH_DESKTOP_PORT=3199 DSH_DESKTOP_SMOKE=1 pnpm start
 | `assets/icon.svg` | the classic DeepSeek whale on its blue plate, with a **Neo** badge in the bottom-right corner marking this build as a personal derivative. Compose it from the harness's own whale path plus the badge; `gen-icon.mjs` never fetches the favicon itself |
 | `build/icon.png` | 1024px render of it, from `scripts/gen-icon.mjs`; electron-builder derives `.icns`/`.ico` from here |
 
-Environment knobs: `DSH_HOME`, `DSH_NODE`, `DSH_DESKTOP_PORT`,
+Environment knobs: `DSH_HOME`, `DSH_NODE`, `DSH_DESKTOP_PORT`, `DSH_DESKTOP_DSH_BIN`
+(run another harness build as the host), `DSH_DESKTOP_DEVTOOLS`,
 `DSH_DESKTOP_MIN_WIDTH`/`_HEIGHT`, `DSH_DESKTOP_NO_SEED`, `DSH_DESKTOP_SMOKE`,
-`DSH_DESKTOP_SMOKE_CRASH`.
+`DSH_DESKTOP_SMOKE_CRASH`. See [docs/development.md](../../docs/development.md).

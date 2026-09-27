@@ -116,7 +116,7 @@ built:
 
 | Symptom | Cause |
 | --- | --- |
-| Dialog "the dsh host exited unexpectedly", log ends with `user patch-layer watching requires the Cordis HMR service` | profile manifest's `dsh.profile.patchReload` is `live` in a packaged app; set `startup` |
+| Dialog "the dsh host exited unexpectedly", log ends with `user patch-layer watching requires the Cordis HMR service` | profile manifest's `dsh.profile.patchReload` is `live` (the default when the key is absent) **and** the HMR plugin is present. Since dsh-base/dsh-app-boot rc.3 depend on `@deepseek-ai/cordis-plugin-hmr` as a hard dependency, the package excludes it (see the `files` list) and the seeded profile sets `patchReload: "startup"`. An **existing** profile from an older install still needs `"startup"` unless the app that loads it omits HMR |
 | App boots but a plugin is missing from the UI | it was shipped under `node_modules` in `extraResources` and got filtered; ship it as `vendor/` and let the seeder materialise it |
 | `platform-specific optional dependencies not bundled` lists the *current* platform | the install did not run on that platform; build on its own runner |
 | Window opens, host started, page never loads | the readiness URL must be loaded **with** its `?token=` query; a bare `http://127.0.0.1:<port>` answers 401 |

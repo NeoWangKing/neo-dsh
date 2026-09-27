@@ -88,6 +88,7 @@ Builds are **unsigned**. macOS needs a right-click → Open the first time; Wind
 | Skip seeding | `DSH_DESKTOP_NO_SEED=1` |
 | Other port | `DSH_DESKTOP_PORT=3198` |
 | Diagnostics | `DSH_DESKTOP_SMOKE=1` boots, reports window/layout facts, exits non-zero on failure |
+| Develop against the installed app | see [docs/development.md](docs/development.md): plugins and presets are editable in place, so the app can extend its own UI |
 
 ## Known limitations
 

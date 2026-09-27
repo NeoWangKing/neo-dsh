@@ -46,8 +46,16 @@ const LOG_PATH = join(DSH_HOME, 'desktop.log')
  * local URL carries a one-time `?token=` auth query — the shell must load the
  * FULL URL (token included), never a bare `http://127.0.0.1:<port>`. */
 const READY_LINE = /^dsh web: (http:\/\/127\.0\.0\.1:\d+[^\s]*)/
-/** The `dsh` CLI bin shipped inside the @deepseek-ai/dsh dependency. */
+/** The `dsh` CLI bin the host runs: the bundled dependency, or an override.
+ *
+ * `DSH_DESKTOP_DSH_BIN` points the shell at a different harness build — a source
+ * checkout's `lib/bin.js`, or another install — so the harness can be developed
+ * without repackaging this app.
+ * @returns the absolute path of the host entry point.
+ */
 function resolveDshBin() {
+  const override = process.env.DSH_DESKTOP_DSH_BIN
+  if (override !== undefined && override !== '') return override
   const manifest = require.resolve('@deepseek-ai/dsh/package.json')
   return join(dirname(manifest), 'lib', 'bin.js')
 }
@@ -444,6 +452,11 @@ function createWindow() {
   }
 
   mainWindow.loadURL(resolvedUrl)
+  // Developing a client plugin means reading its own console; `smoke` runs must
+  // stay headless, so the hook is ignored there.
+  if (process.env.DSH_DESKTOP_DEVTOOLS === '1' && !smoke) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
+  }
 }
 
 async function shutdownHost() {

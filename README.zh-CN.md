@@ -80,6 +80,7 @@ zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把�
 | 跳过播种 | `DSH_DESKTOP_NO_SEED=1` |
 | 换端口 | `DSH_DESKTOP_PORT=3198` |
 | 诊断 | `DSH_DESKTOP_SMOKE=1` 会启动、报告窗口/布局事实、失败时以非零码退出 |
+| 对着安装版继续开发 | 见 [docs/development.zh-CN.md](docs/development.zh-CN.md)：插件与 preset 都能就地改，所以应用可以扩展自己的 UI |
 
 ## 已知限制
 

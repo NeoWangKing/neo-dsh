@@ -79,6 +79,16 @@ function peerClosure() {
     }
   }
   peers.delete('@deepseek-ai/dsh')
+  // Excluded on purpose. This one is an authoring-time plugin (hot reload of the
+  // host's cordis config), and its presence is actively harmful in a packaged app:
+  // a profile that does not set `dsh.profile.patchReload` defaults to "live", the
+  // boot then tries to watch the patch layer through HMR, finds no `hmr` service,
+  // and the host dies with "user patch-layer watching requires the Cordis HMR
+  // service" — after the readiness URL was already printed, so the window shows
+  // "the dsh host exited unexpectedly". Without the package the attempt fails
+  // harmlessly and boot continues. An existing profile from an older install has
+  // exactly this shape, which is how it was found.
+  peers.delete('@deepseek-ai/cordis-plugin-hmr')
   return Object.fromEntries([...peers.entries()].sort(([a], [b]) => a.localeCompare(b)))
 }
 
