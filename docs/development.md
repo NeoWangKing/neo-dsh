@@ -116,5 +116,13 @@ of self-modification: seeing your own composition.
   the Cordis HMR service. The packaged app excludes `@deepseek-ai/cordis-plugin-hmr`
   on purpose (see [packaging.md](packaging.md)), and the profile it seeds sets
   `patchReload: "startup"`.
+- **A preset must be a real directory.** The harness scans `$DSH_HOME/.agent-presets`
+  with `readdir(dir, { withFileTypes: true })` and skips anything where
+  `child.isDirectory()` is false — and that is false for a **symlink to a
+  directory**. The failure is silent: `startSession()` only reaches
+  `console.warn("new session failed: …")`, so clicking *New session* appears to do
+  nothing while the host reports `agent-preset/not-found`. To keep one source of
+  truth, make the preset a real directory and symlink the **files** inside it
+  (`stat` follows those, so the loader reads them fine).
 - **Node 22 is required** for the repo (`.nvmrc`, `engines`, `scripts/check-node.mjs`).
   The packaged app is unaffected: it carries its own Node.
