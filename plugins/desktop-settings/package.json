@@ -1,0 +1,68 @@
+{
+  "name": "dsh-desktop-settings",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness web plugin: Neo DSH desktop preferences — check for, download and install updates of this desktop build from its own GitHub releases.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "plugin",
+    "client",
+    "settings",
+    "updates",
+    "desktop"
+  ],
+  "license": "MIT",
+  "author": "Neo Wang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NeoWangKing/neo-dsh.git",
+    "directory": "plugins/desktop-settings"
+  },
+  "homepage": "https://github.com/NeoWangKing/neo-dsh/tree/main/plugins/desktop-settings",
+  "bugs": {
+    "url": "https://github.com/NeoWangKing/neo-dsh/issues"
+  },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node test/settings.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md"
+  ],
+  "engines": {
+    "node": "^22.19 || >=24"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

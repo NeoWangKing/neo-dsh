@@ -30,7 +30,10 @@ import { fileURLToPath } from 'node:url'
 const REPO = dirname(dirname(fileURLToPath(import.meta.url)))
 const APP = join(REPO, 'apps', 'desktop')
 const RES = join(APP, 'resources')
-const PLUGIN = join(REPO, 'plugins', 'activity-line')
+const PLUGINS = [
+  { dir: join(REPO, 'plugins', 'activity-line'), name: 'dsh-activity-line' },
+  { dir: join(REPO, 'plugins', 'desktop-settings'), name: 'dsh-desktop-settings' },
+]
 const PRESET = join(REPO, 'presets', 'liangshen')
 
 /**
@@ -77,8 +80,10 @@ steps.push('presets/liangshen')
 //    extraResources, and shipping no node_modules at all is also what keeps the
 //    package free of symlinks. The first launch materialises the plugin into the
 //    seeded profile's node_modules from this copy (see src/main.mjs seedHome).
-copyTree(PLUGIN, join(RES, 'profile-web', 'vendor', 'dsh-activity-line'))
-steps.push('profile-web/vendor/dsh-activity-line')
+for (const plugin of PLUGINS) {
+  copyTree(plugin.dir, join(RES, 'profile-web', 'vendor', plugin.name))
+  steps.push(`profile-web/vendor/${plugin.name}`)
+}
 
 // 3. report what will actually ship, so a silent miss is impossible
 const profile = JSON.parse(readFileSync(join(RES, 'profile-web', 'package.json'), 'utf8'))

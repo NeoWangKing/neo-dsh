@@ -85,6 +85,19 @@ Builds are **unsigned**. Signing is wired through the usual electron-builder var
 
 Windows shows SmartScreen's "unknown publisher" (More info → Run anyway).
 
+## Updating
+
+Neo DSH updates itself from **this project's own releases** (`NeoWangKing/neo-dsh`) — unrelated to DeepSeek's harness releases. Settings → General carries a **Neo DSH desktop app** row: current version, a manual *Check for updates*, automatic checks on an interval (1/6/24 h), an auto-download switch, and a dialog when a newer release appears. Installing downloads the platform asset, quits, swaps the app in place with a detached helper, and relaunches.
+
+Preferences live in the renderer's localStorage, which is why the host port is pinned (port = part of the origin). Everything up to and including the download is verifiable without the GUI:
+
+```sh
+node apps/desktop/scripts/update-check.mjs              # newest release + the asset for this platform
+node apps/desktop/scripts/update-check.mjs --download   # also fetch it into the update directory
+DSH_DESKTOP_UPDATE_SMOKE=check  <packaged binary>       # same check from inside the shell
+DSH_DESKTOP_UPDATE_SMOKE=download <packaged binary>
+```
+
 ## Operating it
 
 | Task | How |

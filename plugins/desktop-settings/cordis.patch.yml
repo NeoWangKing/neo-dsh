@@ -1,0 +1,10 @@
+# dsh-desktop-settings bundle patch
+#
+# Installing this package appends it to `dsh.profile.bundles`; profile boot merges
+# this patch (a single `insert` of the plugin row) exactly like a manual
+# cordis.patch.yml mount line, and the same row is the `dsh.client` browser-roster
+# entry the web modules half scans for the client bundle
+# (exports["./client"] -> client.js).
+- insert:
+    - id: desktop-settings
+      name: 'dsh-desktop-settings'

@@ -23,12 +23,15 @@
  */
 
 import { spawn } from 'node:child_process'
-import { appendFileSync, cpSync, existsSync, mkdirSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron'
+import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 
 const require = createRequire(import.meta.url)
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -74,6 +77,85 @@ function resolveNode() {
 }
 
 /**
+ * The client plugins this app ships, as named by the shipped profile.
+ *
+ * They travel as `vendor/<name>` (electron-builder filters node_modules out of
+ * extraResources) and the host resolves a bundle through the live profile's own
+ * node_modules + `dsh.profile.bundles`, so both have to be present in the user's
+ * writable profile — including in one that was seeded by an older build.
+ * @returns the plugin package names the shipped profile declares.
+ */
+function bundledPlugins() {
+  const manifest = join(RESOURCES, 'profile-web', 'package.json')
+  if (!existsSync(manifest)) return []
+  try {
+    const profile = JSON.parse(readFileSync(manifest, 'utf8'))
+    const bundles = profile?.dsh?.profile?.bundles
+    if (!Array.isArray(bundles)) return []
+    return bundles.filter((name) => typeof name === 'string' && !name.startsWith('@deepseek-ai/'))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Keep the live profile in step with the plugins this app ships: materialise any
+ * bundled plugin the profile is missing and append it to the profile's bundle
+ * list. It only ever ADDS — a plugin the user installed or upgraded themselves
+ * wins — and it backs up and re-parses the manifest before replacing it, because
+ * a broken profile manifest means the host cannot boot at all.
+ * @returns the plugin names that were materialised, for the log.
+ */
+function syncBundledPlugins() {
+  const liveDir = join(DSH_HOME, 'profiles', 'web')
+  const liveManifest = join(liveDir, 'package.json')
+  if (!existsSync(liveManifest)) return []
+  const names = bundledPlugins()
+  if (names.length === 0) return []
+
+  const added = []
+  for (const name of names) {
+    const source = join(RESOURCES, 'profile-web', 'vendor', name)
+    if (!existsSync(source)) continue
+    for (const target of [join(liveDir, 'vendor', name), join(liveDir, 'node_modules', name)]) {
+      if (existsSync(target)) continue
+      mkdirSync(dirname(target), { recursive: true })
+      cpSync(source, target, { recursive: true, dereference: true })
+    }
+    added.push(name)
+  }
+
+  let profile
+  try {
+    profile = JSON.parse(readFileSync(liveManifest, 'utf8'))
+  } catch (error) {
+    log(`plugin sync: ${liveManifest} is not valid JSON, leaving it alone (${error.message})`)
+    return added
+  }
+  const section = profile?.dsh?.profile
+  if (section === undefined || !Array.isArray(section.bundles)) return added
+  const missing = names.filter((name) => !section.bundles.includes(name))
+  if (missing.length === 0) return added
+  section.bundles.push(...missing)
+  profile.dependencies = profile.dependencies ?? {}
+  for (const name of missing) {
+    if (profile.dependencies[name] === undefined) profile.dependencies[name] = `file:vendor/${name}`
+  }
+  const serialized = `${JSON.stringify(profile, null, 2)}\n`
+  try {
+    JSON.parse(serialized)
+    writeFileSync(`${liveManifest}.bak-${Date.now()}`, readFileSync(liveManifest))
+    const temp = `${liveManifest}.tmp-${process.pid}`
+    writeFileSync(temp, serialized)
+    renameSync(temp, liveManifest)
+    log(`profile: added bundled plugin(s) ${missing.join(', ')} to ${liveManifest}`)
+  } catch (error) {
+    log(`profile: could not update ${liveManifest}: ${error.message}`)
+  }
+  return added
+}
+
+/**
  * Copy a shipped directory into $DSH_HOME when the destination is absent.
  * Existing state always wins: this only ever fills in what is missing.
  * @param from - shipped source directory.
@@ -97,17 +179,7 @@ function seedHome() {
   if (process.env.DSH_DESKTOP_NO_SEED === '1') return seeded
   mkdirSync(DSH_HOME, { recursive: true })
   if (seedDirectory(join(RESOURCES, 'profile-web'), join(DSH_HOME, 'profiles', 'web'))) seeded.push('profiles/web')
-  // The package ships the plugin as `vendor/` (electron-builder filters
-  // node_modules out of extraResources); the host resolves bundles through
-  // node_modules, so materialise it here, in the user's own writable profile.
-  // Only fills a gap: a plugin the user installed or upgraded themselves wins.
-  const vendor = join(DSH_HOME, 'profiles', 'web', 'vendor', 'dsh-activity-line')
-  const installed = join(DSH_HOME, 'profiles', 'web', 'node_modules', 'dsh-activity-line')
-  if (existsSync(vendor) && !existsSync(installed)) {
-    mkdirSync(dirname(installed), { recursive: true })
-    cpSync(vendor, installed, { recursive: true, dereference: true })
-    seeded.push('profiles/web/node_modules/dsh-activity-line')
-  }
+  seeded.push(...syncBundledPlugins())
   if (seedDirectory(join(RESOURCES, 'presets'), join(DSH_HOME, '.agent-presets'))) seeded.push('.agent-presets')
   const settings = join(DSH_HOME, 'settings.yaml')
   const defaults = join(RESOURCES, 'settings.defaults.yaml')
@@ -354,6 +426,15 @@ function createWindow() {
       void restartHost()
       return
     }
+    // Self-update commands from the settings plugin: the renderer cannot touch
+    // files or processes, so it navigates here and the shell does the work.
+    if (pathname === '/__dsh_desktop_update') {
+      event.preventDefault()
+      let action = ''
+      try { action = new URL(url).searchParams.get('action') ?? '' } catch { /* keep '' */ }
+      void handleUpdateCommand(action)
+      return
+    }
     if (url !== resolvedUrl) {
       event.preventDefault()
       if (url.startsWith('http://') || url.startsWith('https://')) shell.openExternal(url)
@@ -361,6 +442,15 @@ function createWindow() {
   })
   mainWindow.webContents.on('did-finish-load', () => {
     injectRestartButton()
+    injectDesktopInfo()
+    /* Updater self-test: runs the real check/download and exits, so the updater
+       can be verified from a terminal (or CI) instead of by clicking around.
+       It never installs — see DSH_DESKTOP_UPDATE_SMOKE in docs/development.md. */
+    const updateSmoke = process.env.DSH_DESKTOP_UPDATE_SMOKE
+    if (updateSmoke !== undefined && updateSmoke !== '') {
+      void runUpdateSmoke(updateSmoke)
+      return
+    }
     /* A window that has stayed up for a minute is healthy again, so the next crash
        gets its own automatic recovery instead of being treated as a repeat. */
     if (rendererRecoveryTimer !== null) clearTimeout(rendererRecoveryTimer)
@@ -527,6 +617,215 @@ function injectRestartButton() {
   })()`).catch(() => {})
 }
 
+// ---------------------------------------------------------------------------
+// Self-update
+//
+// The settings UI carries a client plugin that asks this shell to update Neo DSH
+// from this project's OWN GitHub releases (never DeepSeek's). The renderer can do
+// none of it — it is sandboxed, with no filesystem and no process spawn — so the
+// shell owns the check, the download and the platform-specific install. The two
+// sides talk over two narrow channels:
+//
+//   page  -> shell   navigate to /__dsh_desktop_update?action=download|install
+//   shell -> page    window.__NEO_DSH_UPDATE__(state)      progress + results
+//
+// Installing always means "quit, let a detached helper swap the app, relaunch":
+// a running application cannot replace its own files.
+// ---------------------------------------------------------------------------
+
+/** Releases come from here — this project's own repository. */
+/** Push updater state into the page for the settings plugin to render. */
+function sendUpdateState(state) {
+  log(`update: ${JSON.stringify(state)}`)
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents
+    .executeJavaScript(`window.__NEO_DSH_UPDATE__ && window.__NEO_DSH_UPDATE__(${JSON.stringify(state)})`)
+    .catch(() => {})
+}
+
+/** The release and file the last download produced; `install` only trusts this. */
+let downloadedUpdate = null
+
+/** Download this platform's asset for a release, reporting progress to the page. */
+async function downloadUpdate(release, asset) {
+  const done = await downloadRelease(asset, {
+    onProgress: (progress) => sendUpdateState({ phase: 'downloading', version: release.version, ...progress }),
+  })
+  downloadedUpdate = { release, asset, path: done.path, bytes: done.bytes }
+  sendUpdateState({ phase: 'downloaded', version: release.version, bytes: done.bytes, path: done.path })
+  return downloadedUpdate
+}
+
+/**
+ * Swap the installed app for the downloaded one, then quit. A running app cannot
+ * replace its own files, so this writes a detached helper that waits for this
+ * process to exit, installs, and relaunches.
+ */
+function installUpdate() {
+  const pending = downloadedUpdate
+  if (pending === null) {
+    sendUpdateState({ phase: 'error', message: '还没有下载好的更新包，请先下载' })
+    return
+  }
+  const logPath = join(DSH_HOME, 'update.log')
+  const pid = process.pid
+
+  if (process.platform === 'win32') {
+    // The NSIS installer replaces the app itself; hand over and get out of the way.
+    sendUpdateState({ phase: 'installing', version: pending.release.version })
+    spawn(pending.path, [], { detached: true, stdio: 'ignore' }).unref()
+    app.quit()
+    return
+  }
+
+  const helper = join(tmpdir(), `neo-dsh-apply-${Date.now()}.sh`)
+  const wait = `i=0\nwhile [ $i -lt 600 ]; do kill -0 ${pid} 2>/dev/null || break; sleep 0.5; i=$((i+1)); done\nsleep 1\n`
+  let script
+
+  if (process.platform === 'darwin') {
+    const bundle = app.getPath('exe').replace(/\/Contents\/MacOS\/[^/]+$/, '')
+    script = `#!/bin/bash
+exec >>"${logPath}" 2>&1
+echo "[$(date)] applying ${pending.release.version} to ${bundle}"
+${wait}MOUNT="$(mktemp -d)"
+hdiutil attach "${pending.path}" -nobrowse -quiet -mountpoint "$MOUNT" || exit 1
+# Copy to the side first and only then swap: a failed copy must leave the working
+# app in place rather than a deleted one.
+rm -rf "${bundle}.new"
+cp -R "$MOUNT/Neo DSH.app" "${bundle}.new" || exit 1
+rm -rf "${bundle}"
+mv "${bundle}.new" "${bundle}" || exit 1
+hdiutil detach "$MOUNT" -quiet
+# A browser-downloaded dmg is quarantined; the copy inherits that flag and would
+# be refused on first launch (the "is damaged and can't be opened" dialog).
+xattr -dr com.apple.quarantine "${bundle}"
+echo "[$(date)] installed; relaunching"
+open -a "${bundle}"
+`
+  } else if (process.env.APPIMAGE) {
+    const image = process.env.APPIMAGE
+    script = `#!/bin/sh
+exec >>"${logPath}" 2>&1
+echo "[$(date)] applying ${pending.release.version} to ${image}"
+${wait}cp "${pending.path}" "${image}.new" || exit 1
+chmod +x "${image}.new"
+mv "${image}.new" "${image}" || exit 1
+echo "[$(date)] installed; relaunching"
+nohup "${image}" >/dev/null 2>&1 &
+`
+  } else {
+    const launcher = join(homedir(), '.local', 'bin', 'neo-dsh')
+    script = `#!/bin/sh
+exec >>"${logPath}" 2>&1
+echo "[$(date)] applying ${pending.release.version}"
+${wait}D="${tmpdir()}/neo-dsh-update/tree-${Date.now()}"
+rm -rf "$D"; mkdir -p "$D"
+unzip -q -o "${pending.path}" -d "$D" || exit 1
+# install.sh is bash; plain sh is dash on some distributions.
+bash "$D/install.sh" || exit 1
+echo "[$(date)] installed; relaunching"
+nohup "${launcher}" >/dev/null 2>&1 &
+`
+  }
+
+  writeFileSync(helper, script, { mode: 0o755 })
+  chmodSync(helper, 0o755)
+  sendUpdateState({ phase: 'installing', version: pending.release.version })
+  spawn('/bin/sh', [helper], { detached: true, stdio: 'ignore' }).unref()
+  log(`update: helper ${helper} applies the update once this process exits`)
+  app.quit()
+}
+
+/**
+ * Handle one `/__dsh_desktop_update` command from the settings plugin.
+ * @param action - `check`, `download` or `install`.
+ */
+async function handleUpdateCommand(action) {
+  try {
+    if (action === 'check') {
+      const release = await fetchLatestRelease()
+      const latest = String(release.tag_name ?? '').replace(/^v/i, '')
+      const current = app.getVersion()
+      sendUpdateState({
+        phase: 'checked',
+        version: current,
+        latest,
+        hasUpdate: isNewer(latest, current),
+        notes: typeof release.body === 'string' ? release.body.slice(0, 4000) : '',
+        url: release.html_url ?? `https://github.com/${UPDATE_REPO}/releases`,
+      })
+      return
+    }
+    if (action === 'download') {
+      const release = await fetchLatestRelease()
+      const latest = String(release.tag_name ?? '').replace(/^v/i, '')
+      const current = app.getVersion()
+      if (!isNewer(latest, current)) {
+        sendUpdateState({
+          phase: 'checked',
+          version: current,
+          latest,
+          hasUpdate: false,
+          url: release.html_url ?? `https://github.com/${UPDATE_REPO}/releases`,
+        })
+        return
+      }
+      const asset = pickAsset(release.assets, { platform: process.platform, arch: process.arch, appImage: process.env.APPIMAGE })
+      if (asset === undefined) throw new Error(`release ${latest} 里没有匹配本平台的安装包`)
+      await downloadUpdate({ version: latest }, asset)
+      return
+    }
+    if (action === 'install') {
+      installUpdate()
+      return
+    }
+    sendUpdateState({ phase: 'error', message: `未知操作：${action === '' ? '(空)' : action}` })
+  } catch (error) {
+    sendUpdateState({ phase: 'error', message: String(error?.message ?? error) })
+  }
+}
+
+/**
+ * Headless verification of the updater (`DSH_DESKTOP_UPDATE_SMOKE`): report what
+ * the newest release is, and with `download` also fetch this platform's asset.
+ * Never installs anything.
+ * @param mode - `check` or `download`.
+ */
+async function runUpdateSmoke(mode) {
+  try {
+    const release = await fetchLatestRelease()
+    const latest = String(release.tag_name ?? '').replace(/^v/i, '')
+    const current = app.getVersion()
+    const asset = pickAsset(release.assets, { platform: process.platform, arch: process.arch, appImage: process.env.APPIMAGE })
+    console.log(`UPDATE SMOKE: current=${current} latest=${latest} hasUpdate=${isNewer(latest, current)} asset=${asset === undefined ? '(none)' : asset.name}`)
+    if (mode === 'download') {
+      if (asset === undefined) throw new Error('no asset for this platform in the latest release')
+      const done = await downloadUpdate({ version: latest }, asset)
+      console.log(`UPDATE SMOKE: downloaded ${done.path} (${done.bytes} bytes)`)
+    }
+    log(`update smoke ok: ${mode}`)
+    app.exit(0)
+  } catch (error) {
+    console.error(`UPDATE SMOKE FAIL: ${String(error?.message ?? error)}`)
+    log(`update smoke failed: ${String(error?.message ?? error)}`)
+    app.exit(5)
+  }
+}
+
+/** Publish this build's version and platform to the page for client plugins. */
+function injectDesktopInfo() {
+  if (!mainWindow) return
+  const info = {
+    version: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+    updatePath: '/__dsh_desktop_update',
+  }
+  mainWindow.webContents
+    .executeJavaScript(`window.__NEO_DSH__ = ${JSON.stringify(info)}; true`)
+    .catch(() => {})
+}
+
 async function fail(message) {
   log(`fatal: ${message}`)
   await shutdownHost()
@@ -576,7 +875,12 @@ if (!gotLock) {
     if (BrowserWindow.getAllWindows().length === 0 && resolvedUrl) createWindow()
   })
 
-  app.whenReady().then(() => {
+  // `app.on('ready')` rather than `app.whenReady()`: with an ESM main script the
+  // promise form can leave the ready event pending forever — the event waits for
+  // the main module to finish evaluating, while the module is waiting on the
+  // promise. It only showed up under `electron .` in development, but the event
+  // form is correct in both, so there is no reason to keep the fragile one.
+  app.on('ready', () => {
     app.setName('Neo DSH')
     /* Keep crash dumps local: the shell ships no upload channel, and a dump is the
        only artifact that says WHY a renderer died (the kernel core from the previous

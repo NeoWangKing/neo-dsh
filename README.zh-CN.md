@@ -77,6 +77,19 @@ zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把�
 
 Windows 上会弹 SmartScreen 的"未知发布者"（更多信息 → 仍要运行）。
 
+## 更新
+
+Neo DSH 从**本项目自己的 release**（`NeoWangKing/neo-dsh`）更新自己——和 DeepSeek 官方 harness 的发布无关。设置 → 通用里会多出一行「**Neo DSH 桌面版**」：显示当前版本、手动「检查更新」、按固定间隔自动检查（1/6/24 小时）、「发现新版本后自动下载」开关，以及发现新版本时的弹窗。安装会下载对应平台的安装包 → 退出 → 由脱离进程的助手脚本就地覆盖 → 自动重启。
+
+开关状态存在渲染进程的 localStorage 里（这也是 host 端口被固定的原因：端口属于 origin 的一部分）。**到"下载完成"为止的整条链都能不开界面验证**：
+
+```sh
+node apps/desktop/scripts/update-check.mjs              # 最新版本 + 本平台对应的安装包
+node apps/desktop/scripts/update-check.mjs --download   # 顺便真的下载下来
+DSH_DESKTOP_UPDATE_SMOKE=check  <打包后的可执行文件>      # 在外壳里跑同一套检查
+DSH_DESKTOP_UPDATE_SMOKE=download <打包后的可执行文件>
+```
+
 ## 日常操作
 
 | 想做的事 | 怎么做 |
