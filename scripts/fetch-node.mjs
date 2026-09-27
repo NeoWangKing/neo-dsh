@@ -18,7 +18,7 @@
  * The version is pinned so builds are reproducible; bump it deliberately.
  */
 import { createHash } from 'node:crypto'
-import { chmodSync, cpSync, createWriteStream, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { chmodSync, cpSync, createWriteStream, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { get } from 'node:https'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -136,13 +136,43 @@ if (extracted === undefined) {
 }
 console.log(`fetch-node: extracted ${extracted}`)
 const root = join(tmp, extracted)
+
+// Take only the interpreter and the licence. Copying the whole release drags in
+// npm/npx/corepack, whose `bin/` entries are absolute symlinks into the release
+// tree — cpSync copies those links rather than their targets, so they end up
+// dangling the moment the staging directory goes away. electron-builder then
+// fails packaging with `./resources/node/bin/npm : errno=2`. The host spawns
+// `bin/node` (or `node.exe`) and nothing else, so nothing else ships.
 rmSync(OUT, { recursive: true, force: true })
-mkdirSync(OUT, { recursive: true })
-cpSync(root, OUT, { recursive: true, dereference: true })
+const nodeBin = platform === 'win32' ? join(OUT, 'node.exe') : join(OUT, 'bin', 'node')
+mkdirSync(dirname(nodeBin), { recursive: true })
+cpSync(platform === 'win32' ? join(root, 'node.exe') : join(root, 'bin', 'node'), nodeBin, { dereference: true })
+if (existsSync(join(root, 'LICENSE'))) cpSync(join(root, 'LICENSE'), join(OUT, 'LICENSE'))
+writeFileSync(join(OUT, 'SOURCE.txt'), [
+  `node v${VERSION} for ${platform}-${arch}`,
+  `from ${MIRROR}/v${VERSION}/${file}`,
+  `sha256 ${expected}`,
+  'Only the interpreter and the licence are kept: the harness spawns bin/node and',
+  'never npm/npx/corepack, and the release tree\'s symlinks do not survive copying.',
+  '',
+].join('\n'))
 rmSync(tmp, { recursive: true, force: true })
 
-const nodeBin = join(OUT, platform === 'win32' ? 'node.exe' : 'bin/node')
 if (!existsSync(nodeBin)) throw new Error(`fetch-node: ${nodeBin} missing after extraction`)
 if (platform !== 'win32') chmodSync(nodeBin, 0o755)
+
+// A dangling link here would only surface later, inside electron-builder's AppImage
+// scan, as an unhelpful `errno=2`. Assert the invariant now, where it is cheap.
+const links = []
+const walk = (dir) => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name)
+    if (entry.isSymbolicLink()) links.push(path)
+    else if (entry.isDirectory()) walk(path)
+  }
+}
+walk(OUT)
+if (links.length > 0) throw new Error(`fetch-node: runtime contains symlinks: ${links.join(', ')}`)
+
 console.log(`fetch-node: ready → ${nodeBin}`)
 console.log(`fetch-node: ${execFileSync(nodeBin, ['--version']).toString().trim()}`)
