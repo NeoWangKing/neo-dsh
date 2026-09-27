@@ -15,12 +15,12 @@
   "author": "Neo Wang",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ymh0000123/neo-dsh.git",
+    "url": "git+https://github.com/NeoWangKing/neo-dsh.git",
     "directory": "plugins/activity-line"
   },
-  "homepage": "https://github.com/ymh0000123/neo-dsh/tree/main/plugins/activity-line",
+  "homepage": "https://github.com/NeoWangKing/neo-dsh/tree/main/plugins/activity-line",
   "bugs": {
-    "url": "https://github.com/ymh0000123/neo-dsh/issues"
+    "url": "https://github.com/NeoWangKing/neo-dsh/issues"
   },
   "main": "index.js",
   "exports": {

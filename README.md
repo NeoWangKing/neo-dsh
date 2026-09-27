@@ -116,7 +116,7 @@ a new repository's default token is read-only, and the release otherwise fails w
 Releasing:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0                  # desktop installers → GitHub Release
+git tag v0.1.2 && git push origin v0.1.2                  # desktop installers → GitHub Release
 git tag plugin-v1.0.0 && git push origin plugin-v1.0.0    # plugin → npm
 ```
 

@@ -105,7 +105,7 @@ zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把�
 发版：
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0                  # 桌面安装包 → GitHub Release
+git tag v0.1.2 && git push origin v0.1.2                  # 桌面安装包 → GitHub Release
 git tag plugin-v1.0.0 && git push origin plugin-v1.0.0    # 插件 → npm
 ```
 
