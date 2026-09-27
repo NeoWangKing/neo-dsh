@@ -584,7 +584,13 @@ async function restartHost() {
     resolvedUrl = await host.url
     log(`restart: new host ready at ${resolvedUrl}`)
     watchHostExit()
-    if (mainWindow) mainWindow.loadURL(resolvedUrl)
+    if (mainWindow) {
+      // Bypass the renderer's HTTP cache: a cached index carries the OLD client-module
+      // manifest, and with it the old bundle URLs, so a plugin change would keep
+      // rendering the previous code even though the fresh host already serves the new
+      // one. The bundles themselves stay cacheable — only this document load is forced.
+      await mainWindow.loadURL(resolvedUrl, { extraHeaders: 'pragma: no-cache\ncache-control: no-cache' })
+    }
   } catch (error) {
     await fail(String(error.message ?? error))
   } finally {
