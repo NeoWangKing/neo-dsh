@@ -1,5 +1,7 @@
 # Neo DSH desktop shell
 
+**English** · [中文](README.zh-CN.md)
+
 The Electron half of [Neo DSH](../../README.md): it owns the native window and the
 harness host's lifecycle, and nothing else. The harness runs as a plain Node child
 process (`dsh web --no-open --port 3081`), never inside Electron — its prebuilt

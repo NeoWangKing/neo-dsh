@@ -42,7 +42,7 @@ jobs:
           node -e '
             const { files } = require("./pack.json")[0]
             const names = files.map((f) => f.path)
-            const required = ["index.js", "client.js", "cordis.patch.yml", "README.md"]
+            const required = ["index.js", "client.js", "cordis.patch.yml", "README.md", "README.zh-CN.md"]
             const missing = required.filter((r) => !names.includes(r))
             if (missing.length) {
               console.error("tarball is missing:", missing.join(", "))
