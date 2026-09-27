@@ -22,8 +22,11 @@ on:
         default: linux
         type: string
 
+# The event name and the selected platforms are part of the group on purpose: a
+# manual macOS/Windows dispatch used to land in the same group as a push to main
+# and cancel it, so a pushed commit showed "cancelled" checks for no reason.
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.ref }}-${{ github.event_name }}-${{ inputs.platforms || 'default' }}
   cancel-in-progress: true
 
 # Creating the GitHub Release on a tag needs write access; a new repository's
