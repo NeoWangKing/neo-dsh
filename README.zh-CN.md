@@ -59,7 +59,7 @@ pnpm --dir apps/desktop exec electron-builder --linux   # 或 --mac / --win
 | --- | --- | --- |
 | Linux x64 | AppImage、deb、**zip + install.sh** | **已端到端验证**——三种产物都能启动、播种 `$DSH_HOME`、加载随包插件 |
 | macOS arm64 | dmg | **已在 macos-14 runner 上验证**（arm64 的 `Neo DSH.app`、内嵌 `darwin-arm64` Node、原生插件架构正确） |
-| macOS x64 | dmg | 暂不构建：GitHub 的 Intel runner 标签（`macos-13`）已退役、会一直排队。真需要 Intel 包时，在 `macos-14` 上用 pnpm 的 `supportedArchitectures` 交叉装配 |
+| macOS x64 | — | **明确不支持**：只做 Apple Silicon。GitHub 的 Intel runner 标签（`macos-13`）会无限排队，而 Intel 包需要在 `macos-14` 上做交叉装配 |
 | Windows x64 | nsis 安装包 | 已配置；尚未在 Windows runner 上构建过 |
 
 zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把整棵树复制到 `~/.local/opt/neo-dsh`，并加上 `neo-dsh` 启动器、图标和菜单项——**不需要 root、不需要包管理器、不需要预装 Node**。`./uninstall.sh` 可反向卸载，默认保留 `$DSH_HOME`（加 `--purge` 才删）。
