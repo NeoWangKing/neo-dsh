@@ -86,3 +86,32 @@ Builds are **unsigned**. macOS needs a right-click → Open the first time; Wind
 - **Size** — roughly 650 MB unpacked / 250–350 MB per installer: Electron, the whole harness dependency tree, and a 125 MB Node runtime. The runtime is the price of not asking users to install Node.
 - **No auto-update.** Updating means installing a newer artifact.
 - **The profile only seeds once.** An existing `$DSH_HOME/profiles/web` is left alone, including its plugin set.
+
+## Publishing
+
+The repository has no remote yet. Create an empty repository on GitHub (no
+README, no .gitignore — the history here is already the starting point) and push:
+
+```sh
+git remote add origin git@github.com:ymh0000123/neo-dsh.git   # or https://…
+git push -u origin main
+```
+
+What the workflows then do by themselves:
+
+| Workflow | Trigger | Notes |
+| --- | --- | --- |
+| `build` | every push to `main` | builds **Linux** (AppImage + deb + zip) and uploads them as artifacts. macOS and Windows stay off unless selected: `workflow_dispatch` with `platforms=mac` or `platforms=win`. |
+| `build` | tag `v*` | same builds, plus attaches every artifact to a GitHub Release. |
+| `publish-plugin` | push/PR touching `plugins/activity-line/**` | runs the plugin tests and asserts the npm tarball carries `index.js`, `client.js` and `cordis.patch.yml`. |
+| `publish-plugin` | tag `plugin-v*` | `npm publish --provenance` for `dsh-activity-line`. Needs the repository secret `NPM_TOKEN` (an npm automation token); without it the publish job fails while the check job still passes. |
+
+Releasing:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0          # desktop installers → GitHub Release
+git tag plugin-v1.0.0 && git push origin plugin-v1.0.0   # plugin → npm
+```
+
+Both tags are independent: the desktop version and the plugin version move on
+their own schedules.
