@@ -37,7 +37,10 @@
     every: '每',
     hours: '小时',
     autoDownload: '发现新版本后自动下载',
-    nativeFrame: '使用系统标题栏',
+    frameTitle: '窗口边框',
+    frameDesc: '默认无边框：平铺合成器可直接拖动窗口。需要标题栏和关闭按钮时切到这个。',
+    frameBorderless: '无边框',
+    frameNative: '系统标题栏',
     foundTitle: '发现新版本',
     foundBody: '更新会覆盖当前安装并自动重启应用。',
     later: '稍后',
@@ -62,7 +65,10 @@
     every: 'every',
     hours: 'h',
     autoDownload: 'Download automatically when an update appears',
-    nativeFrame: 'Use the system title bar',
+    frameTitle: 'Window frame',
+    frameDesc: 'Borderless by default: a tiling compositor moves it directly. Switch to the native title bar for the usual drag handle and close button.',
+    frameBorderless: 'Borderless',
+    frameNative: 'System title bar',
     foundTitle: 'Update available',
     foundBody: 'Installing replaces the current build and restarts the app.',
     later: 'Later',
@@ -81,54 +87,54 @@
   // pad 16/0, hairline separator; selector pill h36 r18), so this row sits in the
   // section like a native one instead of looking bolted on.
   const STYLE = `
-  #dsh-desktop-settings {
+  .dsk-row {
     display: flex; flex-direction: column; gap: 12px;
     padding: 16px 0; border-bottom: .5px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08));
   }
-  #dsh-desktop-settings .dsk-main { display: flex; align-items: center; gap: 8px; }
-  #dsh-desktop-settings .dsk-text {
+  .dsk-main { display: flex; align-items: center; gap: 8px; }
+  .dsk-text {
     flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 48px;
   }
-  #dsh-desktop-settings .dsk-title {
+  .dsk-title {
     font-size: 14px; font-weight: 400; line-height: 22px; color: var(--dsw-alias-label-primary, inherit);
   }
-  #dsh-desktop-settings .dsk-desc {
+  .dsk-desc {
     font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8b8f97);
   }
-  #dsh-desktop-settings .dsk-actions { display: inline-flex; flex: none; gap: 8px; }
-  #dsh-desktop-settings .dsk-btn {
+  .dsk-actions { display: inline-flex; flex: none; gap: 8px; }
+  .dsk-btn {
     display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
     border: .5px solid var(--dsw-alias-border-l3, rgba(127,127,127,.2)); border-radius: 18px;
     background: var(--dsw-alias-button-elevated-fill, rgba(127,127,127,.12));
     font: inherit; font-size: 14px; line-height: 22px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
   }
-  #dsh-desktop-settings .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
-  #dsh-desktop-settings .dsk-btn:disabled { cursor: default; opacity: .55; }
+  .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
+  .dsk-btn:disabled { cursor: default; opacity: .55; }
   /* Filled primary button. The harness pairs "--dsw-alias-button-primary-fill" with
      "--dsw-alias-label-primary-inverted": that fill is LIGHT in the dark theme, and
      "--dsw-alias-brand-primary" is a *text* colour (also light there), so using it as
      a fill together with a hard-coded white label makes the text disappear. */
-  #dsh-desktop-settings .dsk-primary {
+  .dsk-primary {
     background: var(--dsw-alias-button-primary-fill, #4d6bfe);
     color: var(--dsw-alias-label-primary-inverted, #fff);
   }
-  #dsh-desktop-settings .dsk-primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
-  #dsh-desktop-settings .dsk-opts {
+  .dsk-primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
+  .dsk-opts {
     display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
     font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-secondary, #6b7280);
   }
-  #dsh-desktop-settings .dsk-opt { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-  #dsh-desktop-settings input[type="checkbox"] { margin: 0; accent-color: var(--dsw-alias-brand-primary, #4d6bfe); }
-  #dsh-desktop-settings .dsk-select {
+  .dsk-opt { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  input[type="checkbox"] { margin: 0; accent-color: var(--dsw-alias-brand-primary, #4d6bfe); }
+  .dsk-select {
     height: 26px; padding: 0 8px; border: none; border-radius: 13px;
     background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
     font: inherit; font-size: 12px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
   }
-  #dsh-desktop-settings .dsk-bar {
+  .dsk-bar {
     height: 4px; border-radius: 2px; overflow: hidden; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.14));
   }
-  #dsh-desktop-settings .dsk-bar > i { display: block; height: 100%; background: var(--dsw-alias-brand-primary, #4d6bfe); transition: width .3s; }
-  #dsh-desktop-settings .dsk-err { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-error, #d94a4a); }
+  .dsk-bar > i { display: block; height: 100%; background: var(--dsw-alias-brand-primary, #4d6bfe); transition: width .3s; }
+  .dsk-err { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-error, #d94a4a); }
   .dsk-overlay { position: fixed; inset: 0; z-index: 9998; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.38); }
   .dsk-dialog {
     width: min(420px, calc(100vw - 48px)); border-radius: 14px; padding: 18px 20px;
@@ -337,20 +343,6 @@
           ]),
         ])
 
-        // Only Linux offers the choice: macOS and Windows need the native frame to
-        // have any window controls at all, so the shell does not expose a toggle there.
-        if (info.frameChoice === true) {
-          optionsLine.props.children.push(react.createElement('label', { className: 'dsk-opt', key: 'frame' }, [
-            react.createElement('input', {
-              type: 'checkbox', checked: info.nativeFrame === true, key: 'box',
-              onChange: (event) => {
-                const value = event.target.checked ? 'native' : 'none'
-                location.href = `${info.setPath ?? '/__dsh_desktop_set'}?key=frame&value=${value}`
-              },
-            }),
-            react.createElement('span', { key: 'label' }, t('nativeFrame')),
-          ]))
-        }
 
         const extras = []
         if (showPercent) {
@@ -385,16 +377,48 @@
         return react.createElement('div', { id: 'dsh-desktop-settings', className: 'dsk-row' }, [mainLine, optionsLine, ...extras, modal])
       }
 
+      /** The window frame is a setting of its own, so it gets its own row. */
+      function WindowFrameRow() {
+        const info = (typeof window !== 'undefined' && window.__NEO_DSH__) || undefined;
+        // Only Linux gets the choice: macOS and Windows need the native frame to have
+        // any window controls at all, so there is nothing to choose there.
+        if (info === undefined || info.frameChoice !== true) return null;
+        const native = info.nativeFrame === true;
+        return react.createElement('div', { id: 'dsh-window-frame', className: 'dsk-row' },
+          react.createElement('div', { className: 'dsk-main' },
+            react.createElement('div', { className: 'dsk-text' },
+              react.createElement('div', { className: 'dsk-title' }, t('frameTitle')),
+              react.createElement('div', { className: 'dsk-desc' }, t('frameDesc'))),
+            react.createElement('div', { className: 'dsk-actions' },
+              react.createElement('button', {
+                type: 'button', className: 'dsk-btn', title: t('frameDesc'),
+                onClick: () => {
+                  const value = native ? 'none' : 'native';
+                  location.href = `${info.setPath ?? '/__dsh_desktop_set'}?key=frame&value=${value}`;
+                },
+              }, native ? t('frameNative') : t('frameBorderless')))));
+      }
+
       const entry = {
         name: 'settings.general.item',
         id: 'neo-dsh-desktop',
         order: 40,
         label: () => t('title'),
       };
-      if (localeReady) entry.locale = NS;
+      const frameEntry = {
+        name: 'settings.general.item',
+        id: 'neo-dsh-window-frame',
+        order: 41,
+        label: () => t('frameTitle'),
+      };
+      if (localeReady) { entry.locale = NS; frameEntry.locale = NS; }
       ctx.effect(
         () => slots.inject('settings.general.item', () => slots.register(entry, DesktopSettingsRow)),
         'dsh-desktop-settings: settings row',
+      );
+      ctx.effect(
+        () => slots.inject('settings.general.item', () => slots.register(frameEntry, WindowFrameRow)),
+        'dsh-desktop-settings: window frame row',
       );
     };
   }

@@ -615,6 +615,10 @@ function watchHostExit() {
 /** Whether a host restart is already in flight. */
 let restarting = false
 
+/** Set while the window is rebuilt on purpose (a frame change), so
+ *  `window-all-closed` does not read the gap as the user closing the app. */
+let recreatingWindow = false
+
 /** Full restart: stop the host, boot a fresh one, and reload the window. */
 async function restartHost() {
   if (restarting) return
@@ -671,9 +675,12 @@ function handlePreferenceCommand(key, value) {
 function recreateWindow() {
   const current = mainWindow
   if (current === null || current.isDestroyed() || resolvedUrl === '') return
+  recreatingWindow = true
   mainWindow = null
   current.destroy()
   createWindow()
+  // `window-all-closed` is emitted from the destroy, so clear it afterwards.
+  setImmediate(() => { recreatingWindow = false })
 }
 
 /** Inject a floating "restart dsh" button into the page, next to the settings button. */
@@ -955,7 +962,9 @@ if (!gotLock) {
 
   app.on('window-all-closed', () => {
     // Quit entirely (host included) when the window closes; on this shell a
-    // window-less app has nothing to show.
+    // window-less app has nothing to show. Rebuilding the window for a settings
+    // change closes one on purpose — destroying it used to quit the whole app.
+    if (recreatingWindow) return
     app.quit()
   })
 
