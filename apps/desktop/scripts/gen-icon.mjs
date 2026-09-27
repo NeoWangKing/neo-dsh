@@ -1,79 +1,51 @@
 /**
- * gen-icon — build the app icon from the official DeepSeek fish logo.
+ * gen-icon.mjs — rasterise the app icon from the hand-authored SVG.
  *
- * Reads the fish path (the harness ships it at apps/web/public/favicon.svg),
- * centers it on a DeepSeek-blue rounded square, and writes assets/icon.svg.
- * Run: node scripts/gen-icon.mjs <path-to-favicon.svg>
+ * `assets/icon.svg` is the source of truth and is this project's own mark: an N
+ * drawn as a node graph (the harness is a tree of plugins) with a spark for 灵.
+ * It is deliberately NOT DeepSeek's logo, so a Neo DSH build is never mistaken
+ * for an official one. Edit the SVG by hand; this script only renders it.
+ *
+ * Outputs:
+ *   build/icon.png   1024px — what electron-builder turns into .icns / .ico / Linux PNG
+ *   assets/icon.png   512px — what the Linux zip installer puts in the menu
+ *
+ * Usage: node scripts/gen-icon.mjs
  */
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-import { readFileSync, writeFileSync } from 'node:fs'
+const APP = dirname(dirname(fileURLToPath(import.meta.url)))
+const SVG = join(APP, 'assets', 'icon.svg')
 
-const favicon = process.argv[2]
-const source = readFileSync(favicon, 'utf8')
-const match = source.match(/<path[^>]*\bd="([^"]*)"/)
-if (!match) throw new Error('no path found in favicon')
-const d = match[1]
-
-// Approximate bounding box: endpoints plus Bezier control points (a safe
-// superset for fitting; the logo uses only M/C/L/Z).
-const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e-?\d+)?/g)
-let x = 0
-let y = 0
-let minX = Infinity
-let minY = Infinity
-let maxX = -Infinity
-let maxY = -Infinity
-const track = (px, py) => {
-  minX = Math.min(minX, px)
-  minY = Math.min(minY, py)
-  maxX = Math.max(maxX, px)
-  maxY = Math.max(maxY, py)
-}
-for (let i = 0; i < tokens.length; i += 1) {
-  const t = tokens[i]
-  if (/[a-zA-Z]/.test(t)) {
-    const cmd = t
-    let j = i + 1
-    const num = () => {
-      const v = Number(tokens[j])
-      j += 1
-      return v
+/** @returns the first available SVG rasteriser on this machine. */
+function rasteriser() {
+  const candidates = [
+    ['rsvg-convert', (size, out) => ['-w', String(size), '-h', String(size), SVG, '-o', out]],
+    ['magick', (size, out) => ['-background', 'none', '-resize', `${size}x${size}`, SVG, out]],
+    ['convert', (size, out) => ['-background', 'none', '-resize', `${size}x${size}`, SVG, out]],
+  ]
+  for (const [bin, args] of candidates) {
+    try {
+      execFileSync('sh', ['-c', `command -v ${bin}`], { stdio: 'ignore' })
+      return { bin, args }
+    } catch {
+      continue
     }
-    if (cmd === 'M' || cmd === 'L') {
-      while (j < tokens.length && !/[a-zA-Z]/.test(tokens[j])) {
-        x = num()
-        y = num()
-        track(x, y)
-      }
-    } else if (cmd === 'C') {
-      while (j < tokens.length && !/[a-zA-Z]/.test(tokens[j])) {
-        const x1 = num(); const y1 = num()
-        const x2 = num(); const y2 = num()
-        const ex = num(); const ey = num()
-        track(x1, y1); track(x2, y2); track(ex, ey)
-        x = ex; y = ey
-      }
-    } else if (cmd === 'Z') {
-      // nothing to track
-    }
-    i = j - 1
   }
+  throw new Error('gen-icon: needs rsvg-convert, ImageMagick (magick) or convert on PATH')
 }
 
-const PAD = 64
-const SIZE = 512
-const w = maxX - minX
-const h = maxY - minY
-const scale = Math.min((SIZE - 2 * PAD) / w, (SIZE - 2 * PAD) / h)
-const tx = (SIZE - w * scale) / 2 - minX * scale
-const ty = (SIZE - h * scale) / 2 - minY * scale
+if (!existsSync(SVG)) throw new Error(`gen-icon: ${SVG} is missing`)
+const { bin, args } = rasteriser()
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
-  <rect width="${SIZE}" height="${SIZE}" rx="${SIZE * 0.22}" fill="#4D6BFE"/>
-  <g transform="translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${scale.toFixed(4)})">
-    <path d="${d}" fill="#ffffff"/>
-  </g>
-</svg>
-`
-writeFileSync(new URL('../assets/icon.svg', import.meta.url), svg)
-console.log(`bbox: ${minX.toFixed(2)},${minY.toFixed(2)} -> ${maxX.toFixed(2)},${maxY.toFixed(2)}; scale=${scale.toFixed(4)} translate=${tx.toFixed(2)},${ty.toFixed(2)}`)
+for (const [out, size] of [
+  [join(APP, 'build', 'icon.png'), 1024],
+  [join(APP, 'assets', 'icon.png'), 512],
+]) {
+  mkdirSync(dirname(out), { recursive: true })
+  execFileSync(bin, args(size, out), { stdio: 'inherit' })
+  console.log(`gen-icon: ${out} (${size}px, via ${bin})`)
+}

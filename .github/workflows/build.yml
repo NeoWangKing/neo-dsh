@@ -32,6 +32,12 @@ concurrency:
   group: build-${{ github.ref }}-${{ github.event_name }}-${{ github.event.inputs.platforms || 'default' }}
   cancel-in-progress: true
 
+# Creating the GitHub Release needs write access: a new repository's default token
+# is read-only, and the release step then fails with `Resource not accessible by
+# integration` (403) *after* a successful build.
+permissions:
+  contents: write
+
 jobs:
   linux:
     name: linux-x64
