@@ -104,7 +104,7 @@ do by themselves:
 | Workflow | Trigger | Notes |
 | --- | --- | --- |
 | `build` | every push to `main` | builds **Linux** (AppImage + deb + zip) and uploads them as artifacts. macOS and Windows stay off unless selected: `workflow_dispatch` with `platforms=mac` or `platforms=win`. |
-| `build` | tag `v*` | same builds, plus attaches every artifact to a GitHub Release. |
+| `build` | tag `v*` | builds **all three platforms** (Linux, macOS arm64, Windows) and attaches every installer to a GitHub Release. |
 | `publish-plugin` | push/PR touching `plugins/activity-line/**` | runs the plugin tests and asserts the npm tarball carries `index.js`, `client.js` and `cordis.patch.yml`. |
 | `publish-plugin` | tag `plugin-v*` | `npm publish --provenance` for `dsh-activity-line`. Needs the repository secret `NPM_TOKEN` (an npm automation token); without it the publish job fails while the check job still passes. |
 

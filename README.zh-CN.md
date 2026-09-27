@@ -95,7 +95,7 @@ zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把�
 | 工作流 | 触发 | 说明 |
 | --- | --- | --- |
 | `build` | 每次 push 到 `main` | 构建 **Linux**（AppImage + deb + zip）并作为 artifact 上传。macOS 与 Windows 默认不跑，除非用 `workflow_dispatch` 指定 `platforms=mac` / `platforms=win`。 |
-| `build` | tag `v*` | 同样的构建，外加把所有产物挂到 GitHub Release。 |
+| `build` | tag `v*` | **三个平台全部构建**（Linux、macOS arm64、Windows），并把所有安装包挂到 GitHub Release。 |
 | `publish-plugin` | push/PR 涉及 `plugins/activity-line/**` | 跑插件测试，并断言 npm tarball 里必须有 `index.js`、`client.js`、`cordis.patch.yml`。 |
 | `publish-plugin` | tag `plugin-v*` | 对 `dsh-activity-line` 执行 `npm publish --provenance`。需要仓库 secret `NPM_TOKEN`（npm automation token）；没配的话发布任务失败，但检查任务仍会通过。 |
 
