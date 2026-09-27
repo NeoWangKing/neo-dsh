@@ -79,9 +79,9 @@
   // pad 16/0, hairline separator; selector pill h36 r18), so this row sits in the
   // section like a native one instead of looking bolted on.
   const STYLE = `
-  #dsh-desktop-settings .dsk-row {
+  #dsh-desktop-settings {
     display: flex; flex-direction: column; gap: 12px;
-    padding: 16px 0; border-bottom: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08));
+    padding: 16px 0; border-bottom: .5px solid var(--dsw-alias-border-l2, rgba(0,0,0,.08));
   }
   #dsh-desktop-settings .dsk-main { display: flex; align-items: center; gap: 8px; }
   #dsh-desktop-settings .dsk-text {
@@ -255,7 +255,7 @@
         }, [autoCheck, hours, send]);
 
         if (info === undefined) {
-          return react.createElement('div', { id: 'dsh-desktop-settings' },
+          return react.createElement('div', { id: 'dsh-desktop-settings', className: 'dsk-row' },
             react.createElement('div', { className: 'dsk-main' },
               react.createElement('div', { className: 'dsk-text' },
                 react.createElement('div', { className: 'dsk-title' }, t('title')),
@@ -349,7 +349,7 @@
             ]))
           : null
 
-        return react.createElement('div', { id: 'dsh-desktop-settings' }, [mainLine, optionsLine, ...extras, modal])
+        return react.createElement('div', { id: 'dsh-desktop-settings', className: 'dsk-row' }, [mainLine, optionsLine, ...extras, modal])
       }
 
       const entry = {
