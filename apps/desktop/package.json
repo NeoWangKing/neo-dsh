@@ -119,5 +119,8 @@
     "type": "git",
     "url": "git+https://github.com/ymh0000123/neo-dsh.git",
     "directory": "apps/desktop"
+  },
+  "engines": {
+    "node": "^22.19 || >=24"
   }
 }

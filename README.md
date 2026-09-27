@@ -29,7 +29,12 @@ The fixed port keeps browser storage stable — the origin is scheme + host + **
 ## Requirements
 
 - **Using a build**: nothing. Node, the harness and the profile are in the package.
-- **Building**: Node 22 (`^22.19 || >=24`), pnpm 11, and for Linux also the usual Electron packaging tools.
+- **Building**: Node 22 (`^22.19 || >=24`) — Node 20 cannot run the harness at all
+  (no `node:sqlite`, wrong native-addon ABI). The repo enforces this: `.nvmrc`,
+  `engines` in both manifests, `engine-strict` in `apps/desktop/.npmrc`, and
+  `scripts/check-node.mjs` in front of every build/run script. With nvm:
+  `nvm alias default 22.23.1 && nvm use 22.23.1`.
+- **Building (cont.)**: pnpm 11, and for Linux also the usual Electron packaging tools.
 - **An API key**: the app does not ship credentials. Set `DEEPSEEK_API_KEY`, or sign in through the app's settings on first run.
 
 ## Quick start (development)
