@@ -110,15 +110,19 @@
   }
   .dsk-btn:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
   .dsk-btn:disabled { cursor: default; opacity: .55; }
-  /* Filled primary button. The harness pairs "--dsw-alias-button-primary-fill" with
-     "--dsw-alias-label-primary-inverted": that fill is LIGHT in the dark theme, and
-     "--dsw-alias-brand-primary" is a *text* colour (also light there), so using it as
-     a fill together with a hard-coded white label makes the text disappear. */
+  /* Filled primary action, deliberately a stable BLUE in both themes — the same
+     pair the harness's own send button uses:
+       .XXX_primary { background: var(--dsw-alias-button-info-fill); color: #fff }
+     "button-info-fill" is the DeepSeek blue (deepseek-500 light / deepseek-400
+     dark), and a theme that overrides it (or button-info-hover) recolours every
+     primary action here in one place. Avoid "--dsw-alias-button-primary-fill"
+     (it is the *inverted* surface: light in the dark theme) and
+     "--dsw-alias-brand-primary" (a text colour). */
   .dsk-primary {
-    background: var(--dsw-alias-button-primary-fill, #4d6bfe);
-    color: var(--dsw-alias-label-primary-inverted, #fff);
+    background: var(--dsw-alias-button-info-fill, #4d6bfe);
+    color: #fff;
   }
-  .dsk-primary:hover:not(:disabled) { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
+  .dsk-primary:hover:not(:disabled) { background: var(--dsw-alias-button-info-hover, #3f6ae0); }
   .dsk-opts {
     display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
     font-size: 12px; font-weight: 400; line-height: 18px; color: var(--dsw-alias-label-secondary, #6b7280);
@@ -151,8 +155,8 @@
     color: var(--dsw-alias-label-primary, inherit); font: inherit; font-size: 13px; cursor: pointer;
   }
   .dsk-dialog .dsk-btn:hover { background: var(--dsw-alias-interactive-bg-hover-solid, rgba(127,127,127,.22)); }
-  .dsk-dialog .dsk-primary { border-color: transparent; background: var(--dsw-alias-button-primary-fill, #4d6bfe); color: var(--dsw-alias-label-primary-inverted, #fff); }
-  .dsk-dialog .dsk-primary:hover { background: var(--dsw-alias-button-primary-hover, #3f57c9); }
+  .dsk-dialog .dsk-primary { border-color: transparent; background: var(--dsw-alias-button-info-fill, #4d6bfe); color: #fff; }
+  .dsk-dialog .dsk-primary:hover { background: var(--dsw-alias-button-info-hover, #3f6ae0); }
   `;
 
   function insertStyle() {
