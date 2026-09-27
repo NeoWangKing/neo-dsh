@@ -66,7 +66,16 @@ zip 是"不要安装器"的选项：解压后执行 `./install.sh`，它会把�
 
 **故意不支持交叉构建**：harness 依赖一批平台特有的可选二进制（Landlock、node-addon-system、sharp、koffi、ripgrep），所以每个平台都由 `.github/workflows/build.yml` **在各自的系统上**打包。该工作流每次 push 都构建 Linux；mac/win 要等这些 runner 上的结果被验证过，才通过 `workflow_dispatch` 的 `platforms` 输入来跑。
 
-产物**默认未签名**。macOS 首次需右键 → 打开；Windows 会弹 SmartScreen 的"未知发布者"。签名走 electron-builder 的常规环境变量（`CSC_LINK`、`CSC_KEY_PASSWORD`，以及 Apple 公证的三件套）——详见 [docs/packaging.md](docs/packaging.md)。
+产物**默认未签名**。签名走 electron-builder 的常规环境变量（`CSC_LINK`、`CSC_KEY_PASSWORD`，以及 Apple 公证的三件套）——详见 [docs/packaging.md](docs/packaging.md)——但没有证书时，macOS 首次启动会撞上 Gatekeeper，**两种提示的处理方式不一样**：
+
+- 「无法验证开发者／无法检查是否包含恶意软件」——右键 app → **打开**，确认一次即可。
+- 「**"Neo DSH.app" 已损坏，无法打开**」——这种对话框**没有"打开"按钮**（浏览器下载的 dmg 一定会被打上隔离标记）。文件其实没坏，清掉标记就好：
+
+  ```sh
+  xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
+  ```
+
+Windows 上会弹 SmartScreen 的"未知发布者"（更多信息 → 仍要运行）。
 
 ## 日常操作
 

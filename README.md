@@ -74,7 +74,16 @@ it and keeps `$DSH_HOME` unless given `--purge`.
 
 Cross-building is not supported on purpose: the harness pulls platform-specific optional binaries (Landlock, node-addon-system, sharp, koffi, ripgrep), so each target is packaged **on its own OS** by `.github/workflows/build.yml`. That workflow builds Linux on every push and takes `mac`/`win` from a `workflow_dispatch` input until those runs have been checked.
 
-Builds are **unsigned**. macOS needs a right-click → Open the first time; Windows shows SmartScreen's "unknown publisher". Signing is wired through the usual electron-builder variables (`CSC_LINK`, `CSC_KEY_PASSWORD`, plus the Apple notarization trio) — see [docs/packaging.md](docs/packaging.md).
+Builds are **unsigned**. Signing is wired through the usual electron-builder variables (`CSC_LINK`, `CSC_KEY_PASSWORD`, plus the Apple notarization trio) — see [docs/packaging.md](docs/packaging.md) — but without a certificate the first launch on macOS hits Gatekeeper, and the two possible dialogs need **different** actions:
+
+- *"…cannot be opened because Apple cannot check it for malicious software"* — right-click the app → **Open**, confirm once.
+- *"…is damaged and can't be opened"* — this dialog offers **no Open button**, and a dmg downloaded in a browser is always quarantined. Nothing is actually damaged; clear the flag:
+
+  ```sh
+  xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
+  ```
+
+Windows shows SmartScreen's "unknown publisher" (More info → Run anyway).
 
 ## Operating it
 

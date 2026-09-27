@@ -88,8 +88,18 @@ in CI). To sign:
 | macOS | `CSC_LINK`, `CSC_KEY_PASSWORD`; set `mac.hardenedRuntime: true` and pass `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` for notarization |
 | Windows | `CSC_LINK`, `CSC_KEY_PASSWORD` |
 
-Without signing, macOS Gatekeeper blocks the first launch (right-click → Open, or
-`xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"`), and
+Without signing, the first macOS launch hits Gatekeeper. A browser-downloaded dmg
+is always quarantined, and which dialog you get decides what actually works:
+
+- *"cannot be opened because Apple cannot check it for malicious software"* —
+  right-click → **Open**.
+- *"…is damaged and can't be opened"* — **no Open button is offered**, and the
+  wording is misleading: nothing is damaged, the quarantine flag is. Clear it:
+
+  ```sh
+  xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
+  ```
+
 Windows shows a SmartScreen warning.
 
 ## Verifying a build without opening a window on someone's desktop
