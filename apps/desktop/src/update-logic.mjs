@@ -71,6 +71,25 @@ export function pickAsset(assets, target) {
   return mine ?? candidates[0]
 }
 
+/** An HTTP answer that is not a success, carrying what the caller needs to explain it. */
+export class GithubHttpError extends Error {
+  /**
+   * @param status - HTTP status.
+   * @param statusText - HTTP reason phrase.
+   * @param headers - response headers (used for the rate-limit reset).
+   */
+  constructor(status, statusText, headers) {
+    super(`GitHub API ${status} ${statusText}`)
+    this.name = 'GithubHttpError'
+    this.status = status
+    this.rateLimitReset = Number(headers?.get?.('x-ratelimit-reset') ?? 0)
+  }
+}
+
+/** Last ETag seen for the latest-release document, and the body it stands for. */
+let latestEtag = ''
+let latestRelease = null
+
 /**
  * Turn a fetch failure into something a person can act on.
  *
@@ -81,6 +100,15 @@ export function pickAsset(assets, target) {
  * @returns a message that names the underlying cause when there is one.
  */
 export function describeNetworkError(error) {
+  // A rate limit is not a network problem: the unauthenticated API allows 60
+  // requests an hour, and the answer says when it resets.
+  if (error instanceof GithubHttpError && (error.status === 403 || error.status === 429)) {
+    const seconds = error.rateLimitReset > 0 ? error.rateLimitReset - Math.floor(Date.now() / 1000) : 0
+    const minutes = seconds > 0 ? Math.max(1, Math.ceil(seconds / 60)) : null
+    return minutes === null
+      ? 'GitHub 接口限流（未认证每 IP 每小时 60 次），请稍后再试'
+      : `GitHub 接口限流（未认证每 IP 每小时 60 次），约 ${minutes} 分钟后恢复`
+  }
   const cause = error?.cause
   const code = cause?.code ?? cause?.errno ?? error?.code ?? ''
   const base = String(error?.message ?? error)
@@ -104,15 +132,26 @@ export async function fetchLatestRelease(fetchImpl = fetch, options = {}) {
   let lastError
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
+      const headers = { accept: 'application/vnd.github+json', 'user-agent': 'neo-dsh-updater' }
+      // Conditional request: GitHub does not count a 304 against the limit, so a
+      // repeated check costs nothing after the first one.
+      if (latestEtag !== '') headers['if-none-match'] = latestEtag
       const response = await fetchImpl(url, {
-        headers: { accept: 'application/vnd.github+json', 'user-agent': 'neo-dsh-updater' },
+        headers,
         signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(timeoutMs) : undefined,
       })
-      if (!response.ok) throw new Error(`GitHub API ${response.status} ${response.statusText}`)
-      return await response.json()
+      if (response.status === 304 && latestRelease !== null) return latestRelease
+      if (!response.ok) throw new GithubHttpError(response.status, response.statusText, response.headers)
+      latestEtag = response.headers?.get?.('etag') ?? ''
+      latestRelease = await response.json()
+      return latestRelease
     } catch (error) {
       lastError = error
-      if (attempt < attempts) await sleep(attempt * 750)
+      // Retry only what can get better: a 4xx (rate limit, bad request, missing
+      // release) will answer the same, and for a rate limit retrying is worse.
+      const retryable = !(error instanceof GithubHttpError) || error.status >= 500
+      if (retryable && attempt < attempts) await sleep(attempt * 750)
+      else break
     }
   }
   throw new Error(describeNetworkError(lastError))

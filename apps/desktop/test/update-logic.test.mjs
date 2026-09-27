@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
-import { describeNetworkError, fetchLatestRelease, isNewer, pickAsset, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
+import { describeNetworkError, fetchLatestRelease, GithubHttpError, isNewer, pickAsset, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
 
 let failures = 0
 function check(name, actual, expected) {
@@ -67,6 +67,27 @@ try {
 } catch (error) { thrown = String(error.message) }
 check('一直失败 → 报出原因码，而不是裸的 fetch failed', [attempts, thrown.includes('ENOTFOUND'), thrown.includes('fetch failed')], [3, true, true])
 check('HTTP 错误带状态码', describeNetworkError(new Error('GitHub API 500 Internal Server Error')).includes('500'), true)
+
+let limited = 0
+let limitedMessage = ''
+try {
+  await fetchLatestRelease(async () => {
+    limited += 1
+    return { ok: false, status: 403, statusText: 'rate limit exceeded', headers: { get: (k) => (k === 'x-ratelimit-reset' ? String(Math.floor(Date.now() / 1000) + 600) : null) } }
+  }, { sleep: async () => {} })
+} catch (error) { limitedMessage = String(error.message) }
+check('403 限流不重试（重试只会更糟）', limited, 1)
+check('限流文案给出恢复时间', [limitedMessage.includes('限流'), limitedMessage.includes('分钟')], [true, true])
+
+let seq = 0
+const etagFetch = async (_url, options) => {
+  seq += 1
+  if (options?.headers?.['if-none-match'] === 'W/"abc"') return { status: 304, ok: false, headers: { get: () => null } }
+  return { status: 200, ok: true, headers: { get: (k) => (k === 'etag' ? 'W/"abc"' : null) }, json: async () => ({ tag_name: `v-${seq}` }) }
+}
+const first = await fetchLatestRelease(etagFetch, { sleep: async () => {} })
+const second = await fetchLatestRelease(etagFetch, { sleep: async () => {} })
+check('304 条件请求复用上次结果（不计入配额）', [first.tag_name, second.tag_name, seq], ['v-1', 'v-1', 2])
 
 // ---- download ------------------------------------------------------------
 const payload = new Uint8Array(4096).fill(7)
