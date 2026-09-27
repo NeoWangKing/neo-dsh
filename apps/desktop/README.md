@@ -25,7 +25,7 @@ DSH_HOME=/tmp/check DSH_DESKTOP_PORT=3199 DSH_DESKTOP_SMOKE=1 pnpm start
 | `electron-builder.yml` | targets (`AppImage`/`deb`/`zip`, `dmg`, `nsis`), `extraResources`, signing hooks |
 | `resources/` | what ships beside the code (profile, preset, settings defaults, Node runtime) |
 | `scripts/` | `probe-host.mjs` (host readiness check), `install.sh`/`uninstall.sh` (dev install), `gen-icon.mjs` |
-| `assets/icon.svg` | the project's mark: a whale (the DeepSeek anchor) carrying an N drawn as a node graph, plus an amber spark. Hand-authored — not DeepSeek's logo, but deliberately still a whale |
+| `assets/icon.svg` | the classic DeepSeek whale on its blue plate, with a **Neo** badge in the bottom-right corner marking this build as a personal derivative. Compose it from the harness's own whale path plus the badge; `gen-icon.mjs` never fetches the favicon itself |
 | `build/icon.png` | 1024px render of it, from `scripts/gen-icon.mjs`; electron-builder derives `.icns`/`.ico` from here |
 
 Environment knobs: `DSH_HOME`, `DSH_NODE`, `DSH_DESKTOP_PORT`,

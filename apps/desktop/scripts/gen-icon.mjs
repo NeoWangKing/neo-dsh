@@ -1,10 +1,10 @@
 /**
  * gen-icon.mjs — rasterise the app icon from the hand-authored SVG.
  *
- * `assets/icon.svg` is the source of truth and is this project's own mark: an N
- * drawn as a node graph (the harness is a tree of plugins) with a spark for 灵.
- * It is deliberately NOT DeepSeek's logo, so a Neo DSH build is never mistaken
- * for an official one. Edit the SVG by hand; this script only renders it.
+ * `assets/icon.svg` is the source of truth: the classic DeepSeek whale on its
+ * blue plate, carrying a "Neo" badge in the corner that marks the build as a
+ * personal derivative rather than an official one. The SVG is composed by hand
+ * from the harness's own whale path; this script only rasterises it.
  *
  * Outputs:
  *   build/icon.png   1024px — what electron-builder turns into .icns / .ico / Linux PNG
