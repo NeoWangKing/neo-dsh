@@ -26,6 +26,12 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+# Creating the GitHub Release on a tag needs write access; a new repository's
+# default token is read-only, so the release step otherwise fails with
+# "Resource not accessible by integration" (403) *after* a successful build.
+permissions:
+  contents: write
+
 jobs:
   target:
     name: ${{ matrix.name }}
