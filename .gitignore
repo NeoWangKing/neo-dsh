@@ -2,6 +2,11 @@
 node_modules/
 .pnpm-store/
 
+# A root-level `pnpm run …` leaves a lockfile behind, but the repo root has no
+# dependencies — the real one is apps/desktop/pnpm-lock.yaml. Anchor the pattern
+# so it cannot swallow that one.
+/pnpm-lock.yaml
+
 # build output
 apps/desktop/release/
 apps/desktop/dist/

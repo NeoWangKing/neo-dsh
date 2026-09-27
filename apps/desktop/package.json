@@ -12,9 +12,7 @@
     "start": "electron .",
     "probe": "node scripts/probe-host.mjs",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "install:local": "bash scripts/install.sh",
-    "uninstall": "bash scripts/uninstall.sh"
+    "dist": "electron-builder"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
