@@ -94,6 +94,20 @@ DSH_DESKTOP_UPDATE_SMOKE=download <打包后的可执行文件>
 
 默认是**无边框**窗口：平铺合成器可以直接移动它（niri 是 Mod+拖动），界面自己画标题区。如果你的桌面环境需要一条真正的标题栏（没有修饰键拖动、也没有关闭按钮），在**设置 → 通用**里勾上「**使用系统标题栏**」即可——外壳会把选择存进 `$DSH_HOME/desktop-preferences.json` 并**立刻重建窗口**，不用重启应用。macOS 和 Windows 恒用系统原生边框：那里无边框窗口既没有红绿灯/最小化/关闭按钮，也没有可拖动的地方。
 
+### 数据位置
+
+会话、附件、凭证和设置都存在应用**自己的**目录里，不再是那个共享的 `~/.dsh`：
+
+| 平台 | 默认位置 |
+| --- | --- |
+| Linux | `$XDG_DATA_HOME/neo-dsh`（通常是 `~/.local/share/neo-dsh`） |
+| macOS | `~/Library/Application Support/neo-dsh` |
+| Windows | `%APPDATA%\neo-dsh` |
+
+在那个目录里首次启动时，应用会从 `~/.dsh` **复制**用户数据（会话、storages、附件、profile、模型缓存、preset、`settings.yaml`、`.credentials.yaml`、`.anonymous-user-id`、窗口偏好），并写下 `.migrated-from-dsh-home.json` 标记，所以只发生一次。旧目录原封不动：指向它的 harness CLI 仍然能用，只是从此看不到应用新建的会话。
+
+**设置 → 通用 → 数据位置**会显示数据在哪、为什么在那里（默认位置 / 自定义位置 / 由 `DSH_HOME` 指定），并且可以搬家：选一个目录（必须是空的），然后选「复制并切换」（旧目录留作备份）或「移动并切换」（只删除复制成功的部分，日志留在原处）。应用会自己重启进新位置。这个选择记在 Electron user-data 目录里的 `desktop-config.json`（不能记在数据目录里面——一个指针没法描述它自己所在的目录），删掉这个文件、或把里面的 `dataHome` 清空就回到默认；`DSH_HOME` 优先级最高。
+
 ## 日常操作
 
 | 想做的事 | 怎么做 |
@@ -101,7 +115,7 @@ DSH_DESKTOP_UPDATE_SMOKE=download <打包后的可执行文件>
 | 升级 harness 版本 | `pnpm --dir apps/desktop add @deepseek-ai/dsh@<版本> && node scripts/sync-peers.mjs`，然后重新构建 |
 | 改随包的 profile | 编辑 `apps/desktop/resources/profile-web/package.json`（`dsh.profile.bundles`），重跑 `build-resources`，再构建 |
 | 再随包带一个插件 | 放进 `plugins/`，加进 `build-resources.mjs`，并在 profile 的 bundles 里列出 |
-| 用独立的状态目录 | 应用读 `$DSH_HOME`；设成别的路径即可与 CLI 的 `~/.dsh` 分开 |
+| 换一个状态目录 | 设置 → 通用 → 数据位置；或设 `DSH_HOME`（开发用的覆盖项，优先级高于设置里存的位置） |
 | 校验生成的依赖清单 | `node scripts/sync-peers.mjs --check`（harness 升级带来新 peer 时 CI 会失败） |
 | 跳过播种 | `DSH_DESKTOP_NO_SEED=1` |
 | 换端口 | `DSH_DESKTOP_PORT=3198` |
@@ -112,7 +126,7 @@ DSH_DESKTOP_UPDATE_SMOKE=download <打包后的可执行文件>
 
 - **产物未签名** —— 见上。
 - **体积** —— 解包后约 650 MB / 每个安装包 250–350 MB：Electron、完整 harness 依赖树、125 MB 的 Node 运行时。运行时的体积就是"不要求用户装 Node"的代价。
-- **没有自动更新。** 升级 = 装一个更新的产物。
+- **命令行 `dsh` 仍然只用 `~/.dsh`。** 数据搬走之后，CLI 管的是旧目录；想让它俩共用，需要把 wrapper 指到新位置。
 - **profile 只播种一次。** 已存在的 `$DSH_HOME/profiles/web` 不会被改动，包括它的插件集合。
 
 ## 仓库与自动化

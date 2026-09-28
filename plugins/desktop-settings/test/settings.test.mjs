@@ -8,7 +8,7 @@
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { statusText, LOCALE_ZH, LOCALE_EN } = require('../client.js')
+const { statusText, dataErrorText, LOCALE_ZH, LOCALE_EN } = require('../client.js')
 
 let failures = 0
 function check(name, actual, expected) {
@@ -30,6 +30,13 @@ check('已下载', statusText({ phase: 'downloaded', version: '0.1.4' }, t), '�
 check('安装中', statusText({ phase: 'installing', version: '0.1.4' }, t), '正在安装并重启… v0.1.4')
 check('错误带原因', statusText({ phase: 'error', message: 'GitHub API 403' }, t), '检查更新失败：GitHub API 403')
 check('未知状态不崩', statusText(undefined, t), '')
+
+// ---- the data-location row's failure copy --------------------------------
+check('目标目录非空 → 说清楚该怎么办', dataErrorText('target-not-empty', t), '这个目录里已经有别的东西了，请换一个空目录，避免两边混在一起。')
+check('没有错误 → 不显示', dataErrorText('', t), '')
+check('未知代码 → 原样显示，不静默', dataErrorText('boom', t), 'boom')
+const codes = ['not-absolute', 'same-path', 'nested-path', 'target-not-empty', 'failed']
+check('每个失败代码都有文案', codes.filter((code) => { const text = dataErrorText(code, t); return text === '' || text === code }), [])
 
 const zhKeys = Object.keys(LOCALE_ZH).sort()
 const enKeys = Object.keys(LOCALE_EN).sort()

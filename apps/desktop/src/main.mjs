@@ -25,7 +25,7 @@
 import { spawn } from 'node:child_process'
 import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, isAbsolute, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -33,12 +33,41 @@ import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron'
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
+import {
+  defaultHome, legacyHome, migrateHome, moveHome, relocationPlan, resolveHome, writeDataHome,
+} from './desktop-home.mjs'
 
 const require = createRequire(import.meta.url)
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 
-/** Harness home: the same default the `dsh` CLI uses, overridable. */
-const DSH_HOME = process.env.DSH_HOME ?? join(homedir(), '.dsh')
+/** Electron's own per-user directory: settings that must survive a change of data
+ * location, above all the location itself. A pointer cannot live inside the
+ * directory it points at. */
+function userDataDir() {
+  try {
+    return app.getPath('userData')
+  } catch {
+    // Only reachable if getPath failed; the per-platform config directory is still
+    // better than refusing to start.
+    if (process.platform === 'win32') {
+      return join(process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), 'neo-dsh-desktop')
+    }
+    if (process.platform === 'darwin') {
+      return join(homedir(), 'Library', 'Application Support', 'neo-dsh-desktop')
+    }
+    return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'neo-dsh-desktop')
+  }
+}
+
+/** Harness home: this app's OWN directory, not the shared `~/.dsh` the harness CLI
+ * uses — two writers on one session store is how logs get corrupted. The user can
+ * point it elsewhere from Settings; `DSH_HOME` outranks that for development. */
+const HOME_CHOICE = resolveHome({
+  configDir: userDataDir(),
+  platform: process.platform,
+  env: process.env,
+})
+const DSH_HOME = HOME_CHOICE.path
 
 /** Shipped read-only tree (runtime, profile, preset, defaults). */
 const RESOURCES = app.isPackaged ? process.resourcesPath : join(projectRoot, 'resources')
@@ -129,6 +158,10 @@ function syncBundledPlugins() {
   if (names.length === 0) return []
 
   const version = app.getVersion()
+  // `DSH_DESKTOP_FORCE_BUNDLED=1` re-copies them even when the version is unchanged:
+  // editing a bundled plugin in a source checkout keeps the version, and the dev
+  // window has to show the edit (the dev-window script sets this).
+  const forced = process.env.DSH_DESKTOP_FORCE_BUNDLED === '1'
   const marker = '.neo-dsh-bundled.json'
   const added = []
   for (const name of names) {
@@ -139,7 +172,7 @@ function syncBundledPlugins() {
       try { stat = lstatSync(target) } catch { /* absent */ }
       // A symlink is the user's own install (or a `link:` dependency) — never touched.
       if (stat !== null && !stat.isDirectory()) continue
-      if (stat !== null && materialisedVersion(target, marker) === version) continue
+      if (!forced && stat !== null && materialisedVersion(target, marker) === version) continue
       // A real directory here is a copy this app made, so it follows the app: without
       // this, a plugin that ships with the app would never update with it.
       rmSync(target, { recursive: true, force: true })
@@ -202,6 +235,16 @@ function seedDirectory(from, to) {
 function seedHome() {
   const seeded = []
   if (process.env.DSH_DESKTOP_NO_SEED === '1') return seeded
+  // First launch in this home: carry the conversations and settings over from the
+  // shared ~/.dsh this app used before it had one of its own. A copy, so the old
+  // home stays usable; a no-op once the marker is there.
+  //
+  // A location the user picked in the settings row already carries a marker from
+  // that relocation, so this cannot fire a second copy behind their back.
+  if (process.env.DSH_DESKTOP_NO_MIGRATE !== '1') {
+    // Writes its own log line (silent when there is nothing to carry).
+    migrateHome({ from: legacyHome(), to: DSH_HOME, log })
+  }
   mkdirSync(DSH_HOME, { recursive: true })
   if (seedDirectory(join(RESOURCES, 'profile-web'), join(DSH_HOME, 'profiles', 'web'))) seeded.push('profiles/web')
   seeded.push(...syncBundledPlugins())
@@ -264,7 +307,7 @@ function startHost() {
   const bin = resolveDshBin()
   const node = resolveNode()
   log(`starting host: ${node} ${bin} web --no-open --port ${DESKTOP_PORT}`)
-  log(`DSH_HOME=${DSH_HOME} resources=${RESOURCES} packaged=${app.isPackaged}`)
+  log(`DSH_HOME=${DSH_HOME} (${HOME_CHOICE.source}) resources=${RESOURCES} packaged=${app.isPackaged}`)
   const child = spawn(node, [bin, 'web', '--no-open', '--port', DESKTOP_PORT], {
     env: { ...process.env, DSH_HOME },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -455,17 +498,29 @@ function createWindow() {
       void restartHost()
       return
     }
-    // Settings changes that only the shell can make (currently the window frame).
+    // Settings changes that only the shell can make: the window frame, and where
+    // the harness data lives.
     if (pathname === '/__dsh_desktop_set') {
       event.preventDefault()
       let key = ''
       let value = ''
+      let mode = ''
       try {
         const params = new URL(url).searchParams
         key = params.get('key') ?? ''
         value = params.get('value') ?? ''
+        mode = params.get('mode') ?? ''
       } catch { /* keep the empties: the handler logs an unknown key */ }
-      handlePreferenceCommand(key, value)
+      handlePreferenceCommand(key, value, mode)
+      return
+    }
+    // A folder chooser: the renderer cannot open one, so it navigates here and the
+    // shell answers through window.__NEO_DSH_CHOOSE__.
+    if (pathname === '/__dsh_desktop_choose') {
+      event.preventDefault()
+      let key = ''
+      try { key = new URL(url).searchParams.get('key') ?? '' } catch { /* keep '' */ }
+      void handleChooseCommand(key)
       return
     }
     // Self-update commands from the settings plugin: the renderer cannot touch
@@ -656,8 +711,9 @@ function windowUsesNativeFrame() {
  * choice rebuilds the window (cheap: the host keeps running and the page reloads).
  * @param key - preference name.
  * @param value - new value, as a string from the URL.
+ * @param mode - how a relocation treats the old directory (`copy`/`move`).
  */
-function handlePreferenceCommand(key, value) {
+function handlePreferenceCommand(key, value, mode) {
   try {
     if (key === 'frame') {
       const stored = writePreferences(DSH_HOME, { nativeFrame: value === 'native' })
@@ -665,9 +721,111 @@ function handlePreferenceCommand(key, value) {
       recreateWindow()
       return
     }
+    if (key === 'dataHome') {
+      void relocateHome(value, mode)
+      return
+    }
     log(`preference: ignoring unknown key ${String(key)}`)
   } catch (error) {
     log(`preference: could not apply ${String(key)}: ${String(error?.message ?? error)}`)
+  }
+}
+
+/** Answer the settings page with the result of a folder chooser. */
+function publishChoose(state) {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents
+    .executeJavaScript(`window.__NEO_DSH_CHOOSE__ && window.__NEO_DSH_CHOOSE__(${JSON.stringify(state)}); true`)
+    .catch(() => {})
+}
+
+/**
+ * Open the OS folder chooser for the settings row.
+ *
+ * Picking a folder only *proposes* it: the row then asks whether to copy or move,
+ * and sends the answer back through `/__dsh_desktop_set`.
+ * @param key - which setting the folder is for (only `dataHome` today).
+ */
+async function handleChooseCommand(key) {
+  if (key !== 'dataHome') {
+    log(`choose: ignoring unknown key ${String(key)}`)
+    return
+  }
+  try {
+    const options = {
+      title: '选择 Neo DSH 数据目录',
+      defaultPath: DSH_HOME,
+      buttonLabel: '用这个目录',
+      // `createDirectory` is macOS-only; elsewhere the chooser still offers New Folder.
+      properties: ['openDirectory', 'createDirectory'],
+    }
+    const result = mainWindow && !mainWindow.isDestroyed()
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+    const path = result.canceled ? '' : (result.filePaths?.[0] ?? '')
+    log(`choose dataHome: canceled=${result.canceled} path=${path}`)
+    publishChoose({ key, canceled: result.canceled || path === '', path })
+  } catch (error) {
+    log(`choose dataHome failed: ${String(error?.message ?? error)}`)
+    publishChoose({ key, canceled: true, error: String(error?.message ?? error) })
+  }
+}
+
+/**
+ * Carry the harness data to a directory the user chose, then restart into it.
+ *
+ * The host is stopped first: it holds session stores and log files open, and
+ * copying a file another process is appending to is how a conversation gets
+ * truncated. From there both sides are plain directories, so the shared,
+ * unit-tested `moveHome` does the work. The choice is recorded only after the copy
+ * succeeded, so a failure leaves the app on the home it already had.
+ * @param target - the directory the user picked.
+ * @param mode - `copy` (keep the old directory) or `move` (empty it afterwards).
+ */
+async function relocateHome(target, mode) {
+  const to = String(target).trim()
+  const kind = mode === 'move' ? 'move' : 'copy'
+  try {
+    if (to === '' || !isAbsolute(to)) {
+      publishChoose({ key: 'dataHome', canceled: false, error: 'not-absolute' })
+      return
+    }
+    if (to === DSH_HOME) {
+      publishChoose({ key: 'dataHome', canceled: false, error: 'same-path' })
+      return
+    }
+    // Validate BEFORE stopping anything: a refusal must not take a working app down,
+    // and a page reload would swallow the message the row is meant to show.
+    const plan = relocationPlan({ from: DSH_HOME, to })
+    if (!plan.move) {
+      log(`relocate: refused (${plan.reason}) ${DSH_HOME} → ${to}`)
+      publishChoose({ key: 'dataHome', canceled: false, error: plan.reason, path: to })
+      return
+    }
+    log(`relocate: ${kind} ${DSH_HOME} → ${to}`)
+    publishChoose({ key: 'dataHome', canceled: false, phase: 'moving', path: to, mode: kind })
+    await shutdownHost()
+    const report = moveHome({ from: DSH_HOME, to, mode: kind, log })
+    if (report.reason !== undefined) {
+      // Nothing was written: bring the app back up on the home it already had.
+      publishChoose({ key: 'dataHome', canceled: false, error: report.reason, path: to })
+      host = startHost()
+      resolvedUrl = await host.url
+      watchHostExit()
+      if (mainWindow) await mainWindow.loadURL(resolvedUrl)
+      return
+    }
+    writeDataHome(userDataDir(), to)
+    log(`relocate: recorded dataHome=${to}; restarting into it`)
+    publishChoose({ key: 'dataHome', canceled: false, phase: 'restarting', path: to, moved: report.moved.length })
+    // A new process is required: $DSH_HOME is resolved once, before any window exists.
+    setTimeout(() => {
+      app.relaunch()
+      app.exit(0)
+    }, 600)
+  } catch (error) {
+    log(`relocate failed: ${String(error?.message ?? error)}`)
+    publishChoose({ key: 'dataHome', canceled: false, error: 'failed', path: to })
   }
 }
 
@@ -935,6 +1093,12 @@ function injectDesktopInfo() {
     arch: process.arch,
     updatePath: '/__dsh_desktop_update',
     setPath: '/__dsh_desktop_set',
+    choosePath: '/__dsh_desktop_choose',
+    // Where the data actually is, and why (the settings row shows both).
+    homePath: DSH_HOME,
+    homeSource: HOME_CHOICE.source,
+    homeDefault: defaultHome(process.platform, process.env),
+    dataMoves: true,
     // Only Linux gets to choose: elsewhere the native frame is not optional.
     frameChoice: process.platform === 'linux',
     nativeFrame: windowUsesNativeFrame(),
@@ -953,6 +1117,7 @@ async function fail(message) {
 
 async function boot() {
   try {
+    log(`data home: ${DSH_HOME} (${HOME_CHOICE.source})`)
     const seeded = seedHome()
     if (seeded.length > 0) log(`seeded $DSH_HOME: ${seeded.join(', ')}`)
     host = startHost()

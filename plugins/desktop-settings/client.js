@@ -48,6 +48,27 @@
     updateNow: '下载更新',
     notes: '更新说明',
     version: '当前版本',
+    dataTitle: '数据位置',
+    dataDesc: '会话、附件和设置都在这里',
+    dataSourceDefault: '默认位置',
+    dataSourceConfigured: '自定义位置',
+    dataSourceEnv: '由环境变量 DSH_HOME 指定，设置里改不了',
+    dataChange: '更改位置…',
+    dataCliNote: '命令行 dsh 仍在使用 ~/.dsh：那边的会话不会出现在这里。',
+    moveTitle: '把数据搬到这里？',
+    moveBody: '复制会保留原目录作为备份；移动只删除复制成功的部分，日志留在原处。完成后应用会自动重启。',
+    moveCopy: '复制并切换',
+    moveMove: '移动并切换',
+    moveCancel: '取消',
+    moveWorking: '正在复制数据…',
+    moveRestarting: '正在重启应用…',
+    moveFrom: '当前位置',
+    moveTo: '新位置',
+    moveErrNotAbsolute: '请选择一个绝对路径。',
+    moveErrSame: '这就是当前使用的位置。',
+    moveErrNested: '新目录不能位于当前数据目录内部，也不能是它的上层目录。',
+    moveErrNotEmpty: '这个目录里已经有别的东西了，请换一个空目录，避免两边混在一起。',
+    moveErrFailed: '迁移失败，数据仍留在原位置。',
   };
   const LOCALE_EN = {
     title: 'Neo DSH desktop app',
@@ -77,6 +98,27 @@
     updateNow: 'Download update',
     notes: 'Release notes',
     version: 'Current version',
+    dataTitle: 'Data location',
+    dataDesc: 'Conversations, attachments and settings live here',
+    dataSourceDefault: 'default location',
+    dataSourceConfigured: 'chosen location',
+    dataSourceEnv: 'set by the DSH_HOME environment variable — not changeable here',
+    dataChange: 'Change…',
+    dataCliNote: 'The dsh command line still uses ~/.dsh, so its conversations will not appear here.',
+    moveTitle: 'Move the data here?',
+    moveBody: 'Copying keeps the old directory as a backup; moving deletes only what was copied and leaves the logs behind. The app restarts when it is done.',
+    moveCopy: 'Copy and switch',
+    moveMove: 'Move and switch',
+    moveCancel: 'Cancel',
+    moveWorking: 'Copying the data…',
+    moveRestarting: 'Restarting the app…',
+    moveFrom: 'Now',
+    moveTo: 'New',
+    moveErrNotAbsolute: 'Pick an absolute path.',
+    moveErrSame: 'That is the location already in use.',
+    moveErrNested: 'The new directory cannot be inside the current one, or above it.',
+    moveErrNotEmpty: 'That directory already holds something else — pick an empty one so the two never mix.',
+    moveErrFailed: 'The move failed; the data is still where it was.',
   };
   const KEY = {
     autoCheck: 'neo-dsh.update.autoCheck',
@@ -141,6 +183,14 @@
   }
   .dsk-bar > i { display: block; height: 100%; background: var(--dsw-alias-brand-primary, #4d6bfe); transition: width .3s; }
   .dsk-err { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-error, #d94a4a); }
+  /* Paths are long and have no spaces to break at, so let them wrap anywhere. */
+  .dsk-path {
+    font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary, #6b7280);
+    word-break: break-all;
+  }
+  .dsk-note { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8b8f97); }
+  .dsk-dialog .dsk-dialog-path { display: flex; flex-direction: column; gap: 4px; margin: 0 0 16px; }
+  .dsk-dialog .dsk-dialog-path .dsk-desc { padding-right: 0; }
   .dsk-overlay { position: fixed; inset: 0; z-index: 9998; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.38); }
   .dsk-dialog {
     width: min(420px, calc(100vw - 48px)); border-radius: 14px; padding: 18px 20px;
@@ -216,6 +266,28 @@
     if (phase === 'installing') return `${t('installing')} v${state.version}`;
     if (phase === 'error') return `${t('failed')}：${state.message ?? ''}`;
     return '';
+  }
+
+  /** The shell's relocation failure codes, in the reader's language. */
+  const DATA_ERROR_KEYS = {
+    'not-absolute': 'moveErrNotAbsolute',
+    'same-path': 'moveErrSame',
+    'nested-path': 'moveErrNested',
+    'target-not-empty': 'moveErrNotEmpty',
+    failed: 'moveErrFailed',
+  }
+
+  /**
+   * Turn a relocation failure code into a sentence. Pure, so the test can drive it.
+   * @param code - the shell's `error` field.
+   * @param t - locale lookup.
+   * @returns the text to show, or '' when there is nothing to say.
+   */
+  function dataErrorText(code, t) {
+    if (code === undefined || code === null || code === '') return ''
+    const key = DATA_ERROR_KEYS[code]
+    // An unknown code is a bug, but showing the code beats showing nothing.
+    return key === undefined ? String(code) : t(key)
   }
 
   /**
@@ -409,11 +481,105 @@
               }, native ? t('frameNative') : t('frameBorderless')))));
       }
 
+      /**
+       * Where the harness data lives, and how to move it somewhere else.
+       *
+       * The data home is resolved before any window exists, so switching it needs a
+       * new process: the shell copies (or moves) the directory, records the choice
+       * and relaunches — this row only proposes a folder and shows the progress.
+       */
+      function DataLocationRow() {
+        const info = (typeof window !== 'undefined' && window.__NEO_DSH__) || undefined;
+        const [proposal, setProposal] = react.useState(null);
+        const [phase, setPhase] = react.useState('idle');
+        const [error, setError] = react.useState('');
+
+        // The shell reports the folder chooser's answer, and the relocation's
+        // progress, through here.
+        react.useEffect(() => {
+          if (typeof window === 'undefined') return undefined;
+          const previous = window.__NEO_DSH_CHOOSE__;
+          window.__NEO_DSH_CHOOSE__ = (next) => {
+            if (next === undefined || next === null || next.key !== 'dataHome') return;
+            if (next.phase === 'moving' || next.phase === 'restarting') {
+              setProposal(null); setError(''); setPhase(next.phase); return;
+            }
+            if (next.error) { setProposal(null); setError(dataErrorText(next.error, t)); setPhase('idle'); return; }
+            if (next.canceled) return;
+            if (typeof next.path === 'string' && next.path !== '') { setError(''); setProposal(next.path); }
+          };
+          return () => { window.__NEO_DSH_CHOOSE__ = previous; };
+        }, []);
+
+        if (info === undefined || typeof info.homePath !== 'string' || info.dataMoves !== true) return null;
+        // DSH_HOME outranks the settings row, so offering a change there would lie.
+        const pinned = info.homeSource === 'env';
+        const sourceLabel = pinned ? t('dataSourceEnv')
+          : info.homeSource === 'configured' ? t('dataSourceConfigured') : t('dataSourceDefault');
+        const status = phase === 'moving' ? t('moveWorking')
+          : phase === 'restarting' ? t('moveRestarting') : sourceLabel;
+
+        const submit = (kind) => {
+          setProposal(null); setError(''); setPhase('moving');
+          location.href = `${info.setPath ?? '/__dsh_desktop_set'}?key=dataHome`
+            + `&value=${encodeURIComponent(proposal)}&mode=${kind}`;
+        };
+
+        const modal = proposal === null ? null : react.createElement('div', {
+          className: 'dsk-overlay', onClick: () => setProposal(null),
+        }, react.createElement('div', { className: 'dsk-dialog', onClick: (event) => event.stopPropagation() }, [
+          react.createElement('h3', { key: 'title' }, t('moveTitle')),
+          react.createElement('p', { key: 'body' }, t('moveBody')),
+          react.createElement('div', { className: 'dsk-dialog-path', key: 'paths' }, [
+            react.createElement('div', { className: 'dsk-desc', key: 'from' }, `${t('moveFrom')}：${info.homePath}`),
+            react.createElement('div', { className: 'dsk-path', key: 'to' }, `${t('moveTo')}：${proposal}`),
+          ]),
+          react.createElement('div', { className: 'dsk-dialog-actions', key: 'actions' }, [
+            react.createElement('button', {
+              key: 'cancel', type: 'button', className: 'dsk-btn', onClick: () => setProposal(null),
+            }, t('moveCancel')),
+            react.createElement('button', {
+              key: 'move', type: 'button', className: 'dsk-btn', onClick: () => submit('move'),
+            }, t('moveMove')),
+            react.createElement('button', {
+              key: 'copy', type: 'button', className: 'dsk-btn dsk-primary', onClick: () => submit('copy'),
+            }, t('moveCopy')),
+          ]),
+        ]));
+
+        return react.createElement('div', { id: 'dsh-data-location', className: 'dsk-row' }, [
+          react.createElement('div', { className: 'dsk-main', key: 'main' }, [
+            react.createElement('div', { className: 'dsk-text', key: 'text' }, [
+              react.createElement('div', { className: 'dsk-title', key: 'title' }, t('dataTitle')),
+              react.createElement('div', { className: 'dsk-desc', key: 'desc' }, `${t('dataDesc')} · ${status}`),
+              react.createElement('div', { className: 'dsk-path', key: 'path', title: info.homePath }, info.homePath),
+              info.homeSource === 'configured' ? react.createElement('div', { className: 'dsk-note', key: 'cli' }, t('dataCliNote')) : null,
+              error === '' ? null : react.createElement('div', { className: 'dsk-err', key: 'err' }, error),
+            ]),
+            react.createElement('div', { className: 'dsk-actions', key: 'actions' },
+              react.createElement('button', {
+                type: 'button', className: 'dsk-btn', disabled: pinned || phase !== 'idle',
+                onClick: () => {
+                  setError(''); setPhase('idle');
+                  location.href = `${info.choosePath ?? '/__dsh_desktop_choose'}?key=dataHome`;
+                },
+              }, t('dataChange'))),
+          ]),
+          modal,
+        ]);
+      }
+
       const entry = {
         name: 'settings.general.item',
         id: 'neo-dsh-desktop',
         order: 40,
         label: () => t('title'),
+      };
+      const dataEntry = {
+        name: 'settings.general.item',
+        id: 'neo-dsh-data-location',
+        order: 42,
+        label: () => t('dataTitle'),
       };
       const frameEntry = {
         name: 'settings.general.item',
@@ -421,7 +587,7 @@
         order: 41,
         label: () => t('frameTitle'),
       };
-      if (localeReady) { entry.locale = NS; frameEntry.locale = NS; }
+      if (localeReady) { entry.locale = NS; frameEntry.locale = NS; dataEntry.locale = NS; }
       ctx.effect(
         () => slots.inject('settings.general.item', () => slots.register(entry, DesktopSettingsRow)),
         'dsh-desktop-settings: settings row',
@@ -429,6 +595,10 @@
       ctx.effect(
         () => slots.inject('settings.general.item', () => slots.register(frameEntry, WindowFrameRow)),
         'dsh-desktop-settings: window frame row',
+      );
+      ctx.effect(
+        () => slots.inject('settings.general.item', () => slots.register(dataEntry, DataLocationRow)),
+        'dsh-desktop-settings: data location row',
       );
     };
   }
@@ -454,6 +624,6 @@
 
   // Node-side export for the unit test; the browser never defines `module` here.
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { statusText, LOCALE_ZH, LOCALE_EN };
+    module.exports = { statusText, dataErrorText, LOCALE_ZH, LOCALE_EN };
   }
 })();

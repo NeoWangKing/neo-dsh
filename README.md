@@ -102,6 +102,20 @@ DSH_DESKTOP_UPDATE_SMOKE=download <packaged binary>
 
 The window is borderless by default: a tiling compositor moves it (niri: Mod+drag) and the UI draws its own chrome. If your desktop expects a real title bar — no modifier to drag, and a close button — tick **Use the system title bar** in Settings → General. The shell stores the choice in `$DSH_HOME/desktop-preferences.json` and rebuilds the window immediately, so no restart is needed. macOS and Windows always use the native frame: a borderless window there has no traffic lights, minimise/close buttons, or anything to drag it by.
 
+### Data location
+
+Conversations, attachments, credentials and settings live in the app's **own** directory — not in the shared `~/.dsh` it used to write to:
+
+| Platform | Default |
+| --- | --- |
+| Linux | `$XDG_DATA_HOME/neo-dsh` (usually `~/.local/share/neo-dsh`) |
+| macOS | `~/Library/Application Support/neo-dsh` |
+| Windows | `%APPDATA%\neo-dsh` |
+
+On the first launch in that directory the app **copies** the user data over from `~/.dsh` (sessions, storages, attachments, profiles, the model cache, presets, `settings.yaml`, `.credentials.yaml`, `.anonymous-user-id`, window preferences) and writes a `.migrated-from-dsh-home.json` marker, so it happens once. The old directory is left untouched: a harness CLI pointed at it keeps working, it just stops seeing the conversations the app creates from then on.
+
+Settings → General → **Data location** shows where the data is and why (default, chosen, or forced by `DSH_HOME`), and moves it: pick a folder — it has to be empty — and choose *copy and switch* (keeps the old directory as a backup) or *move and switch* (deletes only what was copied; logs stay behind). The app restarts into the new location. The choice is recorded in `desktop-config.json` in Electron's user-data directory (not inside the data directory, which it could not describe) — delete the file, or clear its `dataHome`, to fall back to the default. `DSH_HOME` outranks it.
+
 ## Operating it
 
 | Task | How |
@@ -109,7 +123,7 @@ The window is borderless by default: a tiling compositor moves it (niri: Mod+dra
 | Change the harness version | `pnpm --dir apps/desktop add @deepseek-ai/dsh@<version> && node scripts/sync-peers.mjs`, then rebuild |
 | Change the shipped profile | edit `apps/desktop/resources/profile-web/package.json` (`dsh.profile.bundles`), re-run `build-resources`, rebuild |
 | Ship another plugin | drop it in `plugins/`, add it to `build-resources.mjs`, list it in the profile's bundles |
-| Use my own state | the app reads `$DSH_HOME`; set it to keep this suite's state away from the CLI's `~/.dsh` |
+| Use a different state directory | Settings → General → Data location, or `DSH_HOME` (a development override that outranks the stored choice) |
 | Check the generated dependency list | `node scripts/sync-peers.mjs --check` (CI fails when a harness bump adds a peer) |
 | Skip seeding | `DSH_DESKTOP_NO_SEED=1` |
 | Other port | `DSH_DESKTOP_PORT=3198` |
@@ -120,7 +134,7 @@ The window is borderless by default: a tiling compositor moves it (niri: Mod+dra
 
 - **Unsigned builds** — see above.
 - **Size** — roughly 650 MB unpacked / 250–350 MB per installer: Electron, the whole harness dependency tree, and a 125 MB Node runtime. The runtime is the price of not asking users to install Node.
-- **No auto-update.** Updating means installing a newer artifact.
+- **The `dsh` CLI still uses `~/.dsh`.** After the data moves, the CLI manages the old directory; repoint its wrapper if you want the two to share.
 - **The profile only seeds once.** An existing `$DSH_HOME/profiles/web` is left alone, including its plugin set.
 
 ## Repository layout of the automation

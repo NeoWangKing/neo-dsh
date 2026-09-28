@@ -7,11 +7,14 @@
 #   DSH_DEV_KEEP_HOME=1 bash scripts/dev-window.sh   # reuse the previous home
 #
 # Three things are isolated on purpose:
-#   * $DSH_HOME      a temporary copy of settings/credentials/sessions, so the dev
-#                    window looks like the real app but anything it writes stays
-#                    in /tmp (never a symlink: the harness writes to these files)
-#   * --user-data-dir  its own Electron profile; sharing the real one would fight
-#                    the running app over Chromium's SingletonLock
+#   * --user-data-dir  its own Electron profile. That directory also holds the
+#                    app's data-location pointer, so the dev shell is pointed at
+#                    /tmp without touching the real app's config — and the settings
+#                    row under test can move it around freely.
+#   * the home         /tmp/neo-dev-home, filled on first run by the app's own
+#                    migration (the same code path an installed build runs), so the
+#                    dev window shows your conversations;
+#                    anything it writes stays in /tmp
 #   * DSH_DESKTOP_PORT a spare loopback port; 3081 belongs to the running app, and
 #                    two hosts must never share one session store
 #
@@ -58,13 +61,17 @@ if [ "${DSH_DEV_KEEP_HOME:-0}" != "1" ]; then
   rm -rf "$DEV_HOME" "$DEV_PROFILE"
 fi
 mkdir -p "$DEV_HOME"
-for item in settings.yaml .credentials.yaml sessions storages attachments .agent-presets; do
-  if [ -e "$REAL_HOME/$item" ] && [ ! -e "$DEV_HOME/$item" ]; then
-    cp -a "$REAL_HOME/$item" "$DEV_HOME/$item"
-  fi
-done
 
-echo "dev window: DSH_HOME=$DEV_HOME  port=$PORT  userData=$DEV_PROFILE"
-echo "            (a copy of $REAL_HOME — changes here stay in /tmp)"
-exec env DSH_HOME="$DEV_HOME" DSH_DESKTOP_PORT="$PORT" \
+# Point the dev shell at the throwaway home through the app's own preference file
+# (the same one Settings → General → data location writes), not through DSH_HOME:
+# that way the dev window exercises the real resolution order instead of the
+# development override.
+mkdir -p "$DEV_PROFILE"
+printf '{\n  "dataHome": %s\n}\n' "$(node -e 'console.log(JSON.stringify(process.argv[1]))' "$DEV_HOME")" \
+  > "$DEV_PROFILE/desktop-config.json"
+
+echo "dev window: data home=$DEV_HOME  port=$PORT  userData=$DEV_PROFILE"
+echo "            (fresh home: the app migrates your conversations in on first run,"
+echo "             exactly like an installed build would — nothing here touches $REAL_HOME)"
+exec env DSH_DESKTOP_PORT="$PORT" DSH_DESKTOP_FORCE_BUNDLED=1 \
   apps/desktop/node_modules/.bin/electron apps/desktop --user-data-dir="$DEV_PROFILE"

@@ -27,7 +27,7 @@ dsh plugin --profile web add link:~/Projects/neo-dsh/plugins/activity-line
 
 ### 用一个 dev 窗口看改动
 
-`scripts/dev-window.sh` 会**直接从这份代码仓库**起一个真窗口，不碰安装版、也不碰你正在用的应用：它把你的 `settings.yaml`、凭证、会话、preset **复制**到临时 `$DSH_HOME`，给 Electron 单独的 `--user-data-dir`（共用真的那个会和正在跑的应用抢 Chromium 的 SingletonLock），并监听一个空闲的本地端口。
+`scripts/dev-window.sh` 会**直接从这份代码仓库**起一个真窗口，不碰安装版、也不碰你正在用的应用。它给 Electron 单独的 `--user-data-dir`（共用真的那个会和正在跑的应用抢 Chromium 的 SingletonLock）；数据目录则通过这个 profile 自己的 `desktop-config.json` 指到 `/tmp/neo-dev-home`——也就是「设置 → 通用 → 数据位置」写的那份文件，所以 dev 窗口走的是真实的位置解析顺序，而不是 `DSH_HOME` 这个开发覆盖项；端口用一个空闲的本地端口。`/tmp` 里的 home 一开始是空的，由应用自己的「从 `~/.dsh` 迁移」逻辑在首次启动时填上——和安装版跑的是同一条代码路径。`DSH_DESKTOP_FORCE_BUNDLED=1`（脚本会设）会让随包插件在版本号没变时也重新复制一份，所以改完 `plugins/*/client.js` 不用改版本号就能在 dev 窗口看到。
 
 ```sh
 pnpm run test                    # 秒级，先过逻辑
@@ -89,12 +89,14 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 
 | 变量 | 作用 |
 | --- | --- |
-| `DSH_HOME` | harness home（默认 `~/.dsh`）——会话、设置、凭证、profile |
+| `DSH_HOME` | harness home。优先级高于「设置 → 通用 → 数据位置」，后者又高于平台默认（Linux 是 `~/.local/share/neo-dsh`）。开发用逃生舱 |
 | `DSH_DESKTOP_PORT` | 固定的 host 端口（默认 3081）。别改来改去：origin 里包含端口 |
 | `DSH_NODE` | 跑 host 用的 Node（打包时默认是内嵌运行时） |
 | `DSH_DESKTOP_DSH_BIN` | 用另一个 harness 构建作为 host |
 | `DSH_DESKTOP_DEVTOOLS` | `1` 启动时打开 DevTools |
 | `DSH_DESKTOP_NO_SEED` | `1` 跳过播种随包的 profile/preset/设置 |
+| `DSH_DESKTOP_NO_MIGRATE` | `1` 不把已存在的 `~/.dsh` 搬进新 home |
+| `DSH_DESKTOP_FORCE_BUNDLED` | `1` 版本号没变也重新复制随包插件（dev 窗口用） |
 | `DSH_DESKTOP_MIN_WIDTH` / `_HEIGHT` | 可选的窗口下限（不设＝没有下限） |
 | `DSH_DESKTOP_SMOKE` | `1` 启动→报告→退出；`_SMOKE_CRASH=1` 额外测试渲染进程自恢复 |
 

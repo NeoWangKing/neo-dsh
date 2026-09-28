@@ -32,10 +32,16 @@ packaged runtime deliberately ships no npm/npx of its own.
 ### Look at a change in a dev window
 
 `scripts/dev-window.sh` boots this checkout in a real window without touching the
-install or the app that is already running: it copies your `settings.yaml`,
-credentials, sessions and preset into a temporary `$DSH_HOME`, gives Electron its
-own `--user-data-dir` (sharing the real one fights the running app over Chromium's
-SingletonLock) and serves on a spare loopback port.
+install or the app that is already running. It gives Electron its own
+`--user-data-dir` (sharing the real one fights the running app over Chromium's
+SingletonLock), points the data home at `/tmp/neo-dev-home` through that profile's
+own `desktop-config.json` — the same file Settings → General → Data location writes,
+so the dev window exercises the real resolution order instead of the `DSH_HOME`
+override — and serves on a spare loopback port. The `/tmp` home starts empty and is
+filled on first launch by the app's own `~/.dsh` migration, the same code path an
+installed build runs. `DSH_DESKTOP_FORCE_BUNDLED=1` (which the script sets) re-copies
+the bundled plugins even when the version did not change, so an edit to
+`plugins/*/client.js` shows up in the dev window without a version bump.
 
 ```sh
 pnpm run test                    # seconds — catches the logic
@@ -116,12 +122,14 @@ of self-modification: seeing your own composition.
 
 | Variable | Effect |
 | --- | --- |
-| `DSH_HOME` | harness home (default `~/.dsh`) — sessions, settings, credentials, profiles |
+| `DSH_HOME` | harness home. Outranks Settings → General → Data location, which outranks the platform default (`~/.local/share/neo-dsh` on Linux). Development escape hatch |
 | `DSH_DESKTOP_PORT` | fixed host port (default 3081). Keep it stable: the origin includes the port |
 | `DSH_NODE` | Node used for the host (default: the bundled runtime when packaged) |
 | `DSH_DESKTOP_DSH_BIN` | run a different harness build as the host |
 | `DSH_DESKTOP_DEVTOOLS` | `1` opens DevTools on launch |
 | `DSH_DESKTOP_NO_SEED` | `1` skips seeding the shipped profile/preset/settings |
+| `DSH_DESKTOP_NO_MIGRATE` | `1` skips carrying an existing `~/.dsh` into a fresh home |
+| `DSH_DESKTOP_FORCE_BUNDLED` | `1` re-copies the bundled plugins even at the same version (dev window) |
 | `DSH_DESKTOP_MIN_WIDTH` / `_HEIGHT` | optional window floor (unset = no floor) |
 | `DSH_DESKTOP_SMOKE` | `1` boots, reports, exits; `_SMOKE_CRASH=1` also tests renderer recovery |
 
