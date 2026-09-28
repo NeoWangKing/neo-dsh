@@ -56,6 +56,48 @@ find that out. Starting the script again stops the previous run first; its host
 shows up only as the process holding the port, so killing the shell alone leaves
 it behind and the next launch dies with EADDRINUSE.
 
+### Each front end has its own data directory
+
+Since 0.1.12 the desktop app keeps its own data directory (see README, *Data
+location*). On Linux the terminal `dsh` (TUI / headless / plugin management) is
+started by `~/.local/bin/dsh`, and that wrapper sets its `DSH_HOME` to
+`${XDG_DATA_HOME:-~/.local/share}/dsh-tui`: **the two front ends keep separate
+sessions, credentials and settings, and neither writes the other's session store**
+— two hosts on one home corrupt session logs, which this machine has already paid
+for. With no subcommand the wrapper adds `--profile dsh-tui`, so plain `dsh` is the
+TUI; an explicit `--profile` and subcommands like `plugin` pass through untouched.
+
+Plugin sets are divided by **profile, not by home**, so "GUI plugins are useless in
+the TUI" needs no sync mechanism of its own:
+
+| profile | used by | contents |
+| --- | --- | --- |
+| `web` | the desktop app | `dsh-base` + `dsh-web-app` + the bundled plugins |
+| `dsh-tui` | the terminal TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
+| `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
+
+To install a plugin for the **desktop app**, point the command at the app's home:
+
+```sh
+DSH_HOME=$(pnpm run --silent app-home) dsh plugin --profile web list
+DSH_HOME=$(pnpm run --silent app-home) dsh plugin --profile web add link:/path/to/plugin
+```
+
+`pnpm run app-home` prints the directory the app actually uses (it reads the app's
+own location config, so it follows Settings → Data location). A plugin that belongs
+in both front ends has to be installed twice, once per home, with that home's
+profile name.
+
+**A trap: a profile without `patchReload` defaults to `live`, which needs the Cordis
+HMR service that the packaged runtime deliberately does not ship** — so `dsh
+--profile …` exits with `user patch-layer watching requires the Cordis HMR
+service`. The shipped `web` / `headless` profiles set `"patchReload": "startup"`;
+profiles the harness created itself (an early `dsh-tui`, say) do not, and need:
+
+```json
+"dsh": { "profile": { "bundles": ["…"], "patchReload": "startup" } }
+```
+
 ### Debug the UI while you work
 
 ```sh

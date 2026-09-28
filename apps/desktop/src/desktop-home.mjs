@@ -82,6 +82,28 @@ export function defaultHome(platform, env = {}, home = homedir()) {
 }
 
 /**
+ * Electron's own per-user directory for this app (`app.getPath('userData')`),
+ * computed without Electron so scripts and tests can find the config file that
+ * records the chosen data location.
+ *
+ * The name is the package name, which is what Electron uses by default; only a
+ * `--user-data-dir` switch (the dev window) changes it at runtime.
+ *
+ * @param platform - `process.platform`.
+ * @param env - environment (honours XDG_CONFIG_HOME / APPDATA).
+ * @param home - user's home directory.
+ * @returns the default userData directory.
+ */
+export function defaultUserDataDir(platform, env = {}, home = homedir()) {
+  const name = 'neo-dsh-desktop'
+  if (platform === 'darwin') return join(home, 'Library', 'Application Support', name)
+  if (platform === 'win32') {
+    return win32.join(env.APPDATA ?? win32.join(home, 'AppData', 'Roaming'), name)
+  }
+  return join(env.XDG_CONFIG_HOME ?? join(home, '.config'), name)
+}
+
+/**
  * What is worth carrying over from the old home: conversations and everything that
  * makes them usable (workspace registry, attachments), plus the user's settings,
  * credentials, presets and installed profile. Caches and logs are left behind.
@@ -129,6 +151,8 @@ export function migrateHome(options) {
     to,
     copy = (source, target) => cpSync(source, target, { recursive: true, errorOnExist: false }),
     exists = existsSync,
+    lstat = lstatSync,
+    readdir = (dir) => readdirSync(dir, { withFileTypes: true }),
     chmod = chmodSync,
     write = writeFileSync,
     mkdir = mkdirSync,
@@ -145,6 +169,8 @@ export function migrateHome(options) {
 
   mkdir(to, { recursive: true })
   const migrated = []
+  // One whole-item copy per absent entry: it is a single recursive copy, and the
+  // normal case (an empty new home) is the one that has to be fast.
   for (const item of plan.items) {
     try {
       copy(join(from, item), join(to, item))
@@ -155,13 +181,25 @@ export function migrateHome(options) {
       log(`home: could not carry over ${item}: ${String(error?.message ?? error)}`)
     }
   }
-  restrictPrivateItems(plan.items, to, { chmod, exists, log })
+  // An entry the new home already had is walked file by file: it may have been
+  // created by something else before this app ever ran (a CLI command pointed at
+  // this home, a leftover), and skipping the whole entry would silently drop
+  // everything inside it — including the user's plugin set.
+  const shared = MIGRATION_ITEMS.filter((item) => exists(join(from, item)) && exists(join(to, item)))
+  const added = carryMissing({
+    from, to, items: shared, exists, lstat, readdir, copy, mkdir, log,
+  })
+  restrictPrivateItems(MIGRATION_ITEMS, to, { chmod, exists, log })
   write(
     join(to, MIGRATION_MARKER),
     `${JSON.stringify({ from, at: now().toISOString(), version, items: migrated }, null, 2)}\n`,
   )
+  const carried = topLevelItems(added).filter((name) => !migrated.includes(name))
   log(`home: migrated ${migrated.length} item(s) from ${from} → ${to}: ${migrated.join(', ')}`)
-  return { migrated, from }
+  if (added.length > 0) {
+    log(`home: carried ${added.length} more file(s) into entries this home already had: ${carried.join(', ')}`)
+  }
+  return { migrated: [...migrated, ...carried], added, from }
 }
 
 // ---- where the user put the data ------------------------------------------
@@ -387,8 +425,75 @@ export function readMigrationMarker(to, { read = readFileSync, exists = existsSy
   }
 }
 
+/** The top-level names behind a list of paths relative to the home. */
+function topLevelItems(paths) {
+  const names = new Set()
+  for (const entry of paths) names.add(String(entry).split(/[\\/]/)[0])
+  return [...names].sort()
+}
+
 /**
- * Copy everything in the old home this home does not have yet, then stamp the
+ * Copy every file under `items` that the destination does not have yet.
+ *
+ * The one primitive behind both the first migration and the per-update merge:
+ * it only ever reads the source, and never overwrites a file that exists — a name
+ * that is already in the destination is the live one. Directories are created as
+ * needed, symlinks are copied as symlinks.
+ *
+ * @param options - `from`, `to`, `items`, injectable fs seams and `log`.
+ * @returns the paths it copied, relative to `from`.
+ */
+function carryMissing(options) {
+  const {
+    from,
+    to,
+    items,
+    exists = existsSync,
+    lstat = lstatSync,
+    readdir = (dir) => readdirSync(dir, { withFileTypes: true }),
+    copy = (source, target) => cpSync(source, target, { recursive: true, errorOnExist: false, force: false }),
+    mkdir = mkdirSync,
+    log = () => {},
+  } = options
+
+  const added = []
+  const walk = (source, target) => {
+    let stat
+    try {
+      stat = lstat(source)
+    } catch (error) {
+      if (error?.code !== 'ENOENT') log(`home: could not read ${source}: ${String(error?.message ?? error)}`)
+      return
+    }
+    if (stat.isDirectory()) {
+      mkdir(target, { recursive: true })
+      let entries
+      try {
+        entries = readdir(source)
+      } catch (error) {
+        log(`home: could not list ${source}: ${String(error?.message ?? error)}`)
+        return
+      }
+      for (const entry of entries) {
+        const name = typeof entry === 'string' ? entry : entry.name
+        walk(join(source, name), join(target, name))
+      }
+      return
+    }
+    if (exists(target)) return
+    try {
+      copy(source, target)
+      added.push(relative(from, source))
+    } catch (error) {
+      log(`home: could not carry over ${source}: ${String(error?.message ?? error)}`)
+    }
+  }
+
+  for (const item of items) walk(join(from, item), join(to, item))
+  return added
+}
+
+/** Copy everything in the old home this home does not have yet, then stamp the
  * marker with the version that did it.
  *
  * Runs when the app version changed since the last sync, so an update still finds
@@ -426,40 +531,7 @@ export function mergeHome(options) {
     return { added: [], reason: 'no previous home' }
   }
 
-  const added = []
-  const walk = (source, target) => {
-    let stat
-    try {
-      stat = lstat(source)
-    } catch (error) {
-      if (error?.code !== 'ENOENT') log(`home: could not read ${source}: ${String(error?.message ?? error)}`)
-      return
-    }
-    if (stat.isDirectory()) {
-      mkdir(target, { recursive: true })
-      let entries
-      try {
-        entries = readdir(source)
-      } catch (error) {
-        log(`home: could not list ${source}: ${String(error?.message ?? error)}`)
-        return
-      }
-      for (const entry of entries) {
-        const name = typeof entry === 'string' ? entry : entry.name
-        walk(join(source, name), join(target, name))
-      }
-      return
-    }
-    if (exists(target)) return
-    try {
-      copy(source, target)
-      added.push(relative(from, source))
-    } catch (error) {
-      log(`home: could not carry over ${source}: ${String(error?.message ?? error)}`)
-    }
-  }
-
-  for (const item of items) walk(join(from, item), join(to, item))
+  const added = carryMissing({ from, to, items, exists, lstat, readdir, copy, mkdir, log })
   restrictPrivateItems(items, to, { chmod, exists, log })
 
   const marker = readMigrationMarker(to, { read, exists })

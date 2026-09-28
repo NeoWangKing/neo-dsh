@@ -34,7 +34,8 @@ import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
 import {
-  defaultHome, legacyHome, moveHome, relocationPlan, resolveHome, syncHome, writeDataHome,
+  defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
+  writeDataHome,
 } from './desktop-home.mjs'
 
 const require = createRequire(import.meta.url)
@@ -47,15 +48,9 @@ function userDataDir() {
   try {
     return app.getPath('userData')
   } catch {
-    // Only reachable if getPath failed; the per-platform config directory is still
-    // better than refusing to start.
-    if (process.platform === 'win32') {
-      return join(process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), 'neo-dsh-desktop')
-    }
-    if (process.platform === 'darwin') {
-      return join(homedir(), 'Library', 'Application Support', 'neo-dsh-desktop')
-    }
-    return join(process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'), 'neo-dsh-desktop')
+    // Only reachable if getPath failed; the computed default is still better than
+    // refusing to start, and it is the same path scripts/app-home.mjs reads.
+    return defaultUserDataDir(process.platform, process.env)
   }
 }
 

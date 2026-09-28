@@ -7,7 +7,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
-  defaultHome, legacyHome, migrateHome, migrationPlan, MIGRATION_ITEMS, MIGRATION_MARKER,
+  defaultHome, defaultUserDataDir, legacyHome, migrateHome, migrationPlan, MIGRATION_ITEMS,
+  MIGRATION_MARKER,
   MOVE_SKIP, MOVED_MARKER, MERGE_ITEMS, isEffectivelyEmpty, mergeHome, moveHome, pathRelation,
   readDataHome, readMigrationMarker, relocationPlan, resolveHome, syncHome, writeDataHome,
 } from '../src/desktop-home.mjs'
@@ -26,6 +27,9 @@ check('macOS 落在 Application Support', defaultHome('darwin', {}, '/Users/u'),
 check('Windows 落在 %APPDATA%', defaultHome('win32', { APPDATA: 'C:\\Users\\u\\AppData\\Roaming' }, 'C:\\Users\\u'), 'C:\\Users\\u\\AppData\\Roaming\\neo-dsh')
 check('Windows 没有 APPDATA 时退回 AppData/Roaming', defaultHome('win32', {}, 'C:\\Users\\u'), 'C:\\Users\\u\\AppData\\Roaming\\neo-dsh')
 check('旧位置是 ~/.dsh', legacyHome('/home/u'), '/home/u/.dsh')
+check('Electron 的 userData（脚本要和外壳读到同一份配置）Linux', defaultUserDataDir('linux', {}, '/home/u'), '/home/u/.config/neo-dsh-desktop')
+check('  … macOS', defaultUserDataDir('darwin', {}, '/Users/u'), '/Users/u/Library/Application Support/neo-dsh-desktop')
+check('  … Windows', defaultUserDataDir('win32', {}, 'C:\\Users\\u'), 'C:\\Users\\u\\AppData\\Roaming\\neo-dsh-desktop')
 
 // ---- what the plan decides ----------------------------------------------
 const base = { from: '/old/.dsh', to: '/new/neo-dsh' }
@@ -54,6 +58,34 @@ check('缓存目录没有被搬（caches are rebuilt）', report.migrated.includ
 const second = migrateHome({ from, to })
 check('第二次启动不再迁移（标记生效）', [second.migrated, second.reason], [[], 'already migrated'])
 check('标记文件记录了来源', JSON.parse(readFileSync(join(to, MIGRATION_MARKER), 'utf8')).from, from)
+
+// ---- a home that already has (empty) entries still gets filled ------------
+// Anything can have created the new home before the app ever ran — a `dsh` command
+// pointed at it, a leftover of an earlier attempt. Skipping a whole entry because
+// the name exists would then silently drop everything inside it.
+const preOld = join(root, 'pre', '.dsh')
+const preNew = join(root, 'pre', 'neo-dsh')
+mkdirSync(join(preOld, 'sessions'), { recursive: true })
+writeFileSync(join(preOld, 'sessions', 'a.jsonl.zstd'), 'a')
+mkdirSync(join(preOld, 'profiles', 'web'), { recursive: true })
+writeFileSync(join(preOld, 'profiles', 'web', 'package.json'), '{"name":"dsh-profile-web"}')
+mkdirSync(join(preNew, 'sessions'), { recursive: true })
+mkdirSync(join(preNew, 'profiles', 'web'), { recursive: true })
+const preReport = migrateHome({ from: preOld, to: preNew })
+check('新 home 已有同名条目 → 里面的文件照样补齐', [
+  readFileSync(join(preNew, 'sessions', 'a.jsonl.zstd'), 'utf8'),
+  readFileSync(join(preNew, 'profiles', 'web', 'package.json'), 'utf8'),
+], ['a', '{"name":"dsh-profile-web"}'])
+check('补齐的条目会计入报告', preReport.migrated.slice().sort(), ['profiles', 'sessions'])
+
+const preKept = join(root, 'pre2', '.dsh')
+const preKeptNew = join(root, 'pre2', 'neo-dsh')
+mkdirSync(join(preKept, 'sessions'), { recursive: true })
+writeFileSync(join(preKept, 'sessions', 'mine.jsonl.zstd'), 'from-the-old-home')
+mkdirSync(join(preKeptNew, 'sessions'), { recursive: true })
+writeFileSync(join(preKeptNew, 'sessions', 'mine.jsonl.zstd'), 'already-here')
+migrateHome({ from: preKept, to: preKeptNew })
+check('同名文件绝不被覆盖', readFileSync(join(preKeptNew, 'sessions', 'mine.jsonl.zstd'), 'utf8'), 'already-here')
 
 // ---- the user picks the location -----------------------------------------
 const cfg = join(root, 'userData')

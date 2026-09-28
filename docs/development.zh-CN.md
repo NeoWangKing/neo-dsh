@@ -36,6 +36,33 @@ bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离�
 
 界面类的改动物测不出来：按钮白底白字、窗口被重建时顺手退出、某一行渲染错了位置——单测都看不见，靠"发出去让别人截图"来发现又太慢。再跑一次脚本会先清掉上一次：**它的 host 只以"占着端口"的形式存在**，只杀 shell 会把它留下来，下次启动就会死在 EADDRINUSE。
 
+### 前端各有一套数据目录
+
+0.1.12 起桌面应用有自己的数据目录（见 README「数据位置」）。终端里的 `dsh`（TUI / headless / 插件管理）在 Linux 上由 `~/.local/bin/dsh` 启动，那个 wrapper 把它的 `DSH_HOME` 设到 `${XDG_DATA_HOME:-~/.local/share}/dsh-tui`：**两个前端各自一套会话、凭证和设置，谁都不会写对方的会话库**——同时跑两个 host 共用一份 home 会损坏会话日志，这件事仓库里已经踩过。wrapper 在没给子命令时会补上 `--profile dsh-tui`，所以直接敲 `dsh` 就是 TUI；显式 `--profile` 和 `plugin` 这类子命令原样透传。
+
+插件集**按 profile 分，不按 home 分**，所以"GUI 插件在 TUI 里没用"不需要额外的同步机制：
+
+| profile | 谁在用 | 内容 |
+| --- | --- | --- |
+| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包插件（activity-line、desktop-settings、dshmarket） |
+| `dsh-tui` | 终端 TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
+| `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
+
+要给**桌面端**装插件，把命令指向 app 的 home：
+
+```sh
+DSH_HOME=$(pnpm run --silent app-home) dsh plugin --profile web list
+DSH_HOME=$(pnpm run --silent app-home) dsh plugin --profile web add link:/path/to/plugin
+```
+
+`pnpm run app-home` 打印的就是应用真正在用的目录（读的是 app 自己那份位置配置，所以在「设置 → 数据位置」改过之后它也跟着变）。要让一个插件两边都有，就在两个 home 里各装一次、各用对应的 profile 名。
+
+**一个坑：profile 没写 `patchReload` 时默认是 `live`，而它需要 Cordis HMR 服务，打包版又故意不含 HMR** —— 于是 `dsh --profile …` 会直接以 `user patch-layer watching requires the Cordis HMR service` 退出。随包的 `web` / `headless` profile 写的是 `"patchReload": "startup"`；由 harness 自己新建的 profile（例如早期的 `dsh-tui`）没有这一项，要手动补：
+
+```json
+"dsh": { "profile": { "bundles": ["…"], "patchReload": "startup" } }
+```
+
 ### 改 UI 时要看控制台
 
 ```sh
