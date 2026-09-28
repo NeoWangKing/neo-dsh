@@ -39,7 +39,8 @@ own `desktop-config.json` — the same file Settings → General → Data locati
 so the dev window exercises the real resolution order instead of the `DSH_HOME`
 override — and serves on a spare loopback port. The `/tmp` home starts empty and is
 filled on first launch by the app's own `~/.dsh` migration, the same code path an
-installed build runs. `DSH_DESKTOP_FORCE_BUNDLED=1` (which the script sets) re-copies
+installed build runs (bump `apps/desktop/package.json` to watch the version-gated
+merge, which re-runs on every version change). `DSH_DESKTOP_FORCE_BUNDLED=1` (which the script sets) re-copies
 the bundled plugins even when the version did not change, so an edit to
 `plugins/*/client.js` shows up in the dev window without a version bump.
 

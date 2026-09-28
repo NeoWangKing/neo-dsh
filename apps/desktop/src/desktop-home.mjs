@@ -23,9 +23,37 @@
  * @module desktop-home
  */
 
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, win32 } from 'node:path'
+
+/**
+ * Items the harness refuses to run with when they are group/world readable.
+ * A copy keeps the permissions it found, so a `~/.dsh` whose credentials were
+ * created with a loose umask would migrate into a home that cannot start: the
+ * host exits with "is readable beyond its owner (mode 644)". Tightening them on
+ * the way in costs nothing and turns a dead app into a working one.
+ */
+export const PRIVATE_ITEMS = Object.freeze(['.credentials.yaml'])
+
+/**
+ * chmod 600 every private item that is now in the target home.
+ * @param items - top-level entries that were considered.
+ * @param to - destination home.
+ * @param options - injectable `chmod`/`exists`/`log`.
+ */
+function restrictPrivateItems(items, to, { chmod = chmodSync, exists = existsSync, log = () => {} } = {}) {
+  for (const item of items) {
+    if (!PRIVATE_ITEMS.includes(item)) continue
+    const target = join(to, item)
+    if (!exists(target)) continue
+    try {
+      chmod(target, 0o600)
+    } catch (error) {
+      log(`home: could not restrict ${target}: ${String(error?.message ?? error)}`)
+    }
+  }
+}
 
 /** Marker written into the new home once the migration ran. */
 export const MIGRATION_MARKER = '.migrated-from-dsh-home.json'
@@ -101,8 +129,10 @@ export function migrateHome(options) {
     to,
     copy = (source, target) => cpSync(source, target, { recursive: true, errorOnExist: false }),
     exists = existsSync,
+    chmod = chmodSync,
     write = writeFileSync,
     mkdir = mkdirSync,
+    version,
     now = () => new Date(),
     log = () => {},
   } = options
@@ -125,7 +155,11 @@ export function migrateHome(options) {
       log(`home: could not carry over ${item}: ${String(error?.message ?? error)}`)
     }
   }
-  write(join(to, MIGRATION_MARKER), `${JSON.stringify({ from, at: now().toISOString(), items: migrated }, null, 2)}\n`)
+  restrictPrivateItems(plan.items, to, { chmod, exists, log })
+  write(
+    join(to, MIGRATION_MARKER),
+    `${JSON.stringify({ from, at: now().toISOString(), version, items: migrated }, null, 2)}\n`,
+  )
   log(`home: migrated ${migrated.length} item(s) from ${from} → ${to}: ${migrated.join(', ')}`)
   return { migrated, from }
 }
@@ -272,6 +306,7 @@ export function moveHome(options) {
     exists = existsSync,
     readdir = (dir) => readdirSync(dir),
     remove = (target) => rmSync(target, { recursive: true, force: true }),
+    chmod = chmodSync,
     mkdir = mkdirSync,
     write = writeFileSync,
     now = () => new Date(),
@@ -297,6 +332,7 @@ export function moveHome(options) {
       failed.push(name)
     }
   }
+  restrictPrivateItems(moved, to, { chmod, exists, log })
   write(
     join(to, MIGRATION_MARKER),
     `${JSON.stringify({ from, at: now().toISOString(), mode, items: moved }, null, 2)}\n`,
@@ -313,4 +349,160 @@ export function moveHome(options) {
   }
   log(`home: ${mode === 'move' ? 'moved' : 'copied'} ${moved.length} item(s) ${from} → ${to}`)
   return { moved, failed, mode, from, to }
+}
+
+// ---- keeping a home current across updates --------------------------------
+
+/**
+ * What an update re-checks in the old home.
+ *
+ * Conversations and what makes them readable, plus the small text the user
+ * authored (presets). Deliberately NOT the config files: those were settled by the
+ * first migration and the app's copy is the one that stayed up to date. `profiles`
+ * is left out too — it holds the plugin set the app manages itself, and walking
+ * its `node_modules` on every update would cost far more than it could ever add.
+ */
+export const MERGE_ITEMS = Object.freeze([
+  'sessions',
+  'storages',
+  'attachments',
+  'llm-deepseek',
+  '.agent-presets',
+])
+
+/**
+ * Read a home's migration marker; `{}` when it is missing or unreadable.
+ * @param to - the home.
+ * @param options - injectable `read`/`exists`.
+ * @returns the marker's fields.
+ */
+export function readMigrationMarker(to, { read = readFileSync, exists = existsSync } = {}) {
+  const file = join(to, MIGRATION_MARKER)
+  if (!exists(file)) return {}
+  try {
+    const parsed = JSON.parse(read(file, 'utf8'))
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * Copy everything in the old home this home does not have yet, then stamp the
+ * marker with the version that did it.
+ *
+ * Runs when the app version changed since the last sync, so an update still finds
+ * conversations that the CLI — or an older build — wrote to `~/.dsh` in the
+ * meantime. Never overwrites: a file that exists here is the live one, and the old
+ * home is only ever read.
+ *
+ * @param options - `from`, `to`, `version`, injectable fs seams and `log`.
+ * @returns `{ added, reason? }` with paths relative to `from`.
+ */
+export function mergeHome(options) {
+  const {
+    from,
+    to,
+    version,
+    items = MERGE_ITEMS,
+    exists = existsSync,
+    lstat = lstatSync,
+    readdir = (dir) => readdirSync(dir, { withFileTypes: true }),
+    copy = (source, target) => cpSync(source, target, { recursive: true, errorOnExist: false, force: false }),
+    mkdir = mkdirSync,
+    chmod = chmodSync,
+    write = writeFileSync,
+    read = readFileSync,
+    now = () => new Date(),
+    log = () => {},
+  } = options
+
+  if (pathRelation(from, to) === 'same') {
+    log(`home: not merging ${from} into itself`)
+    return { added: [], reason: 'same-path' }
+  }
+  if (!exists(from)) {
+    log(`home: not merging from ${from} (no previous home)`)
+    return { added: [], reason: 'no previous home' }
+  }
+
+  const added = []
+  const walk = (source, target) => {
+    let stat
+    try {
+      stat = lstat(source)
+    } catch (error) {
+      if (error?.code !== 'ENOENT') log(`home: could not read ${source}: ${String(error?.message ?? error)}`)
+      return
+    }
+    if (stat.isDirectory()) {
+      mkdir(target, { recursive: true })
+      let entries
+      try {
+        entries = readdir(source)
+      } catch (error) {
+        log(`home: could not list ${source}: ${String(error?.message ?? error)}`)
+        return
+      }
+      for (const entry of entries) {
+        const name = typeof entry === 'string' ? entry : entry.name
+        walk(join(source, name), join(target, name))
+      }
+      return
+    }
+    if (exists(target)) return
+    try {
+      copy(source, target)
+      added.push(relative(from, source))
+    } catch (error) {
+      log(`home: could not carry over ${source}: ${String(error?.message ?? error)}`)
+    }
+  }
+
+  for (const item of items) walk(join(from, item), join(to, item))
+  restrictPrivateItems(items, to, { chmod, exists, log })
+
+  const marker = readMigrationMarker(to, { read, exists })
+  write(
+    join(to, MIGRATION_MARKER),
+    `${JSON.stringify(
+      { ...marker, from, version, mergedAt: now().toISOString(), mergedItems: added },
+      null,
+      2,
+    )}\n`,
+  )
+  log(`home: merged ${added.length} new file(s) from ${from} (app ${version})`)
+  return { added, from, to, version }
+}
+
+/**
+ * Make the home current with the shared `~/.dsh`, once per app version.
+ *
+ * Three outcomes, and the cheap one has to be the common one:
+ *   * no marker      → the first migration (whole items the home does not have)
+ *   * other version  → a merge (files the home does not have), then re-stamp
+ *   * same version   → nothing at all, `~/.dsh` is not even opened
+ *
+ * @param options - `from`, `to`, `version`, plus the seams the called function takes.
+ * @returns `{ kind, migrated?, added?, reason? }`.
+ */
+export function syncHome(options) {
+  const { from, to, version, exists = existsSync, log = () => {} } = options
+
+  if (pathRelation(from, to) === 'same') {
+    log(`home: ${to} is the shared home; nothing to sync`)
+    return { kind: 'same', migrated: [], added: [], reason: 'same-path' }
+  }
+  if (!exists(join(to, MIGRATION_MARKER))) {
+    const report = migrateHome({ ...options, version })
+    return { kind: 'migrate', migrated: report.migrated, added: [], reason: report.reason }
+  }
+
+  const marker = readMigrationMarker(to, { exists })
+  if (marker.version === version) {
+    log(`home: ${to} is already current (${version}); not scanning ${from}`)
+    return { kind: 'current', migrated: [], added: [] }
+  }
+  const report = mergeHome({ ...options, version })
+  return { kind: 'merge', migrated: [], added: report.added, reason: report.reason }
 }

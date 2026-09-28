@@ -27,7 +27,7 @@ dsh plugin --profile web add link:~/Projects/neo-dsh/plugins/activity-line
 
 ### 用一个 dev 窗口看改动
 
-`scripts/dev-window.sh` 会**直接从这份代码仓库**起一个真窗口，不碰安装版、也不碰你正在用的应用。它给 Electron 单独的 `--user-data-dir`（共用真的那个会和正在跑的应用抢 Chromium 的 SingletonLock）；数据目录则通过这个 profile 自己的 `desktop-config.json` 指到 `/tmp/neo-dev-home`——也就是「设置 → 通用 → 数据位置」写的那份文件，所以 dev 窗口走的是真实的位置解析顺序，而不是 `DSH_HOME` 这个开发覆盖项；端口用一个空闲的本地端口。`/tmp` 里的 home 一开始是空的，由应用自己的「从 `~/.dsh` 迁移」逻辑在首次启动时填上——和安装版跑的是同一条代码路径。`DSH_DESKTOP_FORCE_BUNDLED=1`（脚本会设）会让随包插件在版本号没变时也重新复制一份，所以改完 `plugins/*/client.js` 不用改版本号就能在 dev 窗口看到。
+`scripts/dev-window.sh` 会**直接从这份代码仓库**起一个真窗口，不碰安装版、也不碰你正在用的应用。它给 Electron 单独的 `--user-data-dir`（共用真的那个会和正在跑的应用抢 Chromium 的 SingletonLock）；数据目录则通过这个 profile 自己的 `desktop-config.json` 指到 `/tmp/neo-dev-home`——也就是「设置 → 通用 → 数据位置」写的那份文件，所以 dev 窗口走的是真实的位置解析顺序，而不是 `DSH_HOME` 这个开发覆盖项；端口用一个空闲的本地端口。`/tmp` 里的 home 一开始是空的，由应用自己的「从 `~/.dsh` 迁移」逻辑在首次启动时填上——和安装版跑的是同一条代码路径（想看版本门控的那次合并，把 `apps/desktop/package.json` 的版本号改一下再启动即可）。`DSH_DESKTOP_FORCE_BUNDLED=1`（脚本会设）会让随包插件在版本号没变时也重新复制一份，所以改完 `plugins/*/client.js` 不用改版本号就能在 dev 窗口看到。
 
 ```sh
 pnpm run test                    # 秒级，先过逻辑

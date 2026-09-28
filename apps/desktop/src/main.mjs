@@ -34,7 +34,7 @@ import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
 import {
-  defaultHome, legacyHome, migrateHome, moveHome, relocationPlan, resolveHome, writeDataHome,
+  defaultHome, legacyHome, moveHome, relocationPlan, resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
 
 const require = createRequire(import.meta.url)
@@ -235,15 +235,13 @@ function seedDirectory(from, to) {
 function seedHome() {
   const seeded = []
   if (process.env.DSH_DESKTOP_NO_SEED === '1') return seeded
-  // First launch in this home: carry the conversations and settings over from the
-  // shared ~/.dsh this app used before it had one of its own. A copy, so the old
-  // home stays usable; a no-op once the marker is there.
-  //
-  // A location the user picked in the settings row already carries a marker from
-  // that relocation, so this cannot fire a second copy behind their back.
+  // Carry the shared ~/.dsh over: a full copy the first time this home is used,
+  // and — because an update can land while the CLI or an older build kept writing
+  // there — a merge of the files this home is missing, once per app version.
+  // Everything is read-only towards the old home, and nothing here is overwritten.
   if (process.env.DSH_DESKTOP_NO_MIGRATE !== '1') {
-    // Writes its own log line (silent when there is nothing to carry).
-    migrateHome({ from: legacyHome(), to: DSH_HOME, log })
+    // Logs what it decided (including "nothing to do").
+    syncHome({ from: legacyHome(), to: DSH_HOME, version: app.getVersion(), log })
   }
   mkdirSync(DSH_HOME, { recursive: true })
   if (seedDirectory(join(RESOURCES, 'profile-web'), join(DSH_HOME, 'profiles', 'web'))) seeded.push('profiles/web')

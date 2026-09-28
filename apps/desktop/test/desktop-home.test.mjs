@@ -3,13 +3,13 @@
  *
  *   node apps/desktop/test/desktop-home.test.mjs
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   defaultHome, legacyHome, migrateHome, migrationPlan, MIGRATION_ITEMS, MIGRATION_MARKER,
-  MOVE_SKIP, MOVED_MARKER, isEffectivelyEmpty, moveHome, pathRelation, readDataHome,
-  relocationPlan, resolveHome, writeDataHome,
+  MOVE_SKIP, MOVED_MARKER, MERGE_ITEMS, isEffectivelyEmpty, mergeHome, moveHome, pathRelation,
+  readDataHome, readMigrationMarker, relocationPlan, resolveHome, syncHome, writeDataHome,
 } from '../src/desktop-home.mjs'
 
 let failures = 0
@@ -116,6 +116,60 @@ check('移动：报告了搬了什么', movedReport.moved.includes('sessions'), 
 const blocked = moveHome({ from: src, to: join(root, 'junk'), mode: 'move' })
 check('目标非空 → 一个文件都不搬', [blocked.moved.length, blocked.reason], [0, 'target-not-empty'])
 check('搬到自己里面 → 拒绝', moveHome({ from: src, to: join(src, 'inner') }).reason, 'nested-path')
+
+// ---- a loose ~/.dsh must not produce a home that cannot start ------------
+// The harness exits with "is readable beyond its owner (mode 644)" when the
+// credentials file is world readable, and a copy keeps the source permissions.
+const looseSrc = join(root, 'loose', '.dsh')
+const looseDst = join(root, 'loose', 'neo-dsh')
+mkdirSync(looseSrc, { recursive: true })
+writeFileSync(join(looseSrc, '.credentials.yaml'), 'auth: x\n', { mode: 0o644 })
+const looseReport = migrateHome({ from: looseSrc, to: looseDst })
+check('凭证仍然搬过来了', looseReport.migrated, ['.credentials.yaml'])
+check('搬过来的凭证被收紧到 600', (statSync(join(looseDst, '.credentials.yaml')).mode & 0o777).toString(8), '600')
+
+const loose2 = join(root, 'loose2', '.dsh')
+const looseDst2 = join(root, 'loose2', 'neo-dsh')
+mkdirSync(loose2, { recursive: true })
+writeFileSync(join(loose2, '.credentials.yaml'), 'auth: x\n', { mode: 0o644 })
+moveHome({ from: loose2, to: looseDst2, mode: 'copy' })
+check('搬家复制时同样收紧', (statSync(join(looseDst2, '.credentials.yaml')).mode & 0o777).toString(8), '600')
+
+// ---- an update merges what the old home gained meanwhile -----------------
+const upOld = join(root, 'up', '.dsh')
+const upNew = join(root, 'up', 'neo-dsh')
+mkdirSync(join(upOld, 'sessions'), { recursive: true })
+writeFileSync(join(upOld, 'sessions', 'first.jsonl.zstd'), 'first')
+writeFileSync(join(upOld, 'settings.yaml'), 'model: old\n')
+writeFileSync(join(upOld, 'desktop.log'), 'noise')
+
+const first = syncHome({ from: upOld, to: upNew, version: '0.1.12' })
+check('升级后第一次启动：整块迁移', first.kind, 'migrate')
+check('标记写下了版本号（下次才能判断"还是同一个版本"）', readMigrationMarker(upNew).version, '0.1.12')
+
+const again = syncHome({ from: upOld, to: upNew, version: '0.1.12' })
+check('同一版本再启动：什么都不做', [again.kind, again.added.length], ['current', 0])
+
+// The user keeps using the CLI (or an older build) while the app sits on 0.1.12.
+writeFileSync(join(upOld, 'sessions', 'second.jsonl.zstd'), 'second')
+writeFileSync(join(upOld, 'sessions', 'first.jsonl.zstd'), 'first-changed-in-the-cli')
+mkdirSync(join(upOld, 'attachments'), { recursive: true })
+writeFileSync(join(upOld, 'attachments', 'pic.bin'), 'pic')
+
+const upgrade = syncHome({ from: upOld, to: upNew, version: '0.1.13' })
+check('换版本启动：合并新会话', upgrade.kind, 'merge')
+check('只补缺的：新会话 + 新附件', upgrade.added.slice().sort(), ['attachments/pic.bin', 'sessions/second.jsonl.zstd'])
+check('已有文件绝不被覆盖', readFileSync(join(upNew, 'sessions', 'first.jsonl.zstd'), 'utf8'), 'first')
+check('日志不会被搬', existsSync(join(upNew, 'desktop.log')), false)
+check('合并后标记更新到新版本', readMigrationMarker(upNew).version, '0.1.13')
+check('合并后同一版本再来一次 = 不做', syncHome({ from: upOld, to: upNew, version: '0.1.13' }).kind, 'current')
+
+// Config is decided by the first migration; an update must not resurrect it.
+writeFileSync(join(upOld, 'settings.yaml'), 'model: changed-in-the-cli\n')
+writeFileSync(join(upOld, '.credentials.yaml'), 'auth: other\n')
+mergeHome({ from: upOld, to: upNew, version: '0.1.14' })
+check('升级不会覆盖应用里的设置', readFileSync(join(upNew, 'settings.yaml'), 'utf8'), 'model: old\n')
+check('配置类条目不在合并清单里', MERGE_ITEMS.includes('settings.yaml') || MERGE_ITEMS.includes('.credentials.yaml'), false)
 
 rmSync(root, { recursive: true, force: true })
 console.log(failures === 0 ? '\nall desktop-home checks passed' : `\n${failures} CHECK(S) FAILED`)

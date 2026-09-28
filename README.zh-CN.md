@@ -104,7 +104,9 @@ DSH_DESKTOP_UPDATE_SMOKE=download <打包后的可执行文件>
 | macOS | `~/Library/Application Support/neo-dsh` |
 | Windows | `%APPDATA%\neo-dsh` |
 
-在那个目录里首次启动时，应用会从 `~/.dsh` **复制**用户数据（会话、storages、附件、profile、模型缓存、preset、`settings.yaml`、`.credentials.yaml`、`.anonymous-user-id`、窗口偏好），并写下 `.migrated-from-dsh-home.json` 标记，所以只发生一次。旧目录原封不动：指向它的 harness CLI 仍然能用，只是从此看不到应用新建的会话。
+在那个目录里首次启动时，应用会从 `~/.dsh` **复制**用户数据（会话、storages、附件、profile、模型缓存、preset、`settings.yaml`、`.credentials.yaml`、`.anonymous-user-id`、窗口偏好），并写下 `.migrated-from-dsh-home.json` 标记。旧目录原封不动：指向它的 harness CLI 仍然能用，只是从此看不到应用新建的会话。
+
+**每次升级还会再合并一次。** 新版本第一次启动时，会把旧目录这段时间新增的东西（你用 CLI 或旧版本新建的会话）补进来，仅此而已：这里已存在的文件**绝不覆盖**，配置（`settings.yaml`、凭证、窗口偏好）也不会被重新读进来——这个 home 里的那份才是保持更新的那份。版本没变时连 `~/.dsh` 都不会打开。另外，如果 `.credentials.yaml` 的权限不止所有者可读，复制过来时会被收紧到 `600`；否则 harness 会拒绝启动。
 
 **设置 → 通用 → 数据位置**会显示数据在哪、为什么在那里（默认位置 / 自定义位置 / 由 `DSH_HOME` 指定），并且可以搬家：选一个目录（必须是空的），然后选「复制并切换」（旧目录留作备份）或「移动并切换」（只删除复制成功的部分，日志留在原处）。应用会自己重启进新位置。这个选择记在 Electron user-data 目录里的 `desktop-config.json`（不能记在数据目录里面——一个指针没法描述它自己所在的目录），删掉这个文件、或把里面的 `dataHome` 清空就回到默认；`DSH_HOME` 优先级最高。
 
