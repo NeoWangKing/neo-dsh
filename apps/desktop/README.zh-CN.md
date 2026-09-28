@@ -2,9 +2,9 @@
 
 [English](README.md) · **中文**
 
-[Neo DSH](../../README.zh-CN.md) 的 Electron 部分：它只负责原生窗口和 harness host 的生命周期，别的什么都不管。harness 以**纯 Node 子进程**运行（`dsh web --no-open --port 3081`），绝不在 Electron 里跑——它预编译的原生插件是按纯 Node 的 ABI 编译的。
+[Neo DSH](../../README.md) 的 Electron 部分：它只负责原生窗口和 harness host 的生命周期，别的什么都不管。harness 以**纯 Node 子进程**运行（`dsh web --no-open --port 3081`），绝不在 Electron 里跑——它预编译的原生插件是按纯 Node 的 ABI 编译的。
 
-整体图景看[根 README](../../README.zh-CN.md)，打包细节看 [docs/packaging.md](../../docs/packaging.md)。
+整体图景看[根 README](../../README.md)，打包细节看 [docs/packaging.md](../../docs/packaging.md)。
 
 ## 在这里干活
 

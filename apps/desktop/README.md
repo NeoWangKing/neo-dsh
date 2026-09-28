@@ -2,12 +2,12 @@
 
 **English** · [中文](README.zh-CN.md)
 
-The Electron half of [Neo DSH](../../README.md): it owns the native window and the
+The Electron half of [Neo DSH](../../README.en.md): it owns the native window and the
 harness host's lifecycle, and nothing else. The harness runs as a plain Node child
 process (`dsh web --no-open --port 3081`), never inside Electron — its prebuilt
 native addons are bound to plain Node's ABI.
 
-Read the [root README](../../README.md) for the whole picture and
+Read the [root README](../../README.en.md) for the whole picture and
 [docs/packaging.md](../../docs/packaging.md) for how a package is assembled.
 
 ## Working in here

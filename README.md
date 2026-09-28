@@ -2,161 +2,145 @@
 
 [![build](https://github.com/NeoWangKing/neo-dsh/actions/workflows/build.yml/badge.svg)](https://github.com/NeoWangKing/neo-dsh/actions/workflows/build.yml)
 
-**English** · [中文](README.zh-CN.md)
+[English](README.en.md) · **中文**
 
-Neo DSH is a desktop app for [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh).
-It runs the harness's web UI in an Electron window, adds an activity line under the
-composer and a few rows to Settings, and packages the result for Linux, macOS and
-Windows. Node ships inside the package, so installing it needs nothing else.
+Neo DSH 是 [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) 的桌面应用：
+把 harness 的 Web 界面放进一个 Electron 窗口，输入框下方加一行活动提示，设置里加几行，
+然后打成 Linux、macOS、Windows 的安装包。Node 运行时随包附带，装完不用再装别的。
 
-The harness is a dependency, not a fork. This repository holds the shell, two client
-plugins, an agent preset and the profile that composes them.
+harness 本身是依赖，不是分支。这个仓库里是外壳、两个客户端插件、一个 agent preset，
+以及把它们组合起来的 profile。
 
-## Install
+## 安装
 
-Download the asset for your platform from
-[Releases](https://github.com/NeoWangKing/neo-dsh/releases/latest):
+到 [Releases](https://github.com/NeoWangKing/neo-dsh/releases/latest) 下载对应平台的文件：
 
-| Platform | Asset | How |
+| 平台 | 文件 | 用法 |
 | --- | --- | --- |
-| Linux x64 | `neo-dsh-<version>-linux-x86_64.AppImage` | `chmod +x` and run it |
-| Linux x64 | `neo-dsh-<version>-linux-amd64.deb` | `sudo dpkg -i <file>` |
-| Linux x64 | `neo-dsh-<version>-linux-x64.zip` | unzip, then `./install.sh`; installs into `~/.local`, no root |
-| macOS arm64 | `neo-dsh-<version>-mac-arm64.dmg` | open it and drag the app to Applications |
-| Windows x64 | `neo-dsh-<version>-win-x64.exe` | run the installer |
+| Linux x64 | `neo-dsh-<版本>-linux-x86_64.AppImage` | `chmod +x` 后直接运行 |
+| Linux x64 | `neo-dsh-<版本>-linux-amd64.deb` | `sudo dpkg -i <文件>` |
+| Linux x64 | `neo-dsh-<版本>-linux-x64.zip` | 解压后 `./install.sh`，装到 `~/.local`，不需要 root |
+| macOS arm64 | `neo-dsh-<版本>-mac-arm64.dmg` | 打开后把应用拖进"应用程序" |
+| Windows x64 | `neo-dsh-<版本>-win-x64.exe` | 运行安装程序 |
 
-The builds are unsigned, so the first launch is blocked:
+安装包没有签名，所以第一次打开会被拦住：
 
 ```
-"…cannot be opened because Apple cannot check it for malicious software"
-  → right-click the app, choose Open, confirm once.
+「……无法打开，因为 Apple 无法检查其是否包含恶意软件」
+  → 右键点应用 → 打开 → 确认一次。
 
-"…is damaged and can't be opened"
-  → this dialog has no Open button. The file is not damaged: a dmg that came
-    through a browser carries a quarantine flag. Clear it and open again:
+「……已损坏，无法打开」
+  → 这个弹窗没有「打开」按钮。文件并没有损坏，只是浏览器下载的 dmg 带了隔离标记，
+    清掉再打开即可：
     xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
 ```
 
-On Windows, SmartScreen reports an unknown publisher: *More info*, then *Run anyway*.
+Windows 上出现的是 SmartScreen 的「未知发布者」：更多信息 → 仍要运行。
 
-No credentials are bundled. Set `DEEPSEEK_API_KEY`, or sign in from the app's settings
-on first run.
+应用不附带凭证。设置 `DEEPSEEK_API_KEY`，或首次启动后在应用设置里登录。
 
-## What you get
+## 功能
 
-- **Self-update** from this repository's releases: a manual check, an optional
-  automatic check every 1, 6 or 24 hours, and an optional automatic download
-  (Settings → General → Neo DSH desktop app).
-- **Its own data directory**, with a Settings row that moves it (copy or move) to a
-  folder you pick. Data that is already in `~/.dsh` is copied over on first launch;
-  the old directory is left alone.
-- **A borderless window on Linux by default**, with a switch back to the system title
-  bar (Settings → General → Window frame). Dragging works with the window manager's
-  modifier, Mod+drag on niri for instance.
-- **`activity-line`**: a live line under the composer showing what the current turn is
-  doing.
-- **`desktop-settings`**: the update and data-location rows in Settings.
-- **`liangshen` preset**: persona, tool selection and a todo-closer.
+- **自我更新**：从本仓库的 release 升级，可手动检查，也可每 1/6/24 小时自动检查、
+  自动下载（设置 → 通用 → Neo DSH 桌面版）。
+- **独立的数据目录**：设置里的「数据位置」可以把它搬到别的文件夹（复制或移动）。
+  首次启动会把 `~/.dsh` 里已有的数据复制过来，旧目录保持不动。
+- **Linux 默认无边框**：平铺合成器用 Mod+拖动 这类修饰键移动窗口；想要标题栏就在
+  设置 → 通用 → 窗口边框 里切回系统标题栏。
+- **`activity-line`**：输入框下方那行活动提示，显示当前这一轮在做什么。
+- **`desktop-settings`**：设置里的更新和数据位置两行。
+- **`liangshen` preset**：人设、工具集和一个 todo-closer。
 
-## How it runs
+## 运行方式
 
-The window is Electron; the harness is not. On launch the shell:
+窗口是 Electron，harness 不是。启动时外壳会：
 
-1. seeds the data directory with the bundled profile, preset and default settings,
-   keeping files that are already there;
-2. starts the harness host as a child process (`dsh web --no-open --port 3081`) under
-   the bundled Node 22, because the harness's prebuilt native addons are built for
-   plain Node and cannot load into Electron's;
-3. reads the readiness URL from the host's stdout, one-time auth token included, and
-   loads it in the window;
-4. stops the host when the app quits, and restarts it from the ⟳ button.
+1. 把随包的 profile、preset 和默认设置播种到数据目录，已存在的文件不动；
+2. 用子进程拉起 harness host（`dsh web --no-open --port 3081`），打包版用内嵌的
+   Node 22——harness 预编译的原生插件是给纯 Node 编译的，装不进 Electron 自带的 Node；
+3. 从 host 的 stdout 读取就绪 URL（含一次性 token），在窗口里加载；
+4. 退出时结束 host；界面右下角的 ⟳ 按钮重启它。
 
-The port is fixed because the renderer keeps plugin settings in localStorage, which is
-scoped to the origin, port included.
+端口固定，是因为渲染进程把插件设置存在 localStorage 里，而 localStorage 按 origin 隔离，
+端口属于 origin 的一部分。
 
-## Where your data lives
+## 数据放在哪
 
-| Platform | Default |
+| 平台 | 默认位置 |
 | --- | --- |
-| Linux | `$XDG_DATA_HOME/neo-dsh`, usually `~/.local/share/neo-dsh` |
+| Linux | `$XDG_DATA_HOME/neo-dsh`，通常是 `~/.local/share/neo-dsh` |
 | macOS | `~/Library/Application Support/neo-dsh` |
 | Windows | `%APPDATA%\neo-dsh` |
 
-The first launch in that directory copies your existing data out of `~/.dsh`:
-sessions, storages, attachments, profiles, the model cache, presets, `settings.yaml`
-and `.credentials.yaml`. The old directory is not modified, so a harness CLI pointed
-at it keeps working.
+在那个目录里首次启动时，会把 `~/.dsh` 里已有的数据复制过来：会话、storages、附件、
+profile、模型缓存、preset、`settings.yaml`、`.credentials.yaml`。旧目录不会被修改，
+指向它的 harness CLI 照常能用。
 
-Each later version copies across whatever appeared in `~/.dsh` since the last one, and
-never overwrites a file that already exists in the app's directory. Settings → General
-→ Data location shows the current path and can move the whole thing; `DSH_HOME`
-overrides all of it.
+之后的每个版本会把 `~/.dsh` 里新增的内容复制过来，并且永不覆盖应用目录里已存在的文件。
+设置 → 通用 → 数据位置 里能看到当前路径，也可以整个搬走；`DSH_HOME` 的优先级最高。
 
-## Development
+## 开发
 
-Node 22 or newer (`^22.19 || >=24`) and pnpm 11. Node 20 cannot run the harness: it has
-no `node:sqlite` and the native addons do not match. `scripts/check-node.mjs` guards
-every script, and `.nvmrc` pins 22 for shells that switch version on directory change.
+需要 Node 22 以上（`^22.19 || >=24`）和 pnpm 11。Node 20 跑不了 harness：没有
+`node:sqlite`，原生插件 ABI 也不匹配。`scripts/check-node.mjs` 挂在每个脚本前面，
+`.nvmrc` 写的是 22，带 nvm-on-cd 钩子的 shell 会自动切过去。
 
 ```sh
-pnpm run install:app    # Electron and the harness
-pnpm run start          # build the resources, then open the window
-pnpm test               # unit suites: plugins, preset, updater, data directory
+pnpm run install:app    # 装 Electron 和 harness
+pnpm run start          # 组装资源，然后打开窗口
+pnpm test               # 单元测试：插件、preset、更新器、数据目录
 ```
 
-To look at a change in a real window without touching the installed app or your own data:
+想在不碰安装版、也不碰自己真实数据的前提下看一处改动：
 
 ```sh
 bash scripts/dev-window.sh
 ```
 
-[docs/development.md](docs/development.md) covers the plugin workflow, the environment
-variables and what the dev window isolates.
+插件开发流程、环境变量、dev 窗口隔离了什么，见
+[docs/development.zh-CN.md](docs/development.zh-CN.md)。
 
-## Building installers
+## 打包
 
 ```sh
-pnpm run dist:linux     # also dist:mac and dist:win
+pnpm run dist:linux     # 还有 dist:mac 和 dist:win
 ```
 
-Artifacts land in `apps/desktop/release/`. Each platform is built on its own OS,
-because the harness pulls platform-specific binaries: `.github/workflows/build.yml`
-builds Linux on every push to `main`, and all three platforms for a `v*` tag.
-Releasing is the tag:
+产物在 `apps/desktop/release/`。每个平台都要在各自的系统上打包，因为 harness 会拉取
+平台相关的二进制文件：`.github/workflows/build.yml` 在每次推送到 `main` 时构建 Linux，
+在 `v*` tag 上构建三个平台。发布就是打 tag：
 
 ```sh
 git tag v0.1.13 && git push origin v0.1.13
 ```
 
-The builds are unsigned; signing is wired through the usual electron-builder variables.
-See [docs/packaging.md](docs/packaging.md).
+构建未签名；签名走 electron-builder 的常规变量，见 [docs/packaging.md](docs/packaging.md)。
 
-The `activity-line` plugin is published to npm separately, on its own tag:
-`git tag plugin-v1.0.1 && git push origin plugin-v1.0.1`.
+`activity-line` 插件单独发到 npm，用自己的 tag：
+`git tag plugin-v1.0.1 && git push origin plugin-v1.0.1`。
 
-## Layout
+## 目录结构
 
 ```
-apps/desktop/             Electron shell: host lifecycle, updater, data directory, preferences
-  resources/              profile, preset and default settings, seeded on first launch
-plugins/activity-line/    client plugin: the activity line under the composer
-plugins/desktop-settings/ client plugin: update and data-location rows in Settings
+apps/desktop/             Electron 外壳：host 生命周期、更新器、数据目录、偏好
+  resources/              首次启动播种的 profile、preset 和默认设置
+plugins/activity-line/    客户端插件：输入框下方的活动行
+plugins/desktop-settings/ 客户端插件：设置里的更新与数据位置两行
 presets/liangshen/        agent preset
-scripts/                  resource assembly, Node runtime download, peer list, dev window
-packaging/linux/          install.sh and uninstall.sh for the zip build
-docs/                     development and packaging notes
+scripts/                  资源组装、Node 运行时下载、peer 清单、dev 窗口
+packaging/linux/          zip 版用的 install.sh 与 uninstall.sh
+docs/                     开发与打包说明
 ```
 
-## Known limitations
+## 已知限制
 
-- Unsigned builds, so macOS and Windows warn on first launch.
-- Size: about 650 MB unpacked, 250–350 MB per installer. That is Electron, the whole
-  harness dependency tree and a 125 MB Node runtime.
-- macOS arm64 only; an Intel build would need a cross-arch install.
-- The Windows installer is built by CI but has not been run on a real Windows machine.
-- The `dsh` command line has its own data directory, so terminal sessions and the app's
-  sessions stay separate.
+- 构建未签名，macOS 和 Windows 首次打开都会警告。
+- 体积：解包约 650 MB，每个安装包 250–350 MB。这是 Electron、harness 的整棵依赖树，
+  以及 125 MB 的 Node 运行时。
+- 只提供 macOS arm64；Intel 版需要交叉安装。
+- Windows 安装包由 CI 构建，但还没在真实的 Windows 上运行过。
+- 命令行 `dsh` 有自己的数据目录，终端里的会话和应用里的会话是分开的。
 
-## License
+## 许可证
 
-There is no LICENSE file yet. Until there is one, all rights reserved.
+还没有 LICENSE 文件。在加上之前，保留所有权利。

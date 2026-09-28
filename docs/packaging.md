@@ -1,7 +1,7 @@
 # Packaging notes
 
 Everything below is the reasoning behind the build configuration. The short
-version is in the [README](../README.md).
+version is in the [README](../README.en.md).
 
 ## What goes into a package
 
