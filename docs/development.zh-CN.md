@@ -25,6 +25,17 @@ dsh plugin --profile web add link:~/Projects/neo-dsh/plugins/activity-line
 
 安装版自带的 `dsh` 能这么用，是因为 `dsh plugin` 只是包了一层 pnpm；打包的运行时**故意不带自己的 npm/npx**。
 
+### 用一个 dev 窗口看改动
+
+`scripts/dev-window.sh` 会**直接从这份代码仓库**起一个真窗口，不碰安装版、也不碰你正在用的应用：它把你的 `settings.yaml`、凭证、会话、preset **复制**到临时 `$DSH_HOME`，给 Electron 单独的 `--user-data-dir`（共用真的那个会和正在跑的应用抢 Chromium 的 SingletonLock），并监听一个空闲的本地端口。
+
+```sh
+pnpm run test                    # 秒级，先过逻辑
+bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离副本
+```
+
+界面类的改动物测不出来：按钮白底白字、窗口被重建时顺手退出、某一行渲染错了位置——单测都看不见，靠"发出去让别人截图"来发现又太慢。再跑一次脚本会先清掉上一次：**它的 host 只以"占着端口"的形式存在**，只杀 shell 会把它留下来，下次启动就会死在 EADDRINUSE。
+
 ### 改 UI 时要看控制台
 
 ```sh

@@ -29,6 +29,26 @@ dsh plugin --profile web add link:~/Projects/neo-dsh/plugins/activity-line
 `dsh plugin` works from the installed app because it only wraps pnpm; the
 packaged runtime deliberately ships no npm/npx of its own.
 
+### Look at a change in a dev window
+
+`scripts/dev-window.sh` boots this checkout in a real window without touching the
+install or the app that is already running: it copies your `settings.yaml`,
+credentials, sessions and preset into a temporary `$DSH_HOME`, gives Electron its
+own `--user-data-dir` (sharing the real one fights the running app over Chromium's
+SingletonLock) and serves on a spare loopback port.
+
+```sh
+pnpm run test                    # seconds — catches the logic
+bash scripts/dev-window.sh       # then look at it: port 3199, isolated home
+```
+
+This is the loop for interface work: the unit suites cannot see a button that is
+white-on-white, a window that quits when it is rebuilt, or a row that renders on
+the wrong line — and a screenshot from someone else's machine is a slow way to
+find that out. Starting the script again stops the previous run first; its host
+shows up only as the process holding the port, so killing the shell alone leaves
+it behind and the next launch dies with EADDRINUSE.
+
 ### Debug the UI while you work
 
 ```sh
