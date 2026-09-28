@@ -38,7 +38,7 @@ bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离�
 
 ### 前端各有一套数据目录
 
-0.1.12 起桌面应用有自己的数据目录（见 README「数据位置」）。终端里的 `dsh`（TUI / headless / 插件管理）在 Linux 上由 `~/.local/bin/dsh` 启动，那个 wrapper 把它的 `DSH_HOME` 设到 `${XDG_DATA_HOME:-~/.local/share}/dsh-tui`：**两个前端各自一套会话、凭证和设置，谁都不会写对方的会话库**——同时跑两个 host 共用一份 home 会损坏会话日志，这件事仓库里已经踩过。wrapper 在没给子命令时会补上 `--profile dsh-tui`，所以直接敲 `dsh` 就是 TUI；显式 `--profile` 和 `plugin` 这类子命令原样透传。
+0.1.12 起桌面应用有自己的数据目录（见 README「数据放在哪」）。终端里的 `dsh`（TUI / headless / 插件管理）在 Linux 上由 `~/.local/bin/dsh` 启动，那个 wrapper 把它的 `DSH_HOME` 设到 `${XDG_DATA_HOME:-~/.local/share}/dsh-tui`：**两个前端各自一套会话、凭证和设置，谁都不会写对方的会话库。**两个 host 共用一份 home 会损坏会话日志。wrapper 在没给子命令时会补上 `--profile dsh-tui`，所以直接敲 `dsh` 就是 TUI；显式 `--profile` 和 `plugin` 这类子命令原样透传。
 
 插件集**按 profile 分，不按 home 分**，所以"GUI 插件在 TUI 里没用"不需要额外的同步机制：
 
@@ -130,7 +130,7 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 ## 值得记住的坑
 
 - **host 会缓存已组装的插件 bundle。** 改完插件只刷新页面是没用的，必须重启 host（⟳）。
-- **绝不要用同一个 `$DSH_HOME` 同时跑两个 host。** 两个写入者会损坏同一个会话日志（这台机器的历史里就有因此产生的 `corrupt-backup` 文件）。端口冲突反而是小问题。
+- **绝不要用同一个 `$DSH_HOME` 同时跑两个 host。** 两个写入者会损坏同一个会话日志。端口冲突反而是小问题。
 - **profile 没写 `dsh.profile.patchReload` 时默认是 `live`**，而它需要 Cordis HMR 服务。打包版**故意排除了** `@deepseek-ai/cordis-plugin-hmr`（原因见 [packaging.md](packaging.md)），而它播种的 profile 写的是 `patchReload: "startup"`。
 - **preset 必须是真目录。** harness 用 `readdir(dir, { withFileTypes: true })` 扫描
   `$DSH_HOME/.agent-presets`，凡是 `child.isDirectory()` 为 false 的一律跳过——而

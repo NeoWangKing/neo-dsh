@@ -1,166 +1,162 @@
 # Neo DSH
 
+[![build](https://github.com/NeoWangKing/neo-dsh/actions/workflows/build.yml/badge.svg)](https://github.com/NeoWangKing/neo-dsh/actions/workflows/build.yml)
+
 **English** · [中文](README.zh-CN.md)
 
-My own [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh) desktop suite — one repository holding the Electron shell, my client plugins, my agent preset, and the profile composition they ship with, plus everything needed to build a Linux AppImage/deb/zip, a macOS dmg and a Windows installer.
+Neo DSH is a desktop app for [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh).
+It runs the harness's web UI in an Electron window, adds an activity line under the
+composer and a few rows to Settings, and packages the result for Linux, macOS and
+Windows. Node ships inside the package, so installing it needs nothing else.
 
-The name is mine (Neo Wang); the harness is DeepSeek's. This repository is the packaging and the personal layer around it, not a fork of the harness.
+The harness is a dependency, not a fork. This repository holds the shell, two client
+plugins, an agent preset and the profile that composes them.
+
+## Install
+
+Download the asset for your platform from
+[Releases](https://github.com/NeoWangKing/neo-dsh/releases/latest):
+
+| Platform | Asset | How |
+| --- | --- | --- |
+| Linux x64 | `neo-dsh-<version>-linux-x86_64.AppImage` | `chmod +x` and run it |
+| Linux x64 | `neo-dsh-<version>-linux-amd64.deb` | `sudo dpkg -i <file>` |
+| Linux x64 | `neo-dsh-<version>-linux-x64.zip` | unzip, then `./install.sh`; installs into `~/.local`, no root |
+| macOS arm64 | `neo-dsh-<version>-mac-arm64.dmg` | open it and drag the app to Applications |
+| Windows x64 | `neo-dsh-<version>-win-x64.exe` | run the installer |
+
+The builds are unsigned, so the first launch is blocked:
 
 ```
-apps/desktop/          Electron shell: spawns the harness host, shows it in a native window
-plugins/activity-line/ client plugin: the live "what is the turn doing" line under the composer
-presets/liangshen/     agent preset (persona, tools, todo-closer)
-apps/desktop/resources/
-  profile-web/         the web profile this app seeds on first launch
-  settings.defaults.yaml
-scripts/               assemble resources, fetch the Node runtime the app ships
-.github/workflows/     per-platform packaging
+"…cannot be opened because Apple cannot check it for malicious software"
+  → right-click the app, choose Open, confirm once.
+
+"…is damaged and can't be opened"
+  → this dialog has no Open button. The file is not damaged: a dmg that came
+    through a browser carries a quarantine flag. Clear it and open again:
+    xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
 ```
 
-## How the app runs
+On Windows, SmartScreen reports an unknown publisher: *More info*, then *Run anyway*.
 
-The window is Electron; the harness is **not**. On launch the shell:
+No credentials are bundled. Set `DEEPSEEK_API_KEY`, or sign in from the app's settings
+on first run.
 
-1. seeds `$DSH_HOME` (default `~/.dsh`) with the shipped profile, preset and default settings — existing files are never overwritten, so an existing CLI install keeps its sessions and settings;
-2. spawns `node .../@deepseek-ai/dsh/lib/bin.js web --no-open --port 3081` as a child process, using the **bundled official Node 22** when packaged (never Electron's Node: the harness's prebuilt native addons are ABI-bound to plain Node);
-3. parses the readiness URL (with its one-time auth token) from the host's stdout and loads it in the window;
+## What you get
+
+- **Self-update** from this repository's releases: a manual check, an optional
+  automatic check every 1, 6 or 24 hours, and an optional automatic download
+  (Settings → General → Neo DSH desktop app).
+- **Its own data directory**, with a Settings row that moves it (copy or move) to a
+  folder you pick. Data that is already in `~/.dsh` is copied over on first launch;
+  the old directory is left alone.
+- **A borderless window on Linux by default**, with a switch back to the system title
+  bar (Settings → General → Window frame). Dragging works with the window manager's
+  modifier, Mod+drag on niri for instance.
+- **`activity-line`**: a live line under the composer showing what the current turn is
+  doing.
+- **`desktop-settings`**: the update and data-location rows in Settings.
+- **`liangshen` preset**: persona, tool selection and a todo-closer.
+
+## How it runs
+
+The window is Electron; the harness is not. On launch the shell:
+
+1. seeds the data directory with the bundled profile, preset and default settings,
+   keeping files that are already there;
+2. starts the harness host as a child process (`dsh web --no-open --port 3081`) under
+   the bundled Node 22, because the harness's prebuilt native addons are built for
+   plain Node and cannot load into Electron's;
+3. reads the readiness URL from the host's stdout, one-time auth token included, and
+   loads it in the window;
 4. stops the host when the app quits, and restarts it from the ⟳ button.
 
-The fixed port keeps browser storage stable — the origin is scheme + host + **port**, so a random port would reset every plugin's settings on each launch.
+The port is fixed because the renderer keeps plugin settings in localStorage, which is
+scoped to the origin, port included.
 
-## Requirements
+## Where your data lives
 
-- **Using a build**: nothing. Node, the harness and the profile are in the package.
-- **Building**: Node 22 (`^22.19 || >=24`) — Node 20 cannot run the harness at all
-  (no `node:sqlite`, wrong native-addon ABI). The repo enforces this: `.nvmrc`,
-  `engines` in both manifests, `engine-strict` in `apps/desktop/.npmrc`, and
-  `scripts/check-node.mjs` in front of every build/run script. `.nvmrc` says `22`,
-  so a shell with an nvm-on-cd hook switches on entry; otherwise run `nvm use`.
-  The guards still matter for CI and non-interactive shells, where no hook runs.
-- **Building (cont.)**: pnpm 11, and for Linux also the usual Electron packaging tools.
-- **An API key**: the app does not ship credentials. Set `DEEPSEEK_API_KEY`, or sign in through the app's settings on first run.
+| Platform | Default |
+| --- | --- |
+| Linux | `$XDG_DATA_HOME/neo-dsh`, usually `~/.local/share/neo-dsh` |
+| macOS | `~/Library/Application Support/neo-dsh` |
+| Windows | `%APPDATA%\neo-dsh` |
 
-## Quick start (development)
+The first launch in that directory copies your existing data out of `~/.dsh`:
+sessions, storages, attachments, profiles, the model cache, presets, `settings.yaml`
+and `.credentials.yaml`. The old directory is not modified, so a harness CLI pointed
+at it keeps working.
+
+Each later version copies across whatever appeared in `~/.dsh` since the last one, and
+never overwrites a file that already exists in the app's directory. Settings → General
+→ Data location shows the current path and can move the whole thing; `DSH_HOME`
+overrides all of it.
+
+## Development
+
+Node 22 or newer (`^22.19 || >=24`) and pnpm 11. Node 20 cannot run the harness: it has
+no `node:sqlite` and the native addons do not match. `scripts/check-node.mjs` guards
+every script, and `.nvmrc` pins 22 for shells that switch version on directory change.
 
 ```sh
-pnpm --dir apps/desktop install     # app deps (Electron + @deepseek-ai/dsh)
-node scripts/build-resources.mjs    # profile + preset + plugin into apps/desktop/resources
-pnpm run start                      # seeds $DSH_HOME if needed, then opens the window
+pnpm run install:app    # Electron and the harness
+pnpm run start          # build the resources, then open the window
+pnpm test               # unit suites: plugins, preset, updater, data directory
 ```
 
-In development the host runs under whatever `node` is on `PATH` (override with `DSH_NODE`), and the shipped resources are read straight from `apps/desktop/resources` — no packaging step needed.
+To look at a change in a real window without touching the installed app or your own data:
+
+```sh
+bash scripts/dev-window.sh
+```
+
+[docs/development.md](docs/development.md) covers the plugin workflow, the environment
+variables and what the dev window isolates.
 
 ## Building installers
 
 ```sh
-node scripts/fetch-node.mjs                  # official Node runtime for this platform (SHA256-verified)
-node scripts/build-resources.mjs             # profile/preset/plugin payload
-pnpm --dir apps/desktop exec electron-builder --linux   # or --mac / --win
+pnpm run dist:linux     # also dist:mac and dist:win
 ```
 
-Artifacts land in `apps/desktop/release/` as `neo-dsh-<version>-<os>-<arch>.<ext>`:
-
-| Platform | Targets | Status |
-| --- | --- | --- |
-| Linux x64 | AppImage, deb, **zip + install.sh** | **verified end-to-end** — all three artifacts boot, seed `$DSH_HOME`, and load the bundled plugin |
-| macOS arm64 | dmg | **verified on a macos-14 runner** (arm64 `Neo DSH.app`, bundled `darwin-arm64` Node, correct native addons) |
-| macOS x64 | — | **out of scope**: Apple Silicon only. GitHub's Intel runner label (`macos-13`) queues indefinitely, and an Intel dmg would need a cross-arch install on `macos-14` |
-| Windows x64 | nsis installer | configured; not yet built on a Windows runner |
-
-The zip is the no-installer option: extract it and run `./install.sh`, which copies
-the tree to `~/.local/opt/neo-dsh`, adds a `neo-dsh` launcher, an icon and a menu
-entry — no root, no package manager, no Node prerequisite. `./uninstall.sh` reverses
-it and keeps `$DSH_HOME` unless given `--purge`.
-
-Cross-building is not supported on purpose: the harness pulls platform-specific optional binaries (Landlock, node-addon-system, sharp, koffi, ripgrep), so each target is packaged **on its own OS** by `.github/workflows/build.yml`. That workflow builds Linux on every push and takes `mac`/`win` from a `workflow_dispatch` input until those runs have been checked.
-
-Builds are **unsigned**. Signing is wired through the usual electron-builder variables (`CSC_LINK`, `CSC_KEY_PASSWORD`, plus the Apple notarization trio) — see [docs/packaging.md](docs/packaging.md) — but without a certificate the first launch on macOS hits Gatekeeper, and the two possible dialogs need **different** actions:
-
-- *"…cannot be opened because Apple cannot check it for malicious software"* — right-click the app → **Open**, confirm once.
-- *"…is damaged and can't be opened"* — this dialog offers **no Open button**, and a dmg downloaded in a browser is always quarantined. Nothing is actually damaged; clear the flag:
-
-  ```sh
-  xattr -dr com.apple.quarantine "/Applications/Neo DSH.app"
-  ```
-
-Windows shows SmartScreen's "unknown publisher" (More info → Run anyway).
-
-## Updating
-
-Neo DSH updates itself from **this project's own releases** (`NeoWangKing/neo-dsh`) — unrelated to DeepSeek's harness releases. Settings → General carries a **Neo DSH desktop app** row: current version, a manual *Check for updates*, automatic checks on an interval (1/6/24 h), an auto-download switch, and a dialog when a newer release appears. Installing downloads the platform asset, quits, swaps the app in place with a detached helper, and relaunches.
-
-Preferences live in the renderer's localStorage, which is why the host port is pinned (port = part of the origin). Everything up to and including the download is verifiable without the GUI:
+Artifacts land in `apps/desktop/release/`. Each platform is built on its own OS,
+because the harness pulls platform-specific binaries: `.github/workflows/build.yml`
+builds Linux on every push to `main`, and all three platforms for a `v*` tag.
+Releasing is the tag:
 
 ```sh
-node apps/desktop/scripts/update-check.mjs              # newest release + the asset for this platform
-node apps/desktop/scripts/update-check.mjs --download   # also fetch it into the update directory
-DSH_DESKTOP_UPDATE_SMOKE=check  <packaged binary>       # same check from inside the shell
-DSH_DESKTOP_UPDATE_SMOKE=download <packaged binary>
+git tag v0.1.13 && git push origin v0.1.13
 ```
 
-### Window frame (Linux)
+The builds are unsigned; signing is wired through the usual electron-builder variables.
+See [docs/packaging.md](docs/packaging.md).
 
-The window is borderless by default: a tiling compositor moves it (niri: Mod+drag) and the UI draws its own chrome. If your desktop expects a real title bar — no modifier to drag, and a close button — tick **Use the system title bar** in Settings → General. The shell stores the choice in `$DSH_HOME/desktop-preferences.json` and rebuilds the window immediately, so no restart is needed. macOS and Windows always use the native frame: a borderless window there has no traffic lights, minimise/close buttons, or anything to drag it by.
+The `activity-line` plugin is published to npm separately, on its own tag:
+`git tag plugin-v1.0.1 && git push origin plugin-v1.0.1`.
 
-### Data location
+## Layout
 
-Conversations, attachments, credentials and settings live in the app's **own** directory — not in the shared `~/.dsh` it used to write to:
-
-| Platform | Default |
-| --- | --- |
-| Linux | `$XDG_DATA_HOME/neo-dsh` (usually `~/.local/share/neo-dsh`) |
-| macOS | `~/Library/Application Support/neo-dsh` |
-| Windows | `%APPDATA%\neo-dsh` |
-
-On the first launch in that directory the app **copies** the user data over from `~/.dsh` (sessions, storages, attachments, profiles, the model cache, presets, `settings.yaml`, `.credentials.yaml`, `.anonymous-user-id`, window preferences) and writes a `.migrated-from-dsh-home.json` marker. The old directory is left untouched: a harness CLI pointed at it keeps working, it just stops seeing the conversations the app creates from then on.
-
-**Every update merges once.** The first launch of a new version copies whatever the old home has gained since — conversations the CLI or an older build wrote there in the meantime — and nothing else: files that already exist here are never overwritten, and configuration (`settings.yaml`, credentials, window preferences) is not re-read, because this home's copy is the one that stayed current. Between versions `~/.dsh` is not even opened. A `.credentials.yaml` that was readable beyond its owner is tightened to `600` on the way in; the harness refuses to start otherwise.
-
-Settings → General → **Data location** shows where the data is and why (default, chosen, or forced by `DSH_HOME`), and moves it: pick a folder — it has to be empty — and choose *copy and switch* (keeps the old directory as a backup) or *move and switch* (deletes only what was copied; logs stay behind). The app restarts into the new location. The choice is recorded in `desktop-config.json` in Electron's user-data directory (not inside the data directory, which it could not describe) — delete the file, or clear its `dataHome`, to fall back to the default. `DSH_HOME` outranks it.
-
-## Operating it
-
-| Task | How |
-| --- | --- |
-| Change the harness version | `pnpm --dir apps/desktop add @deepseek-ai/dsh@<version> && node scripts/sync-peers.mjs`, then rebuild |
-| Change the shipped profile | edit `apps/desktop/resources/profile-web/package.json` (`dsh.profile.bundles`), re-run `build-resources`, rebuild |
-| Ship another plugin | drop it in `plugins/`, add it to `build-resources.mjs`, list it in the profile's bundles |
-| Use a different state directory | Settings → General → Data location, or `DSH_HOME` (a development override that outranks the stored choice) |
-| Check the generated dependency list | `node scripts/sync-peers.mjs --check` (CI fails when a harness bump adds a peer) |
-| Skip seeding | `DSH_DESKTOP_NO_SEED=1` |
-| Other port | `DSH_DESKTOP_PORT=3198` |
-| Diagnostics | `DSH_DESKTOP_SMOKE=1` boots, reports window/layout facts, exits non-zero on failure |
-| Develop against the installed app | see [docs/development.md](docs/development.md): plugins and presets are editable in place, so the app can extend its own UI |
+```
+apps/desktop/             Electron shell: host lifecycle, updater, data directory, preferences
+  resources/              profile, preset and default settings, seeded on first launch
+plugins/activity-line/    client plugin: the activity line under the composer
+plugins/desktop-settings/ client plugin: update and data-location rows in Settings
+presets/liangshen/        agent preset
+scripts/                  resource assembly, Node runtime download, peer list, dev window
+packaging/linux/          install.sh and uninstall.sh for the zip build
+docs/                     development and packaging notes
+```
 
 ## Known limitations
 
-- **Unsigned builds** — see above.
-- **Size** — roughly 650 MB unpacked / 250–350 MB per installer: Electron, the whole harness dependency tree, and a 125 MB Node runtime. The runtime is the price of not asking users to install Node.
-- **The `dsh` CLI still uses `~/.dsh`.** After the data moves, the CLI manages the old directory; repoint its wrapper if you want the two to share.
-- **The profile only seeds once.** An existing `$DSH_HOME/profiles/web` is left alone, including its plugin set.
+- Unsigned builds, so macOS and Windows warn on first launch.
+- Size: about 650 MB unpacked, 250–350 MB per installer. That is Electron, the whole
+  harness dependency tree and a 125 MB Node runtime.
+- macOS arm64 only; an Intel build would need a cross-arch install.
+- The Windows installer is built by CI but has not been run on a real Windows machine.
+- The `dsh` command line has its own data directory, so terminal sessions and the app's
+  sessions stay separate.
 
-## Repository layout of the automation
+## License
 
-The repository lives at <https://github.com/NeoWangKing/neo-dsh>. What the workflows
-do by themselves:
-
-| Workflow | Trigger | Notes |
-| --- | --- | --- |
-| `build` | every push to `main` | builds **Linux** (AppImage + deb + zip) and uploads them as artifacts. macOS and Windows stay off unless selected: `workflow_dispatch` with `platforms=mac` or `platforms=win`. |
-| `build` | tag `v*` | builds **all three platforms** (Linux, macOS arm64, Windows) and attaches every installer to a GitHub Release. |
-| `publish-plugin` | push/PR touching `plugins/activity-line/**` | runs the plugin tests and asserts the npm tarball carries `index.js`, `client.js` and `cordis.patch.yml`. |
-| `publish-plugin` | tag `plugin-v*` | `npm publish --provenance` for `dsh-activity-line`. Needs the repository secret `NPM_TOKEN` (an npm automation token); without it the publish job fails while the check job still passes. |
-
-The release step needs `permissions: contents: write`, which the workflow declares:
-a new repository's default token is read-only, and the release otherwise fails with
-`Resource not accessible by integration` *after* a successful build.
-
-Releasing:
-
-```sh
-git tag v0.1.2 && git push origin v0.1.2                  # desktop installers → GitHub Release
-git tag plugin-v1.0.0 && git push origin plugin-v1.0.0    # plugin → npm
-```
-
-Both tags are independent: the desktop version and the plugin version move on
-their own schedules.
+There is no LICENSE file yet. Until there is one, all rights reserved.

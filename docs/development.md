@@ -58,14 +58,14 @@ it behind and the next launch dies with EADDRINUSE.
 
 ### Each front end has its own data directory
 
-Since 0.1.12 the desktop app keeps its own data directory (see README, *Data
-location*). On Linux the terminal `dsh` (TUI / headless / plugin management) is
+Since 0.1.12 the desktop app keeps its own data directory (see README, *Where your
+data lives*). On Linux the terminal `dsh` (TUI / headless / plugin management) is
 started by `~/.local/bin/dsh`, and that wrapper sets its `DSH_HOME` to
 `${XDG_DATA_HOME:-~/.local/share}/dsh-tui`: **the two front ends keep separate
-sessions, credentials and settings, and neither writes the other's session store**
-— two hosts on one home corrupt session logs, which this machine has already paid
-for. With no subcommand the wrapper adds `--profile dsh-tui`, so plain `dsh` is the
-TUI; an explicit `--profile` and subcommands like `plugin` pass through untouched.
+sessions, credentials and settings, and neither writes the other's session store.**
+Two hosts on one home corrupt session logs. With no subcommand the wrapper adds
+`--profile dsh-tui`, so plain `dsh` is the TUI; an explicit `--profile` and
+subcommands like `plugin` pass through untouched.
 
 Plugin sets are divided by **profile, not by home**, so "GUI plugins are useless in
 the TUI" needs no sync mechanism of its own:
@@ -181,8 +181,7 @@ of self-modification: seeing your own composition.
 - **The host caches assembled plugin bundles.** Editing a plugin and reloading
   the page does nothing; restart the host (⟳).
 - **Never run two hosts on the same `$DSH_HOME`.** Two writers on one session log
-  corrupts it (there are `corrupt-backup` files in this machine's history from
-  exactly that). The port collision is the smaller problem.
+  corrupt it. The port collision is the smaller problem.
 - **A profile without `dsh.profile.patchReload` defaults to `live`**, which needs
   the Cordis HMR service. The packaged app excludes `@deepseek-ai/cordis-plugin-hmr`
   on purpose (see [packaging.md](packaging.md)), and the profile it seeds sets
