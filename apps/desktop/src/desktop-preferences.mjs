@@ -20,7 +20,14 @@ import { dirname, join } from 'node:path'
 export const PREFERENCES_FILE = 'desktop-preferences.json'
 
 /** Values used when the file is missing, unreadable or malformed. */
-export const DEFAULT_PREFERENCES = Object.freeze({ nativeFrame: false })
+export const DEFAULT_PREFERENCES = Object.freeze({
+  nativeFrame: false,
+  // 'system' follows the environment and then the desktop's own proxy settings, which is
+  // what almost everyone wants: the host is a Node process and Node ignores the variables
+  // unless it is told, so the shell resolves this and hands it over.
+  proxyMode: 'system',
+  proxyUrl: '',
+})
 
 /**
  * Resolve the preferences file inside a harness home.

@@ -161,6 +161,29 @@ The harness's own introspection tooling (`dsh-tool-cordis`, the plugin inventory
 in Settings) is available for looking at what is mounted, which is the useful half
 of self-modification: seeing your own composition.
 
+### Network proxy
+
+The harness host is a Node process, and Node ignores `http_proxy` unless it is told to look
+(`NODE_USE_ENV_PROXY=1`). Behind an explicit proxy — Clash, a corporate gateway — a model
+request then simply times out while the browser next to it works, which is a confusing way
+to find that out.
+
+The shell resolves the proxy itself and hands an environment that works to both the host
+and its own HTTP client:
+
+* an explicit choice in Settings → General → **Network proxy** (`system`, `direct`, or a
+  manual address), stored in `$DSH_HOME/desktop-preferences.json`;
+* otherwise the environment the app was started with;
+* otherwise the desktop's own settings: `gsettings org.gnome.system.proxy` on Linux,
+  `scutil --proxy` on macOS, the `Internet Settings` registry values on Windows.
+
+`loopback` (`localhost`, `127.0.0.1`, `::1`) is always added to `no_proxy` so the window can
+still reach its host. Changing the row restarts the host with the new environment, and the
+resolution is logged as `proxy: system → http://127.0.0.1:7897 (desktop settings)`.
+
+`src/proxy-env.mjs` holds the parsers and the decision, with unit tests; the whole path was
+verified by starting the app behind Clash and looking at the host's environment.
+
 ### Safe mode
 
 A plugin or a settings file that cannot load leaves no window to fix it from, so there is
@@ -211,6 +234,7 @@ to leave.
 | `DSH_DESKTOP_DEVTOOLS` | `1` opens DevTools on launch |
 | `DSH_DESKTOP_NO_SEED` | `1` skips seeding the shipped profile/preset/settings |
 | `DSH_DESKTOP_SAFE` | `1` opens in safe mode (same as `--safe`): shipped profile only |
+| `http_proxy` / `https_proxy` / `no_proxy` | read at startup; the resolved proxy is handed to the host (see *Network proxy*) |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` skips carrying an existing `~/.dsh` into a fresh home |
 | `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | set on the host by the shell (watchdog); not for humans |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` re-copies the bundled plugins even at the same version (dev window) |

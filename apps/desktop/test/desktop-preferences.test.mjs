@@ -25,7 +25,10 @@ check('默认：Linux 不用原生边框', wantsNativeFrame('linux', readPrefere
 check('默认：macOS 恒用原生边框', wantsNativeFrame('darwin', readPreferences(home)), true)
 check('默认：Windows 恒用原生边框', wantsNativeFrame('win32', readPreferences(home)), true)
 
-check('写入后可读回', writePreferences(home, { nativeFrame: true }), { nativeFrame: true })
+check('写入后可读回（其余偏好保持默认）', writePreferences(home, { nativeFrame: true }), {
+  nativeFrame: true, proxyMode: 'system', proxyUrl: '',
+})
+check('代理偏好也能存', writePreferences(home, { proxyMode: 'manual', proxyUrl: '127.0.0.1:7897' }).proxyUrl, '127.0.0.1:7897')
 check('回读一致', readPreferences(home).nativeFrame, true)
 check('开关后 Linux 用原生边框', wantsNativeFrame('linux', readPreferences(home)), true)
 check('关掉后回到无边框', writePreferences(home, { nativeFrame: false }).nativeFrame, false)

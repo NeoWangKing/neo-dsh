@@ -56,6 +56,9 @@ on first run.
 - **`activity-line`**: a live line under the composer showing what the current turn is
   doing.
 - **`desktop-settings`**: the update and data-location rows in Settings.
+- **Network proxy**: follows the system proxy by default, so an explicit proxy such as
+  Clash does not turn model requests into timeouts; Settings → General → Network proxy can
+  also force direct or a manual address.
 - **Safe mode**: when a plugin or a settings file breaks the boot, the next launch offers
   to open with the bundled plugins only. Leaving safe mode checks your own profile first,
   and offers to move a broken one aside (renamed, not deleted) for the shipped one.

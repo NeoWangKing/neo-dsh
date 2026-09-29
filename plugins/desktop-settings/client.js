@@ -70,6 +70,18 @@
     moveErrNested: '新目录不能位于当前数据目录内部，也不能是它的上层目录。',
     moveErrNotEmpty: '这个目录里已经有别的东西了，请换一个空目录，避免两边混在一起。',
     moveErrFailed: '迁移失败，数据仍留在原位置。',
+    proxyTitle: '网络代理',
+    proxyFollow: '跟随系统',
+    proxyDirect: '直连',
+    proxyManual: '手动填写',
+    proxySave: '保存',
+    proxyPlaceholder: '127.0.0.1:7897',
+    proxyNoProxy: '没有检测到代理，直连',
+    proxyUsing: '正在使用',
+    proxySourceEnv: '来自环境变量',
+    proxySourceSystem: '来自系统设置',
+    proxySourceManual: '手动指定',
+    proxyHint: 'host 是 Node 子进程，而 Node 默认不读代理环境变量——这里会把解析结果交给它，所以用 Clash 这类显式代理时模型请求不会超时。',
   };
   const LOCALE_EN = {
     title: 'Neo DSH desktop app',
@@ -121,6 +133,18 @@
     moveErrNested: 'The new directory cannot be inside the current one, or above it.',
     moveErrNotEmpty: 'That directory already holds something else — pick an empty one so the two never mix.',
     moveErrFailed: 'The move failed; the data is still where it was.',
+    proxyTitle: 'Network proxy',
+    proxyFollow: 'Follow the system',
+    proxyDirect: 'Direct',
+    proxyManual: 'Enter one manually',
+    proxySave: 'Save',
+    proxyPlaceholder: '127.0.0.1:7897',
+    proxyNoProxy: 'no proxy detected, connecting directly',
+    proxyUsing: 'Using',
+    proxySourceEnv: 'from the environment',
+    proxySourceSystem: 'from the desktop settings',
+    proxySourceManual: 'set by hand',
+    proxyHint: 'The host is a Node process, and Node ignores proxy environment variables unless it is told to — this is where that happens, so an explicit proxy like Clash does not turn model requests into timeouts.',
   };
   const KEY = {
     autoCheck: 'neo-dsh.update.autoCheck',
@@ -179,6 +203,11 @@
     height: 26px; padding: 0 8px; border: none; border-radius: 13px;
     background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
     font: inherit; font-size: 12px; color: var(--dsw-alias-label-primary, inherit); cursor: pointer;
+  }
+  .dsk-input {
+    height: 26px; padding: 0 10px; min-width: 180px; border: .5px solid var(--dsw-alias-border-l3, rgba(127,127,127,.2));
+    border-radius: 13px; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.12));
+    font: inherit; font-size: 12px; color: var(--dsw-alias-label-primary, inherit);
   }
   .dsk-bar {
     height: 4px; border-radius: 2px; overflow: hidden; background: var(--dsw-alias-bg-module-platform, rgba(127,127,127,.14));
@@ -576,11 +605,85 @@
         ]);
       }
 
+      /**
+       * The proxy the harness host runs behind.
+       *
+       * The host is a Node process, so an explicit proxy (Clash and friends) only works if
+       * Node is told to read the variables: the shell resolves the proxy and passes it on.
+       * This row is where that choice lives.
+       */
+      function ProxyRow() {
+        const info = (typeof window !== 'undefined' && window.__NEO_DSH__) || undefined;
+        const proxy = info?.proxy;
+        if (info === undefined || proxy === undefined) return null;
+
+        const [mode, setMode] = react.useState(proxy.mode ?? 'system');
+        const [url, setUrl] = react.useState(proxy.url ?? '');
+        const send = (nextMode, nextUrl) => {
+          const base = `${info.setPath ?? '/__dsh_desktop_set'}?key=proxy&value=${encodeURIComponent(nextMode)}`;
+          location.href = nextUrl === undefined ? base : `${base}&url=${encodeURIComponent(nextUrl)}`;
+        };
+
+        const sourceLabel = proxy.source === 'environment' ? t('proxySourceEnv')
+          : proxy.source === 'desktop settings' ? t('proxySourceSystem')
+          : proxy.source === 'manual' ? t('proxySourceManual')
+          : proxy.source;
+        const status = mode === 'direct' ? t('proxyDirect')
+          : mode === 'manual'
+            ? `${t('proxyManual')} · ${url === '' ? t('proxyNoProxy') : url}`
+            : proxy.effective === '' ? `${t('proxyFollow')} · ${t('proxyNoProxy')}`
+            : `${t('proxyFollow')} · ${t('proxyUsing')} ${proxy.effective}（${sourceLabel}）`;
+
+        const actions = [
+          react.createElement('select', {
+            key: 'mode', className: 'dsk-select', value: mode,
+            onChange: (event) => {
+              const next = event.target.value;
+              setMode(next);
+              if (next !== 'manual') send(next);
+            },
+          }, [
+            react.createElement('option', { key: 'system', value: 'system' }, t('proxyFollow')),
+            react.createElement('option', { key: 'direct', value: 'direct' }, t('proxyDirect')),
+            react.createElement('option', { key: 'manual', value: 'manual' }, t('proxyManual')),
+          ]),
+        ];
+        if (mode === 'manual') {
+          actions.push(react.createElement('input', {
+            key: 'url', className: 'dsk-input', type: 'text', value: url,
+            placeholder: t('proxyPlaceholder'), spellCheck: false,
+            onChange: (event) => setUrl(event.target.value),
+            onKeyDown: (event) => { if (event.key === 'Enter') send('manual', url) },
+          }));
+          actions.push(react.createElement('button', {
+            key: 'save', type: 'button', className: 'dsk-btn dsk-primary',
+            onClick: () => send('manual', url),
+          }, t('proxySave')));
+        }
+
+        return react.createElement('div', { id: 'dsh-network-proxy', className: 'dsk-row' }, [
+          react.createElement('div', { className: 'dsk-main', key: 'main' }, [
+            react.createElement('div', { className: 'dsk-text', key: 'text' }, [
+              react.createElement('div', { className: 'dsk-title', key: 'title' }, t('proxyTitle')),
+              react.createElement('div', { className: 'dsk-desc', key: 'desc' }, status),
+              react.createElement('div', { className: 'dsk-note', key: 'hint' }, t('proxyHint')),
+            ]),
+            react.createElement('div', { className: 'dsk-actions', key: 'actions' }, actions),
+          ]),
+        ]);
+      }
+
       const entry = {
         name: 'settings.general.item',
         id: 'neo-dsh-desktop',
         order: 40,
         label: () => t('title'),
+      };
+      const proxyEntry = {
+        name: 'settings.general.item',
+        id: 'neo-dsh-network-proxy',
+        order: 43,
+        label: () => t('proxyTitle'),
       };
       const dataEntry = {
         name: 'settings.general.item',
@@ -594,7 +697,7 @@
         order: 41,
         label: () => t('frameTitle'),
       };
-      if (localeReady) { entry.locale = NS; frameEntry.locale = NS; dataEntry.locale = NS; }
+      if (localeReady) { entry.locale = NS; frameEntry.locale = NS; dataEntry.locale = NS; proxyEntry.locale = NS; }
       ctx.effect(
         () => slots.inject('settings.general.item', () => slots.register(entry, DesktopSettingsRow)),
         'dsh-desktop-settings: settings row',
@@ -606,6 +709,10 @@
       ctx.effect(
         () => slots.inject('settings.general.item', () => slots.register(dataEntry, DataLocationRow)),
         'dsh-desktop-settings: data location row',
+      );
+      ctx.effect(
+        () => slots.inject('settings.general.item', () => slots.register(proxyEntry, ProxyRow)),
+        'dsh-desktop-settings: network proxy row',
       );
     };
   }

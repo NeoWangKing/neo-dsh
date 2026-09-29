@@ -112,6 +112,27 @@ dsh plugin --profile web remove <名称>
 
 harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清单）可以用来查看自己挂载了什么，这算是"自我修改"里真正有用的那一半：看清自己的组合。
 
+### 网络代理
+
+harness host 是个 Node 进程，而 Node 默认**不读** `http_proxy`——必须显式告诉它
+（`NODE_USE_ENV_PROXY=1`）。于是用着 Clash 这类显式代理时，模型请求会直接超时，而旁边的浏览器
+一切正常，很容易误判成"应用没网"。
+
+外壳现在自己解析代理，并把一套真正有效的环境交给 host 和自己（更新检查也走同一条路）：
+
+* 优先用 设置 → 通用 → **网络代理** 里的显式选择（`system` / `direct` / 手填地址），存在
+  `$DSH_HOME/desktop-preferences.json`；
+* 其次是应用启动时继承的环境变量；
+* 再次才是桌面自己的设置：Linux 读 `gsettings org.gnome.system.proxy`，macOS 读
+  `scutil --proxy`，Windows 读注册表 `Internet Settings`。
+
+`loopback`（`localhost` / `127.0.0.1` / `::1`）永远会被加进 `no_proxy`，否则窗口连不上自己的
+host。改这一行会重启 host 让新环境生效，解析结果会写进日志：
+`proxy: system → http://127.0.0.1:7897 (desktop settings)`。
+
+`src/proxy-env.mjs` 里是解析与判定，带单测；整条链路是在 Clash 后面启动应用、再读 host 进程的
+环境验证的。
+
 ### 安全模式
 
 插件或设置文件加载不了时，就没有窗口可以拿来修它，所以需要一条"只用随包内容"的启动路径：
@@ -155,6 +176,7 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 | `DSH_DESKTOP_DEVTOOLS` | `1` 启动时打开 DevTools |
 | `DSH_DESKTOP_NO_SEED` | `1` 跳过播种随包的 profile/preset/设置 |
 | `DSH_DESKTOP_SAFE` | `1` 用安全模式打开（等同 `--safe`）：只加载随包 profile |
+| `http_proxy` / `https_proxy` / `no_proxy` | 启动时读取，解析出的代理会交给 host（见「网络代理」） |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` 不把已存在的 `~/.dsh` 搬进新 home |
 | `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | 外壳给宿主设的（看门狗用），不是给人设的 |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` 版本号没变也重新复制随包插件（dev 窗口用） |

@@ -42,6 +42,9 @@ import {
   recordBootFailure, repairProfile, repairSettings, shouldOfferSafeMode, unresolvedBundles,
 } from './boot-guard.mjs'
 import {
+  PROXY_MODES, describeProxy, proxyEnvFor, readSystemProxy, resolveProxy,
+} from './proxy-env.mjs'
+import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
   writeDataHome,
 } from './desktop-home.mjs'
@@ -74,6 +77,11 @@ const HOME_CHOICE = resolveHome({
   env: process.env,
 })
 const DSH_HOME = HOME_CHOICE.path
+
+/** The proxy the host is running with; resolved at boot and on every host start. */
+let currentProxy = {
+  mode: 'system', httpProxy: '', httpsProxy: '', allProxy: '', noProxy: [], source: 'not resolved yet',
+}
 
 /** Safe mode: the shipped profile only, plus a settings file that parses. It can be
  * asked for on the command line (`--safe`), through the environment, or offered by the
@@ -432,6 +440,34 @@ async function leaveSafeMode() {
   void restartHost()
 }
 
+/**
+ * Which proxy the app should use, and why.
+ *
+ * The harness host is a Node process and Node ignores `http_proxy` unless it is told to
+ * read it, so behind an explicit proxy (Clash, a corporate gateway) a model request just
+ * times out while the browser next to it works. The shell resolves the proxy itself — the
+ * choice in Settings, then the environment it was started with, then the desktop's own
+ * settings — and hands both itself and the host an environment that works.
+ *
+ * @returns the resolved proxy (see `resolveProxy`).
+ */
+function resolveProxyNow() {
+  const preferences = readPreferences(DSH_HOME)
+  return resolveProxy({
+    mode: PROXY_MODES.includes(preferences.proxyMode) ? preferences.proxyMode : 'system',
+    manualUrl: typeof preferences.proxyUrl === 'string' ? preferences.proxyUrl : '',
+    env: process.env,
+    system: readSystemProxy({ platform: process.platform, run: runCommand }),
+  })
+}
+
+/** Put the resolved proxy into an environment object (the shell's own, or the host's). */
+function applyProxyEnv(target, proxy) {
+  const env = proxyEnvFor(proxy)
+  for (const [key, value] of Object.entries(env)) target[key] = value
+  return env
+}
+
 /** Run a short diagnostic command (ss/lsof/ps) and return its stdout. */
 function runCommand(command) {
   return execFileSync('/bin/sh', ['-c', command], { encoding: 'utf8', timeout: 5000 })
@@ -532,6 +568,11 @@ const DESKTOP_MIN_HEIGHT = Number(process.env.DSH_DESKTOP_MIN_HEIGHT ?? 0)
 function startHost() {
   const bin = resolveDshBin()
   const node = resolveNode()
+  // Resolved per start: changing the proxy in Settings restarts the host with it.
+  const proxy = resolveProxyNow()
+  currentProxy = proxy
+  applyProxyEnv(process.env, proxy)
+  log(`proxy: ${describeProxy(proxy)}`)
   log(`starting host: ${node} ${bin} web --no-open --port ${DESKTOP_PORT}`)
   log(`DSH_HOME=${DSH_HOME} (${HOME_CHOICE.source}) resources=${RESOURCES} packaged=${app.isPackaged}`)
   // The watchdog is loaded into the host before the harness itself: if this shell dies
@@ -547,6 +588,8 @@ function startHost() {
       DSH_HOME,
       [HOST_MARKER]: '1',
       DSH_HOST_PARENT_PID: String(process.pid),
+      // Node needs `NODE_USE_ENV_PROXY=1` before it will read the proxy variables at all.
+      ...proxyEnvFor(proxy),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
@@ -759,13 +802,15 @@ function createWindow() {
       let key = ''
       let value = ''
       let mode = ''
+      let extra = ''
       try {
         const params = new URL(url).searchParams
         key = params.get('key') ?? ''
         value = params.get('value') ?? ''
         mode = params.get('mode') ?? ''
+        extra = params.get('url') ?? ''
       } catch { /* keep the empties: the handler logs an unknown key */ }
-      handlePreferenceCommand(key, value, mode)
+      handlePreferenceCommand(key, value, mode, extra)
       return
     }
     // A folder chooser: the renderer cannot open one, so it navigates here and the
@@ -974,8 +1019,9 @@ function windowUsesNativeFrame() {
  * @param key - preference name.
  * @param value - new value, as a string from the URL.
  * @param mode - how a relocation treats the old directory (`copy`/`move`).
+ * @param extra - an extra value for keys that need one (the manual proxy address).
  */
-function handlePreferenceCommand(key, value, mode) {
+function handlePreferenceCommand(key, value, mode, extra) {
   try {
     if (key === 'frame') {
       const stored = writePreferences(DSH_HOME, { nativeFrame: value === 'native' })
@@ -985,6 +1031,18 @@ function handlePreferenceCommand(key, value, mode) {
     }
     if (key === 'dataHome') {
       void relocateHome(value, mode)
+      return
+    }
+    if (key === 'proxy') {
+      const next = PROXY_MODES.includes(value) ? value : 'system'
+      const previous = readPreferences(DSH_HOME)
+      const stored = writePreferences(DSH_HOME, {
+        proxyMode: next,
+        proxyUrl: next === 'manual' ? String(extra ?? '').trim() : (previous.proxyUrl ?? ''),
+      })
+      log(`preference: proxyMode=${String(stored.proxyMode)} url=${stored.proxyMode === 'manual' ? String(stored.proxyUrl) : '-'}`)
+      // The host holds the old environment; restart it so the change takes effect.
+      void restartHost()
       return
     }
     if (key === 'safe') {
@@ -1397,6 +1455,16 @@ function injectDesktopInfo() {
     homeSource: HOME_CHOICE.source,
     homeDefault: defaultHome(process.platform, process.env),
     dataMoves: true,
+    // What the host is actually using, for Settings → General → Network proxy.
+    proxy: {
+      mode: PROXY_MODES.includes(readPreferences(DSH_HOME).proxyMode)
+        ? readPreferences(DSH_HOME).proxyMode
+        : 'system',
+      url: String(readPreferences(DSH_HOME).proxyUrl ?? ''),
+      effective: currentProxy.httpProxy,
+      source: currentProxy.source,
+      description: describeProxy(currentProxy),
+    },
     // Only Linux gets to choose: elsewhere the native frame is not optional.
     frameChoice: process.platform === 'linux',
     nativeFrame: windowUsesNativeFrame(),
@@ -1418,6 +1486,9 @@ async function fail(message) {
 async function boot() {
   try {
     log(`data home: ${DSH_HOME} (${HOME_CHOICE.source})${safeMode ? ' [safe mode]' : ''}`)
+    // Before anything can make a request — including this shell's own update check.
+    currentProxy = resolveProxyNow()
+    applyProxyEnv(process.env, currentProxy)
     await offerSafeMode()
     if (!(await ensureHostPort())) {
       recordBootFailure(DSH_HOME, `port ${DESKTOP_PORT} stayed busy`)
