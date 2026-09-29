@@ -56,6 +56,9 @@ on first run.
 - **`activity-line`**: a live line under the composer showing what the current turn is
   doing.
 - **`desktop-settings`**: the update and data-location rows in Settings.
+- **Safe mode**: when a plugin or a settings file breaks the boot, the next launch offers
+  to open with the bundled plugins only. Leaving safe mode checks your own profile first,
+  and offers to move a broken one aside (renamed, not deleted) for the shipped one.
 - **`liangshen` preset**: persona, tool selection and a todo-closer.
 
 ## How it runs

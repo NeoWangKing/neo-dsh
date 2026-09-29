@@ -161,6 +161,25 @@ The harness's own introspection tooling (`dsh-tool-cordis`, the plugin inventory
 in Settings) is available for looking at what is mounted, which is the useful half
 of self-modification: seeing your own composition.
 
+### Safe mode
+
+A plugin or a settings file that cannot load leaves no window to fix it from, so there is
+a boot that uses only what ships:
+
+* `--safe` (or `DSH_DESKTOP_SAFE=1`) serves `profiles/web-safe`, re-seeded from
+  `resources/profile-web` on every launch, with the bundled plugins materialised into its
+  `node_modules`. The user's own profile is neither read nor written.
+* A `settings.yaml` that does not parse is renamed to `settings.yaml.broken-<stamp>` and
+  the shipped defaults take its place.
+* Two failed starts in a row (counted in `desktop-boot.json` in the data directory) make
+  the next launch ask whether to start in safe mode; a window that loads clears the count.
+* Leaving safe mode inspects `profiles/web` first. An unparsable manifest or an
+  unresolvable bundle is reported, and the profile can be repaired: moved aside as
+  `profiles/web.broken-<stamp>` and replaced from the shipped profile.
+
+`src/boot-guard.mjs` holds the decisions (the flag, the counter, the settings repair, the
+profile check and repair) with unit tests.
+
 ### The host's port, and what guards it
 
 The window loads exactly one harness host, on one fixed port. A host that outlives its
@@ -191,6 +210,7 @@ to leave.
 | `DSH_DESKTOP_DSH_BIN` | run a different harness build as the host |
 | `DSH_DESKTOP_DEVTOOLS` | `1` opens DevTools on launch |
 | `DSH_DESKTOP_NO_SEED` | `1` skips seeding the shipped profile/preset/settings |
+| `DSH_DESKTOP_SAFE` | `1` opens in safe mode (same as `--safe`): shipped profile only |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` skips carrying an existing `~/.dsh` into a fresh home |
 | `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | set on the host by the shell (watchdog); not for humans |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` re-copies the bundled plugins even at the same version (dev window) |

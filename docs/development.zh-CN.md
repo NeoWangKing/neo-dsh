@@ -112,6 +112,21 @@ dsh plugin --profile web remove <名称>
 
 harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清单）可以用来查看自己挂载了什么，这算是"自我修改"里真正有用的那一半：看清自己的组合。
 
+### 安全模式
+
+插件或设置文件加载不了时，就没有窗口可以拿来修它，所以需要一条"只用随包内容"的启动路径：
+
+* `--safe`（或 `DSH_DESKTOP_SAFE=1`）会使用 `profiles/web-safe`：每次启动都从
+  `resources/profile-web` 重新播种，并把随包插件物化进它的 `node_modules`。用户自己的 profile
+  既不会被读、也不会被写。
+* 解析不了的 `settings.yaml` 会被改名成 `settings.yaml.broken-<时间戳>`，随包的默认值顶上。
+* 连续两次启动失败（记在数据目录的 `desktop-boot.json` 里）会让下次启动询问是否用安全模式；
+  窗口一旦加载成功就把计数清零。
+* 退出安全模式会先体检 `profiles/web`：清单解析不了、或某个 bundle 解析不到，就把问题报出来，
+  并可以修复它——挪成 `profiles/web.broken-<时间戳>`，用随包的那份顶上。
+
+`src/boot-guard.mjs` 里是这些判定（标志、计数、设置修复、profile 体检与修复），都带单测。
+
 ### 宿主的端口，以及守着它的东西
 
 窗口只连一个 harness 宿主、只用一个固定端口。宿主如果比它的外壳活得久，就会一直占着这个
@@ -139,6 +154,7 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 | `DSH_DESKTOP_DSH_BIN` | 用另一个 harness 构建作为 host |
 | `DSH_DESKTOP_DEVTOOLS` | `1` 启动时打开 DevTools |
 | `DSH_DESKTOP_NO_SEED` | `1` 跳过播种随包的 profile/preset/设置 |
+| `DSH_DESKTOP_SAFE` | `1` 用安全模式打开（等同 `--safe`）：只加载随包 profile |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` 不把已存在的 `~/.dsh` 搬进新 home |
 | `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | 外壳给宿主设的（看门狗用），不是给人设的 |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` 版本号没变也重新复制随包插件（dev 窗口用） |

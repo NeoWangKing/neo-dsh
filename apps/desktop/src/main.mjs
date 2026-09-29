@@ -38,11 +38,18 @@ import {
   readHolder, readHostRecord, waitForFree, writeHostRecord,
 } from './host-guard.mjs'
 import {
+  SAFE_PROFILE, clearBootFailures, isSafeRequested, profileBundles, readBootState,
+  recordBootFailure, repairProfile, repairSettings, shouldOfferSafeMode, unresolvedBundles,
+} from './boot-guard.mjs'
+import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
   writeDataHome,
 } from './desktop-home.mjs'
 
 const require = createRequire(import.meta.url)
+
+/** Same parser the harness uses for settings.yaml. */
+const yaml = require('js-yaml')
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 
 /** Electron's own per-user directory: settings that must survive a change of data
@@ -67,6 +74,11 @@ const HOME_CHOICE = resolveHome({
   env: process.env,
 })
 const DSH_HOME = HOME_CHOICE.path
+
+/** Safe mode: the shipped profile only, plus a settings file that parses. It can be
+ * asked for on the command line (`--safe`), through the environment, or offered by the
+ * shell itself after repeated failures to start. */
+let safeMode = isSafeRequested(process.argv, process.env)
 
 /** Shipped read-only tree (runtime, profile, preset, defaults). */
 const RESOURCES = app.isPackaged ? process.resourcesPath : join(projectRoot, 'resources')
@@ -149,8 +161,8 @@ function materialisedVersion(target, marker) {
  * a broken profile manifest means the host cannot boot at all.
  * @returns the plugin names that were materialised, for the log.
  */
-function syncBundledPlugins() {
-  const liveDir = join(DSH_HOME, 'profiles', 'web')
+function syncBundledPlugins(profileName = 'web') {
+  const liveDir = join(DSH_HOME, 'profiles', profileName)
   const liveManifest = join(liveDir, 'package.json')
   if (!existsSync(liveManifest)) return []
   const names = bundledPlugins()
@@ -244,7 +256,32 @@ function seedHome() {
   }
   mkdirSync(DSH_HOME, { recursive: true })
   if (seedDirectory(join(RESOURCES, 'profile-web'), join(DSH_HOME, 'profiles', 'web'))) seeded.push('profiles/web')
-  seeded.push(...syncBundledPlugins())
+  if (safeMode) {
+    // A profile of its own, rebuilt from the shipped one on every safe launch: it cannot
+    // carry a broken plugin, and it leaves the user's own profile untouched.
+    const live = join(DSH_HOME, 'profiles', SAFE_PROFILE)
+    const shipped = join(RESOURCES, 'profile-web')
+    if (existsSync(shipped)) {
+      rmSync(live, { recursive: true, force: true })
+      cpSync(shipped, live, { recursive: true, dereference: true })
+      seeded.push(`profiles/${SAFE_PROFILE} (safe mode)`)
+    } else {
+      log('safe mode: the shipped profile is missing, cannot build one')
+    }
+    // The harness reads settings.yaml before it can serve anything, so a broken one means
+    // no window at all. It is moved aside, never deleted.
+    try {
+      const repaired = repairSettings(DSH_HOME, join(RESOURCES, 'settings.defaults.yaml'), {
+        parse: (text) => yaml.load(text),
+        log,
+      })
+      if (repaired.repaired) seeded.push('settings.yaml (repaired)')
+    } catch (error) {
+      log(`safe mode: settings repair failed: ${String(error?.message ?? error)}`)
+    }
+  }
+  // Safe mode materialises the plugins for its own profile and leaves the user's alone.
+  seeded.push(...syncBundledPlugins(safeMode ? SAFE_PROFILE : 'web'))
   if (seedDirectory(join(RESOURCES, 'presets'), join(DSH_HOME, '.agent-presets'))) seeded.push('.agent-presets')
   const settings = join(DSH_HOME, 'settings.yaml')
   const defaults = join(RESOURCES, 'settings.defaults.yaml')
@@ -274,6 +311,125 @@ class Tail {
   append(chunk) {
     this.text = (this.text + chunk).slice(-this.limit)
   }
+}
+
+/**
+ * Ask whether to open in safe mode, when the last launches kept failing.
+ *
+ * A plugin or a settings file that breaks the boot leaves no UI to fix it from, so the
+ * offer has to come from the shell before anything is loaded.
+ */
+async function offerSafeMode() {
+  if (safeMode) return
+  const state = readBootState(DSH_HOME)
+  if (!shouldOfferSafeMode(state)) return
+  const lastReason = String(state.lastReason ?? '').split('\n')[0]
+  log(`boot: ${state.failures} failed start(s) in a row; offering safe mode`)
+  const { response } = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Neo DSH',
+    message: `Neo DSH failed to start ${state.failures} times in a row`,
+    detail: [
+      lastReason === '' ? '' : `Last failure: ${lastReason}`,
+      'Safe mode opens the window with the bundled plugins only, and moves a settings file that cannot be parsed out of the way (never deleting it). Your own profile and settings are left as they are.',
+      'The corner button leaves safe mode.',
+    ].filter((line) => line !== '').join('\n\n'),
+    buttons: ['Start in safe mode', 'Try again normally'],
+    defaultId: 0,
+    cancelId: 1,
+  })
+  if (response === 0) {
+    safeMode = true
+    log('boot: starting in safe mode')
+  } else {
+    // Do not ask again on every launch while they are trying things out; the counter
+    // still grows, so a genuine loop comes back to this question.
+    clearBootFailures(DSH_HOME)
+  }
+}
+
+/**
+ * What keeps a profile from loading: an unreadable manifest, or bundles that do not
+ * resolve. This is the check that turns "the app will not start" into a question the
+ * window can ask.
+ *
+ * @param profileName - directory name under `profiles/`.
+ * @returns the problems, in the words the dialog will show.
+ */
+function profileProblems(profileName) {
+  const dir = join(DSH_HOME, 'profiles', profileName)
+  const manifest = join(dir, 'package.json')
+  if (!existsSync(manifest)) return [`${manifest} is missing`]
+  let bundles
+  try {
+    bundles = profileBundles(readFileSync(manifest, 'utf8'))
+  } catch (error) {
+    return [`${manifest} ${String(error?.message ?? error)}`]
+  }
+  const searchPaths = [
+    dir,
+    join(projectRoot, 'apps', 'desktop', 'node_modules'),
+    join(RESOURCES, 'app', 'node_modules'),
+    RESOURCES,
+  ]
+  const canResolve = (name) => {
+    if (existsSync(join(dir, 'node_modules', name))) return true
+    try {
+      require.resolve(name, { paths: searchPaths })
+      return true
+    } catch {
+      return false
+    }
+  }
+  return unresolvedBundles(bundles, canResolve).map((name) => `bundle "${name}" cannot be resolved`)
+}
+
+/**
+ * Leave safe mode, offering to repair the profile on the way out.
+ *
+ * Leaving is exactly when the user finds out their own profile is what broke the boot, so
+ * the repair belongs here rather than in a separate button: the broken directory is moved
+ * aside (never deleted) and the shipped profile takes its place.
+ */
+async function leaveSafeMode() {
+  const problems = profileProblems('web')
+  if (problems.length > 0) {
+    log(`safe mode: leaving, but profiles/web has ${problems.length} problem(s): ${problems.join('; ')}`)
+    const { response } = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Neo DSH',
+      message: 'Your own profile cannot be loaded',
+      detail: [
+        ...problems.map((problem) => `• ${problem}`),
+        '',
+        'Repair it by moving profiles/web aside and putting the shipped profile in its place? The current one is renamed, not deleted, and plugins you installed yourself can be installed again afterwards.',
+      ].join('\n'),
+      buttons: ['Repair and restart', 'Stay in safe mode'],
+      defaultId: 0,
+      cancelId: 1,
+    })
+    if (response !== 0) return
+    const report = repairProfile({
+      home: DSH_HOME,
+      profile: 'web',
+      shipped: join(RESOURCES, 'profile-web'),
+      log,
+    })
+    if (!report.repaired) {
+      dialog.showErrorBox('Neo DSH', `profiles/web could not be replaced. See ${LOG_PATH}.`)
+      return
+    }
+    try {
+      syncBundledPlugins('web')
+    } catch (error) {
+      log(`profile repair: bundled plugins could not be materialised: ${String(error?.message ?? error)}`)
+    }
+    log(`safe mode: repaired profiles/web (old copy at ${report.movedTo ?? 'n/a'})`)
+  }
+  safeMode = false
+  clearBootFailures(DSH_HOME)
+  log('safe mode: leaving, restarting the host with the normal profile')
+  void restartHost()
 }
 
 /** Run a short diagnostic command (ss/lsof/ps) and return its stdout. */
@@ -384,7 +540,7 @@ function startHost() {
   const watchdog = join(dirname(fileURLToPath(import.meta.url)), 'host-watchdog.cjs')
   const child = spawn(node, [
     ...(existsSync(watchdog) ? ['--require', watchdog] : []),
-    bin, 'web', '--no-open', '--port', DESKTOP_PORT,
+    bin, ...(safeMode ? ['--profile', SAFE_PROFILE] : ['web']), '--no-open', '--port', DESKTOP_PORT,
   ], {
     env: {
       ...process.env,
@@ -637,7 +793,10 @@ function createWindow() {
   })
   mainWindow.webContents.on('did-finish-load', () => {
     injectRestartButton()
+    injectSafeBanner()
     injectDesktopInfo()
+    // The window loaded: whatever failed before is not failing now.
+    try { clearBootFailures(DSH_HOME) } catch (error) { log(`boot: could not clear the failure count: ${String(error?.message ?? error)}`) }
     /* Updater self-test: runs the real check/download and exits, so the updater
        can be verified from a terminal (or CI) instead of by clicking around.
        It never installs — see DSH_DESKTOP_UPDATE_SMOKE in docs/development.md. */
@@ -757,6 +916,7 @@ function watchHostExit() {
     // Unexpected exit only: our own shutdown/restart nulls `host` first.
     if (!quitting && host) {
       host = null
+      recordBootFailure(DSH_HOME, `the dsh host exited unexpectedly (code=${code}, signal=${signal})`)
       dialog.showErrorBox(
         'Neo DSH stopped',
         `The dsh host exited unexpectedly (code=${code}, signal=${signal}). See ${LOG_PATH} for details.`,
@@ -825,6 +985,10 @@ function handlePreferenceCommand(key, value, mode) {
     }
     if (key === 'dataHome') {
       void relocateHome(value, mode)
+      return
+    }
+    if (key === 'safe') {
+      void leaveSafeMode()
       return
     }
     log(`preference: ignoring unknown key ${String(key)}`)
@@ -1186,6 +1350,37 @@ async function runUpdateSmoke(mode) {
   }
 }
 
+/** A badge that says the window is in safe mode, with the way out of it. */
+function injectSafeBanner() {
+  if (!safeMode || !mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents.executeJavaScript(`(() => {
+    if (document.getElementById('dsh-safe-banner')) return
+    const bar = document.createElement('div')
+    bar.id = 'dsh-safe-banner'
+    bar.style.cssText = [
+      'position:fixed', 'left:16px', 'bottom:16px', 'z-index:9999',
+      'display:flex', 'align-items:center', 'gap:10px', 'max-width:60vw',
+      'padding:8px 10px 8px 14px', 'border-radius:18px',
+      'background:#f5a623', 'color:#1c1c1c',
+      'font:400 13px/18px system-ui,sans-serif',
+      'box-shadow:0 2px 10px rgba(0,0,0,.25)',
+    ].join(';')
+    const text = document.createElement('span')
+    text.textContent = '安全模式：只加载随包插件，自定义设置未生效'
+    const leave = document.createElement('button')
+    leave.type = 'button'
+    leave.textContent = '退出安全模式'
+    leave.style.cssText = [
+      'border:0', 'border-radius:12px', 'padding:3px 10px', 'cursor:pointer',
+      'background:rgba(0,0,0,.14)', 'color:inherit', 'font:inherit',
+    ].join(';')
+    leave.onclick = () => { location.href = '/__dsh_desktop_set?key=safe&value=none' }
+    bar.appendChild(text)
+    bar.appendChild(leave)
+    document.body.appendChild(bar)
+  })()`).catch(() => {})
+}
+
 /** Publish this build's version and platform to the page for client plugins. */
 function injectDesktopInfo() {
   if (!mainWindow) return
@@ -1204,6 +1399,7 @@ function injectDesktopInfo() {
     // Only Linux gets to choose: elsewhere the native frame is not optional.
     frameChoice: process.platform === 'linux',
     nativeFrame: windowUsesNativeFrame(),
+    safeMode,
   }
   mainWindow.webContents
     .executeJavaScript(`window.__NEO_DSH__ = ${JSON.stringify(info)}; true`)
@@ -1212,6 +1408,7 @@ function injectDesktopInfo() {
 
 async function fail(message) {
   log(`fatal: ${message}`)
+  recordBootFailure(DSH_HOME, message)
   await shutdownHost()
   dialog.showErrorBox('Neo DSH failed to start', message)
   app.exit(1)
@@ -1219,8 +1416,10 @@ async function fail(message) {
 
 async function boot() {
   try {
-    log(`data home: ${DSH_HOME} (${HOME_CHOICE.source})`)
+    log(`data home: ${DSH_HOME} (${HOME_CHOICE.source})${safeMode ? ' [safe mode]' : ''}`)
+    await offerSafeMode()
     if (!(await ensureHostPort())) {
+      recordBootFailure(DSH_HOME, `port ${DESKTOP_PORT} stayed busy`)
       app.exit(1)
       return
     }
