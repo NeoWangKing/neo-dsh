@@ -22,7 +22,7 @@
  * who already runs the harness CLI keeps every session and setting.
  */
 
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
@@ -33,6 +33,10 @@ import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron'
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
+import {
+  HOST_MARKER, classifyProbe, clearHostRecord, findPortHolder, isOrphan, portAction, probePort,
+  readHolder, readHostRecord, waitForFree, writeHostRecord,
+} from './host-guard.mjs'
 import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
   writeDataHome,
@@ -272,6 +276,79 @@ class Tail {
   }
 }
 
+/** Run a short diagnostic command (ss/lsof/ps) and return its stdout. */
+function runCommand(command) {
+  return execFileSync('/bin/sh', ['-c', command], { encoding: 'utf8', timeout: 5000 })
+}
+
+/**
+ * Make sure the fixed port is free before a host is started on it.
+ *
+ * A host that outlived its window keeps the port, and then every launch fails with "the
+ * host exited before it was ready" — a message that says nothing about the cause. So
+ * the port is probed first: free is the normal case, a host this app can prove is its
+ * own leftover is stopped, and anything else is put to the user with the pid and the
+ * command line in front of them, rather than killed behind their back.
+ *
+ * @returns true when the port is ready to be used.
+ */
+async function ensureHostPort() {
+  const port = DESKTOP_PORT
+  const state = classifyProbe(await probePort({ port }))
+  if (state === 'free') return true
+
+  const { pid } = findPortHolder({ platform: process.platform, port, run: runCommand })
+  const holder = readHolder({ platform: process.platform, pid, port, bin: resolveDshBin(), run: runCommand })
+  const record = readHostRecord(DSH_HOME)
+  const orphan = isOrphan({ holder, record })
+  const { action, reason } = portAction({ probe: state, holder, record, orphan })
+  const mine = holder.marker === true || (record.pid !== undefined && record.pid === holder.pid)
+  log(
+    `port ${port}: probe=${state} pid=${holder.pid ?? '?'} dsh-host=${holder.host} ours=${mine} ppid=${holder.ppid ?? '?'} orphan=${orphan} → ${action} (${reason})`,
+  )
+
+  const stopHolder = async () => {
+    try {
+      process.kill(holder.pid, 'SIGTERM')
+    } catch (error) {
+      log(`port ${port}: could not signal pid ${holder.pid}: ${String(error?.message ?? error)}`)
+    }
+    const freed = await waitForFree({ probe: () => probePort({ port }) })
+    log(`port ${port}: ${freed ? 'free again' : 'still held'}`)
+    return freed
+  }
+
+  if (action === 'reclaim') {
+    log(`port ${port}: stopping pid ${holder.pid}, our host outlived its window`)
+    if (await stopHolder()) return true
+  }
+
+  const { response } = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Neo DSH',
+    message: `Port ${port} is already in use`,
+    detail: [
+      holder.cmdline === '' ? 'The process could not be identified.' : holder.cmdline.slice(0, 400),
+      '',
+      `pid ${holder.pid ?? '?'} — ${reason}`,
+      '',
+      'Neo DSH starts its own harness host on this port. Stopping it is usually right for a leftover from an earlier run, but it may be something you are using.',
+      '',
+      'DSH_DESKTOP_PORT can point this app at another port instead.',
+    ].join('\n'),
+    buttons: ['Stop it and continue', 'Quit'],
+    defaultId: 0,
+    cancelId: 1,
+  })
+  if (response === 0 && (await stopHolder())) return true
+
+  dialog.showErrorBox(
+    'Neo DSH could not start',
+    `Port ${port} is still in use by pid ${holder.pid ?? '?'}. Stop that process, or start with DSH_DESKTOP_PORT=<another port>. See ${LOG_PATH}.`,
+  )
+  return false
+}
+
 /**
  * Start the host and resolve when its readiness URL appears. Rejects when the
  * child exits before ready, carrying the tail of its stderr for the dialog.
@@ -301,9 +378,35 @@ function startHost() {
   const node = resolveNode()
   log(`starting host: ${node} ${bin} web --no-open --port ${DESKTOP_PORT}`)
   log(`DSH_HOME=${DSH_HOME} (${HOME_CHOICE.source}) resources=${RESOURCES} packaged=${app.isPackaged}`)
-  const child = spawn(node, [bin, 'web', '--no-open', '--port', DESKTOP_PORT], {
-    env: { ...process.env, DSH_HOME },
+  // The watchdog is loaded into the host before the harness itself: if this shell dies
+  // without a chance to clean up (SIGKILL, a crash, the whole session going away), the
+  // host would otherwise hold the port until the machine reboots.
+  const watchdog = join(dirname(fileURLToPath(import.meta.url)), 'host-watchdog.cjs')
+  const child = spawn(node, [
+    ...(existsSync(watchdog) ? ['--require', watchdog] : []),
+    bin, 'web', '--no-open', '--port', DESKTOP_PORT,
+  ], {
+    env: {
+      ...process.env,
+      DSH_HOME,
+      [HOST_MARKER]: '1',
+      DSH_HOST_PARENT_PID: String(process.pid),
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  // Remember which pid serves this port, so a later launch can tell our own leftover
+  // apart from someone else's host.
+  child.once('spawn', () => {
+    try {
+      writeHostRecord(DSH_HOME, {
+        pid: child.pid,
+        port: Number(DESKTOP_PORT),
+        parentPid: process.pid,
+        startedAt: new Date().toISOString(),
+      })
+    } catch (error) {
+      log(`could not record the host pid: ${String(error?.message ?? error)}`)
+    }
   })
 
   const stderr = new Tail()
@@ -341,7 +444,9 @@ function startHost() {
       if (!settled) {
         settled = true
         reject(new Error(
-          `the dsh host exited before it was ready (code=${code}, signal=${signal})\n\n${stderr.text.trim()}`,
+          `the dsh host exited before it was ready (code=${code}, signal=${signal}).\n`
+            + `Another process holding port ${DESKTOP_PORT} is the usual cause; see ${LOG_PATH}.\n\n`
+            + stderr.text.trim(),
         ))
       }
     })
@@ -643,6 +748,7 @@ async function shutdownHost() {
   const current = host
   host = null
   if (current) await current.stop()
+  clearHostRecord(DSH_HOME)
 }
 
 /** Attach the unexpected-exit watchdog to the CURRENT host (each host needs its own). */
@@ -674,6 +780,9 @@ async function restartHost() {
   log('restart requested: stopping host')
   try {
     await shutdownHost()
+    // The socket can outlive the process by a moment; a host that starts too early
+    // would die on EADDRINUSE instead of serving the reloaded page.
+    await waitForFree({ probe: () => probePort({ port: DESKTOP_PORT }), timeoutMs: 5000, intervalMs: 100 })
     host = startHost()
     resolvedUrl = await host.url
     log(`restart: new host ready at ${resolvedUrl}`)
@@ -1111,6 +1220,10 @@ async function fail(message) {
 async function boot() {
   try {
     log(`data home: ${DSH_HOME} (${HOME_CHOICE.source})`)
+    if (!(await ensureHostPort())) {
+      app.exit(1)
+      return
+    }
     const seeded = seedHome()
     if (seeded.length > 0) log(`seeded $DSH_HOME: ${seeded.join(', ')}`)
     host = startHost()
@@ -1133,6 +1246,14 @@ if (!gotLock) {
       mainWindow.focus()
     }
   })
+
+  // A shell that is asked to stop should take its host with it.
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+    process.on(signal, () => {
+      log(`received ${signal}`)
+      app.quit()
+    })
+  }
 
   app.on('before-quit', (event) => {
     if (quitting || !host) return

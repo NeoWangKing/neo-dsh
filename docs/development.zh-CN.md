@@ -112,6 +112,23 @@ dsh plugin --profile web remove <名称>
 
 harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清单）可以用来查看自己挂载了什么，这算是"自我修改"里真正有用的那一半：看清自己的组合。
 
+### 宿主的端口，以及守着它的东西
+
+窗口只连一个 harness 宿主、只用一个固定端口。宿主如果比它的外壳活得久，就会一直占着这个
+端口，之后每次启动都死在 EADDRINUSE 上，表现成"the host exited before it was ready"。
+两层东西防这件事：
+
+* 宿主启动时带 `--require src/host-watchdog.cjs`，外壳通过 `DSH_HOST_PARENT_PID` 告诉它
+  自己是哪个 pid，并打上 `DSH_DESKTOP_HOST=1` 标记。当那个 pid 不再是它的父进程时，宿主
+  自己退出。外壳被 SIGKILL（没有任何清理机会）时，只有这一层还管用。
+* 启动宿主之前，外壳先探测端口。空着是常态；能证明是自己的宿主（`$DSH_HOME` 里的
+  `desktop-host.json`，或那个标记）而且外壳已经不在了，就停掉它并等端口松开；其余的会把
+  pid 和命令行摆到用户面前让他决定，而不是擅自杀掉。`DSH_DESKTOP_PORT` 可以整体换端口，
+  代价是渲染进程的 localStorage 会重置（origin 包含端口）。
+
+`ensureHostPort`、`isOrphan`、`portAction` 在 `src/host-guard.mjs` 里，有单测；看门狗有一个
+真实进程的测试：杀掉它的父进程，然后等它自己离开。
+
 ## 环境变量
 
 | 变量 | 作用 |
@@ -123,6 +140,7 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 | `DSH_DESKTOP_DEVTOOLS` | `1` 启动时打开 DevTools |
 | `DSH_DESKTOP_NO_SEED` | `1` 跳过播种随包的 profile/preset/设置 |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` 不把已存在的 `~/.dsh` 搬进新 home |
+| `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | 外壳给宿主设的（看门狗用），不是给人设的 |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` 版本号没变也重新复制随包插件（dev 窗口用） |
 | `DSH_DESKTOP_MIN_WIDTH` / `_HEIGHT` | 可选的窗口下限（不设＝没有下限） |
 | `DSH_DESKTOP_SMOKE` | `1` 启动→报告→退出；`_SMOKE_CRASH=1` 额外测试渲染进程自恢复 |

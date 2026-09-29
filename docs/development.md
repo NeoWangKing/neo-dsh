@@ -161,6 +161,26 @@ The harness's own introspection tooling (`dsh-tool-cordis`, the plugin inventory
 in Settings) is available for looking at what is mounted, which is the useful half
 of self-modification: seeing your own composition.
 
+### The host's port, and what guards it
+
+The window loads exactly one harness host, on one fixed port. A host that outlives its
+shell keeps that port, and every later start then fails on EADDRINUSE, which surfaces as
+"the host exited before it was ready". Two things keep that from happening:
+
+* The host is started with `--require src/host-watchdog.cjs`, plus the shell's pid
+  (`DSH_HOST_PARENT_PID`) and the marker `DSH_DESKTOP_HOST=1`. When that pid is no longer
+  the host's parent, the host stops itself. This is the only layer that still works when
+  the shell is SIGKILLed and gets no chance to clean up.
+* Before starting a host, the shell probes the port. Free is the normal case. A host it
+  can prove is its own — `desktop-host.json` in `$DSH_HOME`, or the marker — with no shell
+  left is stopped and waited out. Anything else is put in front of the user with its pid
+  and command line rather than killed. `DSH_DESKTOP_PORT` moves the whole thing elsewhere,
+  at the cost of resetting the renderer's localStorage, since the origin includes the port.
+
+`ensureHostPort`, `isOrphan` and `portAction` live in `src/host-guard.mjs` and are unit
+tested; the watchdog has a real-process test that kills its parent and waits for the child
+to leave.
+
 ## Environment variables
 
 | Variable | Effect |
@@ -172,6 +192,7 @@ of self-modification: seeing your own composition.
 | `DSH_DESKTOP_DEVTOOLS` | `1` opens DevTools on launch |
 | `DSH_DESKTOP_NO_SEED` | `1` skips seeding the shipped profile/preset/settings |
 | `DSH_DESKTOP_NO_MIGRATE` | `1` skips carrying an existing `~/.dsh` into a fresh home |
+| `DSH_HOST_PARENT_PID` / `DSH_HOST_WATCHDOG_MS` | set on the host by the shell (watchdog); not for humans |
 | `DSH_DESKTOP_FORCE_BUNDLED` | `1` re-copies the bundled plugins even at the same version (dev window) |
 | `DSH_DESKTOP_MIN_WIDTH` / `_HEIGHT` | optional window floor (unset = no floor) |
 | `DSH_DESKTOP_SMOKE` | `1` boots, reports, exits; `_SMOKE_CRASH=1` also tests renderer recovery |
