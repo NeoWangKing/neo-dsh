@@ -29,6 +29,7 @@ check('下载中无百分比也不崩', statusText({ phase: 'downloading', versi
 check('已下载', statusText({ phase: 'downloaded', version: '0.1.4' }, t), '已下载，可以安装：v0.1.4')
 check('安装中', statusText({ phase: 'installing', version: '0.1.4' }, t), '正在安装并重启… v0.1.4')
 check('错误带原因', statusText({ phase: 'error', message: 'GitHub API 403' }, t), '检查更新失败：GitHub API 403')
+check('下载失败不会被说成"检查更新失败"', statusText({ phase: 'error', action: 'download', message: '下载卡住：30 秒没有数据' }, t), '下载失败：下载卡住：30 秒没有数据')
 check('未知状态不崩', statusText(undefined, t), '')
 
 // ---- the data-location row's failure copy --------------------------------

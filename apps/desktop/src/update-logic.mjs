@@ -164,29 +164,60 @@ export async function fetchLatestRelease(fetchImpl = fetch, options = {}) {
  * @returns `{ path, bytes, asset }`.
  */
 export async function downloadRelease(asset, options = {}) {
-  const { onProgress = () => {}, fetchImpl = fetch } = options
+  const {
+    onProgress = () => {},
+    fetchImpl = fetch,
+    // A connection that never delivers anything leaves the row stuck at "downloading 0%"
+    // forever, with no way to tell a slow network from a dead one. Give up after this long
+    // without a single new byte; 0 disables the check.
+    idleTimeoutMs = 30_000,
+    probeEveryMs = 500,
+  } = options
   const dir = updateDir()
   mkdirSync(dir, { recursive: true })
   const target = join(dir, asset.name)
   const total = Number(asset.size ?? 0)
   if (existsSync(target)) rmSync(target, { force: true })
 
+  const controller = typeof AbortController === 'function' ? new AbortController() : undefined
   const response = await fetchImpl(asset.browser_download_url, {
     headers: { 'user-agent': 'neo-dsh-updater' },
     redirect: 'follow',
+    signal: controller?.signal,
   })
   if (!response.ok) throw new Error(`download failed: HTTP ${response.status}`)
 
   onProgress({ received: 0, total, percent: 0 })
   // Progress off the file size: simpler than wrapping the stream, and it reports
   // the number that matters — bytes actually on disk.
+  let lastBytes = 0
+  let lastChangeAt = Date.now()
+  let stalled = false
+  const source = Readable.fromWeb(response.body)
   const ticker = setInterval(() => {
     let received = 0
     try { received = statSync(target).size } catch { /* not created yet */ }
+    if (received !== lastBytes) {
+      lastBytes = received
+      lastChangeAt = Date.now()
+    } else if (idleTimeoutMs > 0 && Date.now() - lastChangeAt >= idleTimeoutMs && !stalled) {
+      stalled = true
+      // Aborting the request does not necessarily settle a web stream that never
+      // produced anything, so the source is torn down as well.
+      source.destroy(new Error('download stalled'))
+      controller?.abort(new Error('download stalled'))
+    }
     onProgress({ received, total, percent: total > 0 ? Math.min(100, Math.round((received / total) * 100)) : null })
-  }, 500)
+  }, probeEveryMs)
   try {
-    await pipeline(Readable.fromWeb(response.body), createWriteStream(target))
+    await pipeline(source, createWriteStream(target))
+  } catch (error) {
+    if (stalled) {
+      throw new Error(
+        `download stalled: no data for ${Math.round(idleTimeoutMs / 1000)}s (${String(error?.message ?? error)})`,
+      )
+    }
+    throw error
   } finally {
     clearInterval(ticker)
   }

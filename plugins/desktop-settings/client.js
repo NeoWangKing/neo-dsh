@@ -31,6 +31,7 @@
     downloaded: '已下载，可以安装',
     installing: '正在安装并重启…',
     failed: '检查更新失败',
+    failedDownload: '下载失败',
     check: '检查更新',
     download: '下载更新',
     install: '立即更新并重启',
@@ -81,6 +82,7 @@
     downloaded: 'Downloaded — ready to install',
     installing: 'Installing and restarting…',
     failed: 'Update check failed',
+    failedDownload: 'Download failed',
     check: 'Check for updates',
     download: 'Download update',
     install: 'Install and restart',
@@ -264,7 +266,12 @@
     }
     if (phase === 'downloaded') return `${t('downloaded')}：v${state.version}`;
     if (phase === 'installing') return `${t('installing')} v${state.version}`;
-    if (phase === 'error') return `${t('failed')}：${state.message ?? ''}`;
+    if (phase === 'error') {
+      // A stalled or failed download is not a failed check, and saying so is the whole
+      // point of that message.
+      const prefix = state.action === 'download' ? t('failedDownload') : t('failed')
+      return `${prefix}：${state.message ?? ''}`
+    };
     return '';
   }
 

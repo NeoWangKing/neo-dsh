@@ -1317,9 +1317,10 @@ async function handleUpdateCommand(action) {
       installUpdate()
       return
     }
-    sendUpdateState({ phase: 'error', message: `未知操作：${action === '' ? '(空)' : action}` })
+    sendUpdateState({ phase: 'error', action, message: `未知操作：${action === '' ? '(空)' : action}` })
   } catch (error) {
-    sendUpdateState({ phase: 'error', message: String(error?.message ?? error) })
+    // `action` says whether the check or the download failed, so the row can say which.
+    sendUpdateState({ phase: 'error', action, message: String(error?.message ?? error) })
   }
 }
 

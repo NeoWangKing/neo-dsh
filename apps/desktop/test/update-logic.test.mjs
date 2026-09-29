@@ -120,5 +120,39 @@ try {
 check('HTTP 错误会报错', httpThrew.includes('HTTP 500'), true)
 
 rmSync(join(tmpdir(), 'neo-dsh-update'), { recursive: true, force: true })
+// ---- a download that never delivers must not hang forever ---------------
+{
+  const { downloadRelease } = await import('../src/update-logic.mjs')
+  const { Readable } = await import('node:stream')
+  const never = new Readable({ read() {} })
+  const stalledAsset = {
+    name: 'stalled-probe.bin',
+    size: 1000,
+    browser_download_url: 'https://example.invalid/stalled',
+  }
+  let message = ''
+  const attempt = (async () => {
+    try {
+      await downloadRelease(stalledAsset, {
+        idleTimeoutMs: 200,
+        probeEveryMs: 50,
+        fetchImpl: async () => ({ ok: true, status: 200, body: Readable.toWeb(never) }),
+        onProgress: () => {},
+      })
+      return 'resolved'
+    } catch (error) {
+      return String(error?.message ?? error)
+    }
+  })()
+  // The suite must not hang on the very failure this test is about.
+  message = await Promise.race([
+    attempt,
+    new Promise((resolve) => setTimeout(() => resolve('TIMED OUT (still hanging)'), 5000)),
+  ])
+  never.destroy()
+  check('下载一直没有数据 → 超时放弃（而不是永远挂在 0%）', /stalled/.test(message), true)
+  check('  不会挂住（5 秒内一定有结果）', message.includes('TIMED OUT'), false)
+}
+
 console.log(failures === 0 ? '\nall update-logic checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
