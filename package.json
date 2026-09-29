@@ -1,6 +1,6 @@
 {
   "name": "neo-dsh",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "private": true,
   "description": "Neo DSH: my own DeepSeek Harness desktop suite — Electron shell, client plugins, agent preset and the profile they ship with.",
   "type": "module",
