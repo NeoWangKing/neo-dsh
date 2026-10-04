@@ -44,7 +44,7 @@ bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离�
 
 | profile | 谁在用 | 内容 |
 | --- | --- | --- |
-| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包插件（activity-line、desktop-settings、dshmarket） |
+| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包插件（activity-line、desktop-settings、smart-approval、dshmarket） |
 | `dsh-tui` | 终端 TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
 | `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
 
@@ -56,6 +56,8 @@ DSH_HOME=$(pnpm run --silent app-home) dsh plugin --profile web add link:/path/t
 ```
 
 `pnpm run app-home` 打印的就是应用真正在用的目录（读的是 app 自己那份位置配置，所以在「设置 → 数据位置」改过之后它也跟着变）。要让一个插件两边都有，就在两个 home 里各装一次、各用对应的 profile 名。
+
+应用自己还随包带了一层 profile patch（`resources/profile-web/cordis.patch.yml`，目前就是档位表）。从 `~/.dsh` 迁移过来、或者由旧版本播种的 home 会带着它自己那份 `cordis.patch.yml`，而播种**从不覆盖已有文件**——所以那份原版空文件会赢，「智能批准」这个只能靠 patch 条目出现的档位就整个不见了。因此应用会把自己的那层交给 host 作为额外的 `--patch` 覆盖层，但**只针对 live 文件里还没写的条目**：已经写了说明是旧版本写的或用户自己改的，覆盖层会静默压掉后者。判断在 `apps/desktop/src/profile-patch.mjs`，`desktop.log` 里会写明它有没有生效。注意 `--patch` 要跟 profile 选择器放在一起——`web` 子命令自己的选项之后的内容会原样透传给 web app，放错位置会得到 `unknown option '--patch'`，表现就是启动失败弹窗。
 
 **一个坑：profile 没写 `patchReload` 时默认是 `live`，而它需要 Cordis HMR 服务，打包版又故意不含 HMR** —— 于是 `dsh --profile …` 会直接以 `user patch-layer watching requires the Cordis HMR service` 退出。随包的 `web` / `headless` profile 写的是 `"patchReload": "startup"`；由 harness 自己新建的 profile（例如早期的 `dsh-tui`）没有这一项，要手动补：
 

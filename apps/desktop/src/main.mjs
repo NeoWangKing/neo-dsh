@@ -48,6 +48,7 @@ import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
   writeDataHome,
 } from './desktop-home.mjs'
+import { missingPatchEntryIds } from './profile-patch.mjs'
 
 const require = createRequire(import.meta.url)
 
@@ -565,6 +566,26 @@ const DESKTOP_PORT = process.env.DSH_DESKTOP_PORT || '3081'
 const DESKTOP_MIN_WIDTH = Number(process.env.DSH_DESKTOP_MIN_WIDTH ?? 0)
 const DESKTOP_MIN_HEIGHT = Number(process.env.DSH_DESKTOP_MIN_HEIGHT ?? 0)
 
+/**
+ * The app's shipped patch layer, when the live profile still needs part of it.
+ *
+ * See `profile-patch.mjs` for why this is an overlay and not a file the app writes: the
+ * profile's own patch file belongs to the user, and a home that migrated from `~/.dsh` or an
+ * older install keeps the layer it already had. A profile that already names every entry we
+ * ship needs nothing, and says so.
+ *
+ * @returns the patch file to pass to the host, or `undefined` when there is nothing to add.
+ */
+function shippedPatchOverlay() {
+  const shipped = join(RESOURCES, 'profile-web', 'cordis.patch.yml')
+  if (!existsSync(shipped)) return undefined
+  const live = join(DSH_HOME, 'profiles', 'web', 'cordis.patch.yml')
+  const missing = missingPatchEntryIds(readFileSync(shipped, 'utf8'), existsSync(live) ? readFileSync(live, 'utf8') : '')
+  if (missing.length === 0) return undefined
+  log(`profile patch: overlaying the shipped entries this profile lacks (${missing.join(', ')})`)
+  return shipped
+}
+
 function startHost() {
   const bin = resolveDshBin()
   const node = resolveNode()
@@ -579,9 +600,15 @@ function startHost() {
   // without a chance to clean up (SIGKILL, a crash, the whole session going away), the
   // host would otherwise hold the port until the machine reboots.
   const watchdog = join(dirname(fileURLToPath(import.meta.url)), 'host-watchdog.cjs')
+  // `--patch` is a CLI option of the profile being booted, so it belongs with the profile
+  // selector: the `web` subcommand passes everything after its own options through to the
+  // web app, and `--patch` there is not an option the app knows.
+  const overlay = shippedPatchOverlay()
+  const patches = overlay === undefined ? [] : ['--patch', overlay]
   const child = spawn(node, [
     ...(existsSync(watchdog) ? ['--require', watchdog] : []),
-    bin, ...(safeMode ? ['--profile', SAFE_PROFILE] : ['web']), '--no-open', '--port', DESKTOP_PORT,
+    bin, ...(safeMode ? ['--profile', SAFE_PROFILE, ...patches] : ['web', ...patches]),
+    '--no-open', '--port', DESKTOP_PORT,
   ], {
     env: {
       ...process.env,

@@ -88,6 +88,18 @@ own location config, so it follows Settings → Data location). A plugin that be
 in both front ends has to be installed twice, once per home, with that home's
 profile name.
 
+The app also ships a profile patch layer of its own (`resources/profile-web/cordis.patch.yml`
+— today the permission preset table). A home that migrated from `~/.dsh`, or that an older
+build seeded, carries its own `cordis.patch.yml`, and seeding never overwrites a file that is
+already there — so the pristine empty file wins and a preset that exists only as a patch
+entry, like 智能批准, is missing from that window entirely. The app therefore hands its own
+layer to the host as an extra `--patch` overlay, but only for entries the live file does not
+already name: an entry that is there was written by an earlier build or by the user, and an
+overlay would silently override the latter. The decision is `apps/desktop/src/profile-patch.mjs`
+and `desktop.log` records when it fires. `--patch` belongs with the profile selector: the `web`
+subcommand passes everything after its own options through to the web app, and the wrong place
+gives `unknown option '--patch'` — a start-up failure dialog.
+
 **A trap: a profile without `patchReload` defaults to `live`, which needs the Cordis
 HMR service that the packaged runtime deliberately does not ship** — so `dsh
 --profile …` exits with `user patch-layer watching requires the Cordis HMR

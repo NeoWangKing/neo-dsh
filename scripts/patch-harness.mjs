@@ -17,12 +17,25 @@
  * (or its `@deepseek-ai` scope), or a single package directory when only that package is
  * meant.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scopeName = '@deepseek-ai'
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
+
+/**
+ * Replace a file in one step. A running app watches the client bundles it serves — the
+ * client HMR plugin reloads a module the moment it changes — and a reader that caught a
+ * half-written file would lose that module instead of picking up the change: that is how a
+ * composer disappeared once. The temporary file lives in the target directory so the rename
+ * stays on one filesystem, and therefore atomic.
+ */
+function writeInOneStep(file, text) {
+  const temporary = `${file}.patch-harness-${process.pid}`
+  writeFileSync(temporary, text)
+  renameSync(temporary, file)
+}
 
 /**
  * A client bundle is spliced with JSX-runtime calls, so it has to keep parsing: a broken
@@ -275,7 +288,7 @@ for (const target of targets) {
     }
     if (changed) {
       if (target.patches.some((patch) => patch.parse)) assertParses(file, text)
-      writeFileSync(file, text)
+      writeInOneStep(file, text)
     }
   }
 }
