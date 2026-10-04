@@ -191,11 +191,72 @@ const clientPatches = [
   },
 ]
 
+/**
+ * `dsh-terminal-bash` refuses a sandbox-mode change while a persistent terminal is alive,
+ * because a PTY keeps the confinement it was spawned with. Our agent preset gives the model
+ * a PTY-backed shell as its `bash` — the shell the official `minimal` preset also uses — so
+ * that shell is warm nearly all the time, and the refusal meant the user could no longer
+ * switch presets mid-conversation. That is the case the desktop app exists for: "I am going
+ * out, hand it full access for a while."
+ *
+ * Closing the shells first keeps the invariant honest: nothing keeps running under the old
+ * policy, and the new one applies to everything that follows. The shells are asked to exit
+ * rather than killed, because the tool that owns a shell notices an exited session and
+ * resets itself cleanly — so the next command runs in a fresh shell without an error.
+ * Upstream is the right home for this (an app with a terminal panel would rather keep the
+ * upstream refusal and let the user close them); a desktop app has no such panel.
+ */
+const terminalRetireHelper = `/**
+ * [neo-dsh] Ask one persistent terminal to exit so a sandbox-mode change can take effect.
+ *
+ * A send is refused while the shell is running a command, and a shell that outlives the
+ * policy it was created under is exactly what the mode-change check exists to prevent, so
+ * anything still alive a second later is killed instead.
+ */
+function retireForModeChange(state, owner, sessionId) {
+	try {
+		const send = state.pty.startSend(owner, sessionId, { text: "exit\\n", submit: true });
+		Promise.resolve(send?.done).catch(() => {});
+	} catch {}
+	setTimeout(() => {
+		try {
+			const snapshot = state.pty.list(owner).find((session) => session.sessionId === sessionId);
+			if (snapshot === void 0 || snapshot.status?.kind === "exited") return;
+			Promise.resolve(state.pty.kill(owner, sessionId, "sandbox mode changed")).catch(() => {});
+		} catch {}
+	}, 1e3);
+}`
+
+const terminalRetireCall = [
+  '\t\tconst live = state.pty.list(owner);',
+  '\t\tif (live.length === 0) {',
+  '\t\t\tthrow new Error(`cannot change sandbox mode from "${currentMode}" to "${event.data.mode}" while a persistent terminal session is being created; try again in a moment`);',
+  '\t\t}',
+  '\t\tfor (const snapshot of live) retireForModeChange(state, owner, snapshot.sessionId);',
+  '\t\tconsole.log(`dsh: sandbox mode ${currentMode} → ${event.data.mode}: closed ${live.length} persistent terminal session(s)`);',
+].join('\n') + '\n'
+
+const terminalPatches = [
+  {
+    id: 'sandbox-mode-closes-terminals',
+    why: 'a preset switch is refused for as long as the agent keeps a shell warm',
+    find: /(\t*throw new Error\(`cannot change sandbox mode[\s\S]*?close them first`\);\n)/,
+    replace: () => terminalRetireCall,
+    applied: /retireForModeChange\(state, owner, snapshot\.sessionId\)/,
+  },
+  {
+    id: 'sandbox-mode-closes-terminals-helper',
+    why: 'the helper that replacement calls',
+    find: /(\nfunction ensureSandboxModeFence\(ctx, owner\) \{)/,
+    replace: (match) => `\n${terminalRetireHelper}\n${match.slice(1)}`,
+    applied: /function retireForModeChange\(state, owner, sessionId\) \{/,
+  },
+]
+
 const targets = [
   {
     package: 'dsh-host-open-in-app',
-    files: ['lib/index.js', 'lib/types/catalog.js'],
-    linuxOnly: true,
+    files: ['lib/index.js', 'lib/types/catalog.js'],    linuxOnly: true,
     patches: openInAppPatches,
   },
   {
@@ -203,6 +264,12 @@ const targets = [
     files: ['lib/client.js'],
     linuxOnly: false,
     patches: clientPatches,
+  },
+  {
+    package: 'dsh-terminal-bash',
+    files: ['lib/index.js'],
+    linuxOnly: false,
+    patches: terminalPatches,
   },
 ]
 

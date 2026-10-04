@@ -197,6 +197,18 @@ two content lines with a four-pointed star over its lower-right corner; because 
 reaches past the shield's outline, a small mask cuts the stroke away inside the corner — the
 same move the workspace-write pen makes with its own path.
 
+It also closes a session's persistent terminals when its sandbox mode changes, in
+`dsh-terminal-bash`. The harness refuses that change while a shell is alive, because a PTY
+keeps the confinement it was spawned with — and our agent preset hands the model a warm
+PTY-backed shell as its `bash` (the shell the official `minimal` preset uses), so the refusal
+blocked preset switches in the middle of a conversation, which is the thing the desktop app is
+for ("hand it full access while I am out"). The shells are asked to `exit` first, so the tool
+that owns one sees an exited session and resets itself cleanly; a shell that cannot read the
+send, because a command is running, is killed a second later, since nothing may outlive the
+policy it was created under. A spawn still in flight cannot be cancelled from there and keeps
+waiting. Upstream is the right home for this: an app with a terminal panel would rather keep
+the refusal and let the user close the shells.
+
 An installed copy can be patched with `--package-dir <app>/node_modules`, or its
 `@deepseek-ai` directory, or one package directory to touch only that package.
 

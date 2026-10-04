@@ -63,14 +63,39 @@ const legacyEntry = [
 ].join('\n')
 
 const dirs = []
-function tree(entries) {
+/** A stand-in for the `dsh-terminal-bash` bundle: just the mode-change check and its anchor. */
+const TERMINAL_BUNDLE = [
+  '// stand-in for the dsh-terminal-bash bundle',
+  'const sandboxModeFences = new WeakMap();',
+  'function ensureSandboxModeFence(ctx, owner) {',
+  '\tconst state = { pty: ctx.terminals };',
+  '\towner.ctx.on("internal/dispatch", (_mode, eventName, args) => {',
+  '\t\tif (eventName !== "session/event") return;',
+  '\t\tconst [session, event] = args;',
+  '\t\tif (session !== owner.session || event.type !== "sandbox/mode") return;',
+  '\t\tconst currentMode = state.sessionProjections.stateOf(session, "sandboxMode") ?? null ?? state.sandboxPolicy.defaultMode;',
+  '\t\tif (event.data.mode === currentMode || !state.pty.hasOwnerActivity(owner)) return;',
+  '\t\tthrow new Error(`cannot change sandbox mode from "${currentMode}" to "${event.data.mode}" while persistent terminal sessions are open or being created; wait for creation to settle and close them first`);',
+  '\t}, { global: true });',
+  '}',
+  '',
+].join('\n')
+
+function tree(entries, { terminal = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'patch-harness-'))
   dirs.push(dir)
   const pkg = join(dir, '@deepseek-ai', 'dsh-client-ui-conversation', 'lib')
   mkdirSync(pkg, { recursive: true })
   const file = join(pkg, 'client.js')
   writeFileSync(file, bundleWith(entries))
-  return { dir, file }
+  let terminalFile
+  if (terminal) {
+    const termDir = join(dir, '@deepseek-ai', 'dsh-terminal-bash', 'lib')
+    mkdirSync(termDir, { recursive: true })
+    terminalFile = join(termDir, 'index.js')
+    writeFileSync(terminalFile, TERMINAL_BUNDLE)
+  }
+  return { dir, file, terminalFile }
 }
 
 function run(...args) {
@@ -115,6 +140,22 @@ check('并且说出是哪个补丁', missing.out.includes('smart-approval-glyph'
 // ---- 指向只含一个包的目录：不该抱怨另一个包没装 ----
 const partial = run('--check', '--package-dir', join(fresh.dir, '@deepseek-ai'))
 check('只含一个包的目录不再报缺包', partial.code, 0)
+
+// ---- 持久终端挡住档位切换：要把"拒绝"改成"先关掉再切" ----
+const term = tree([freshEntry], { terminal: true })
+check('未打补丁时 --check 失败（终端闸门）', run('--check', '--package-dir', term.dir).code !== 0, true)
+const termRun = run('--package-dir', term.dir)
+check('终端补丁能应用', termRun.code, 0)
+const terminalText = () => readFileSync(term.terminalFile, 'utf8')
+check('原来那句拒绝已经不在了', terminalText().includes('close them first`);'), false)
+check('改成先关掉该会话的持久终端再切', terminalText().includes('for (const snapshot of live) retireForModeChange(state, owner, snapshot.sessionId);'), true)
+check('关闭用的 helper 只插入一份', count(terminalText(), 'function retireForModeChange('), 1)
+check('helper 先发 exit，再兜底 kill', terminalText().includes('text: "exit\\n"') && terminalText().includes('state.pty.kill(owner, sessionId, "sandbox mode changed")'), true)
+check('正在创建的终端仍然等一等', terminalText().includes('while a persistent terminal session is being created; try again in a moment'), true)
+check('打完补丁 --check 通过（终端）', run('--check', '--package-dir', term.dir).code, 0)
+run('--package-dir', term.dir)
+check('再跑一次不会插第二份 helper（幂等）', count(terminalText(), 'function retireForModeChange('), 1)
+check('helper 定义在闸门函数之前（先定义后用）', terminalText().indexOf('function retireForModeChange(') < terminalText().indexOf('function ensureSandboxModeFence('), true)
 
 for (const dir of dirs) rmSync(dir, { recursive: true, force: true })
 console.log(failures === 0 ? '\nall patch-harness checks passed' : `\n${failures} CHECK(S) FAILED`)
