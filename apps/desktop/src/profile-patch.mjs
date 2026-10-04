@@ -19,13 +19,15 @@
  *
  * The file is a YAML list of loader patch entries, each carrying the `id` it targets; only
  * that line is read, so the rest of the document (including `!!js` expressions this file
- * allows) does not have to parse here.
+ * allows) does not have to parse here. Only **top-level** entries count — an entry is at
+ * column zero, while the list-valued config inside one (a model catalog, say) indents its own
+ * `- id:` lines, and those are not patch targets.
  *
  * @param text - contents of a `cordis.patch.yml`.
  * @returns the declared ids, without repeats.
  */
 export function patchEntryIds(text) {
-  const found = String(text ?? '').matchAll(/^[ \t]*-[ \t]*id:[ \t]*([^\s#'"]+)/gm)
+  const found = String(text ?? '').matchAll(/^- id:[ \t]*([^\s#'"]+)/gm)
   return [...new Set([...found].map((match) => match[1]))]
 }
 

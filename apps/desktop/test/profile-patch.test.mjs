@@ -39,6 +39,20 @@ check('没有 id 的文件读出空', patchEntryIds(STOCK_TEMPLATE), [])
 check('同一 id 只算一次', patchEntryIds('- id: a\n- id: a\n- id: b\n'), ['a', 'b'])
 check('注释里的 id 不算', patchEntryIds('# - id: permission\n[]'), [])
 
+// 条目里的列表型配置（比如模型目录）也写 `- id:`，那些不是补丁目标
+const NESTED = [
+  '- id: llm-deepseek',
+  '  config:',
+  '    models:',
+  '      - id: deepseek-flash',
+  '        name: DeepSeek-Flash',
+  '      - id: deepseek-v4-pro',
+  '        name: DeepSeek-V4-Pro',
+  '',
+].join('\n')
+check('嵌套的 - id: 不算补丁条目', patchEntryIds(NESTED), ['llm-deepseek'])
+check('缩进的顶层条目也不算（条目一律在列 0）', patchEntryIds('  - id: permission\n'), [])
+
 check('空模板缺我们的条目 → 需要覆盖层', missingPatchEntryIds(SHIPPED, STOCK_TEMPLATE), ['permission'])
 check('profile 里一个 patch 都没有 → 需要覆盖层', missingPatchEntryIds(SHIPPED, ''), ['permission'])
 check('profile 已经写了这条 → 不再覆盖（用户/旧版优先）', missingPatchEntryIds(SHIPPED, '- id: permission\n  config: {}\n'), [])
