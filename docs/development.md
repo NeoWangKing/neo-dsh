@@ -161,6 +161,23 @@ The harness's own introspection tooling (`dsh-tool-cordis`, the plugin inventory
 in Settings) is available for looking at what is mounted, which is the useful half
 of self-modification: seeing your own composition.
 
+### Patches to the vendored harness
+
+`scripts/patch-harness.mjs` applies the few local fixes to `node_modules/@deepseek-ai/*`
+that we cannot make upstream in time. It runs from `pnpm run install:app` and from
+`pnpm run resources` (which every build and packaging script calls), so a fresh install and
+every artifact carry them; `--check` fails when a patch is missing, and a patch whose anchor
+disappeared fails loudly instead of silently shipping without it.
+
+Today it gives `dsh-host-open-in-app` a desktop entry id for the two Linux rows that have
+none (`filemanager` → `org.gnome.Nautilus`, `androidstudio` → `android-studio`). Without one
+the plugin never looks for an icon at all, so those rows stay blank however well the
+applications are installed. Note that the package ships a pre-bundled `lib/index.js` **and**
+the region-split sources beside it, and the bundle is what the host loads — both files have
+to be patched, which is exactly the mistake this script exists to keep in one place.
+
+An installed copy can be patched with `--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`.
+
 ### Network proxy
 
 The harness host is a Node process, and Node ignores `http_proxy` unless it is told to look

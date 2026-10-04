@@ -6,8 +6,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "install:app": "node scripts/check-node.mjs && pnpm --dir apps/desktop install",
-    "resources": "node scripts/check-node.mjs && node scripts/build-resources.mjs",
+    "install:app": "node scripts/check-node.mjs && pnpm --dir apps/desktop install && node scripts/patch-harness.mjs",
+    "resources": "node scripts/check-node.mjs && node scripts/patch-harness.mjs && node scripts/build-resources.mjs",
     "fetch-node": "node scripts/check-node.mjs && node scripts/fetch-node.mjs",
     "start": "node scripts/check-node.mjs && pnpm run resources && pnpm --dir apps/desktop run start",
     "probe": "node scripts/check-node.mjs && pnpm --dir apps/desktop run probe",

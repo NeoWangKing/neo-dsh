@@ -112,6 +112,21 @@ dsh plugin --profile web remove <名称>
 
 harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清单）可以用来查看自己挂载了什么，这算是"自我修改"里真正有用的那一半：看清自己的组合。
 
+### 对 vendored harness 的补丁
+
+`scripts/patch-harness.mjs` 把几处来不及推上游的本地修复应用到 `node_modules/@deepseek-ai/*`。
+它挂在 `pnpm run install:app` 和 `pnpm run resources`（所有构建与打包脚本都会走）上，所以一次全新的
+安装和每个产物都会带上；`--check` 在补丁缺失时失败，锚点找不到时也会**大声失败**，而不是悄悄发一个
+没有修复的版本。
+
+目前它给 `dsh-host-open-in-app` 里两条 Linux 条目补上了 desktop 条目 id
+（`filemanager` → `org.gnome.Nautilus`，`androidstudio` → `android-studio`）：没有这个 id，
+插件根本不会去找图标，那两行无论系统装得多好都是空白。注意这个包**既有预打包的 `lib/index.js`、
+也有旁边拆分出来的源文件**，而运行时加载的是 bundle —— 两个文件都得打，这正是这个脚本要把这件事
+收在一处的原因。
+
+给已安装的那份打补丁：`--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`。
+
 ### 网络代理
 
 harness host 是个 Node 进程，而 Node 默认**不读** `http_proxy`——必须显式告诉它
