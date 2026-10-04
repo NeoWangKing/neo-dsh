@@ -45,7 +45,8 @@
     "node": "^22.19 || >=24"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1"
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-llm": "*"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {

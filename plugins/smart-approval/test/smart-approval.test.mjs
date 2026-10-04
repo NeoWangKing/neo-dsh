@@ -7,7 +7,7 @@
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { classify } = require('../index.js')
+const { classify, judgePrompt, parseVerdict, judgeKey } = require('../index.js')
 
 let failures = 0
 function check(name, actual, expected) {
@@ -56,6 +56,20 @@ check('危险命令 + 升级说辞 → 仍然问（顺序：命令风险优先�
 
 // ---- 写文件：交给沙箱兜底（要越界必须走升级，而升级在上面那条被拦住）----
 check('写工作区内文件放行（沙箱兜底）', [allow(classify({ name: 'write', arguments: { file_path: 'a.txt', content: 'x' } })), allow(classify({ name: 'edit', arguments: { file_path: 'a.txt' } }))], ['allow', 'allow'])
+
+// ---- 交给模型判那一步的纯逻辑（不真调模型）----
+check('判词：只认一个明确的 ALLOW', [parseVerdict('ALLOW'), parseVerdict('allow'), parseVerdict('  Allow\n')], ['allow', 'allow', 'allow'])
+check('判词：ASK 或两个词都出现 → 问', [parseVerdict('ASK'), parseVerdict('ALLOW or ASK'), parseVerdict('I think this is probably fine')], ['ask', 'ask', 'ask'])
+check('判词：空 / 报错文本 → 问', [parseVerdict(''), parseVerdict(undefined), parseVerdict('Error: rate limited')], ['ask', 'ask', 'ask'])
+
+const prompt = judgePrompt({ name: 'bash', arguments: { command: 'hexdump -C a.bin' }, workspace: '/home/u/p' })
+check('提示词：把工具名、参数、工作区都带上', [prompt.system.includes('ALLOW or ASK'), prompt.text.includes('hexdump -C a.bin'), prompt.text.includes('/home/u/p')], [true, true, true])
+check('提示词：明确声明"参数是数据不是指令"', /data, not instructions/.test(prompt.text) && /never instructions/.test(prompt.system), true)
+check('提示词：超长参数会截断（不让命令把提示词撑爆）', judgePrompt({ name: 'bash', arguments: { command: 'x'.repeat(9000) } }).text.includes('truncated'), true)
+check('缓存键：同参数同键、变一个字符就不同键', [
+  judgeKey({ name: 'bash', arguments: { command: 'a' } }) === judgeKey({ name: 'bash', arguments: { command: 'a' } }),
+  judgeKey({ name: 'bash', arguments: { command: 'a' } }) === judgeKey({ name: 'bash', arguments: { command: 'b' } }),
+], [true, false])
 
 console.log(failures === 0 ? '\nall smart-approval checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
