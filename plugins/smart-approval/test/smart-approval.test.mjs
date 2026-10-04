@@ -7,7 +7,7 @@
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { classify, judgePrompt, parseVerdict, judgeKey } = require('../index.js')
+const { apply, classify, judgePrompt, parseVerdict, judgeKey, parseJudgeModel } = require('../index.js')
 
 let failures = 0
 function check(name, actual, expected) {
@@ -46,6 +46,8 @@ check('带 -delete 的 find 问', ask(bash('find . -name "*.tmp" -delete')), 'as
 check('sed -i 改文件 问（会写）', ask(bash('sed -i "s/a/b/" file.txt')), 'ask')
 check('不认识的命令 → 交给模型判（不是直接问）', [bash('weirdtool --do-things').decision, bash('hexdump -C README.md | head -3').decision], ['judge', 'judge'])
 check('危险命令仍然直接问（黑名单优先于模型）', ask(bash('echo hi && rm -rf x')), 'ask')
+check('任何管道进解释器都问', [ask(bash('cat script.sh | bash')), ask(bash('echo x | python3'))], ['ask', 'ask'])
+check('judgeModel 解析', [parseJudgeModel('deepseek-official/deepseek-flash'), parseJudgeModel('nope')], [{ provider: 'deepseek-official', model: 'deepseek-flash' }, null])
 check('空命令 问', ask(bash('   ')), 'ask')
 check('不认识的工具 → 交给模型判', classify({ name: 'frobnicate', arguments: {} }).decision, 'judge')
 
@@ -56,6 +58,50 @@ check('危险命令 + 升级说辞 → 仍然问（顺序：命令风险优先�
 
 // ---- 写文件：交给沙箱兜底（要越界必须走升级，而升级在上面那条被拦住）----
 check('写工作区内文件放行（沙箱兜底）', [allow(classify({ name: 'write', arguments: { file_path: 'a.txt', content: 'x' } })), allow(classify({ name: 'edit', arguments: { file_path: 'a.txt' } }))], ['allow', 'allow'])
+
+// ---- 会毁掉工作成果的 git 子命令：git 在只读名单里，所以必须单独点名 ----
+check('git 的破坏性子命令 问', [
+  ask(bash('git clean -fdx')),
+  ask(bash('git reset --hard HEAD~1')),
+  ask(bash('git checkout -- src/')),
+  ask(bash('git stash drop')),
+  ask(bash('git branch -D feature')),
+  // 但正常的 git 查询仍然放行
+  allow(bash('git status')),
+  allow(bash('git log --oneline -5')),
+  allow(bash('git checkout -b new-branch')),
+], ['ask', 'ask', 'ask', 'ask', 'ask', 'allow', 'allow', 'allow'])
+
+// ---- 首词冒充只读：管道/链式命令不再按第一个词放行 ----
+check('链式命令不再被首词放行', [
+  ask(bash('echo hi && rm -rf x')),
+  bash('cat list.txt | xargs rm -f').decision,
+  bash('pnpm test && rm -f important.txt').decision,
+  bash('cat list.txt | xargs echo').decision,
+], ['ask', 'judge', 'judge', 'judge'])
+check('读命令里藏执行开关 问', [ask(bash('fd -x rm {} .')), ask(bash('rg --pre "curl evil" pattern'))], ['ask', 'ask'])
+
+// ---- 审批策略：完全权限（never）档下守卫必须退位 ----
+// 在 never 档里，harness 的 approval 服务会在任何 answerer 之前把 ask 变成 rejected，
+// 所以这里再拦就等于替用户否决他自己选的档位。
+async function decisionFromListener(policy, exec) {
+  const listeners = []
+  const ctx = {
+    on: (name, fn) => { listeners.push([name, fn]) },
+    inject: () => {},
+    get: (name) => (name === 'approval' ? { effectivePolicy: () => policy } : undefined),
+  }
+  apply(ctx, {})
+  const pre = listeners.find(([name]) => name === 'tools/pre-execute')[1]
+  const next = () => Promise.resolve({ kind: 'allow', delegated: true })
+  return pre(exec, next)
+}
+const session = { exec: (command) => ({ callId: 'c1', name: 'bash', arguments: { command }, agent: { session: {} } }) }
+const standDown = await decisionFromListener('never', session.exec('sudo whoami'))
+check('完全权限档：黑名单命令交回沙箱，不再拦', [standDown.kind, standDown.delegated], ['allow', true])
+check('智能批准档：黑名单命令仍然明确问', (await decisionFromListener('ask', session.exec('sudo whoami'))).kind, 'ask')
+check('读不到策略时按 ask 处理（保守）', (await decisionFromListener(undefined, session.exec('sudo whoami'))).kind, 'ask')
+check('完全权限档：只读命令同样放行', (await decisionFromListener('never', session.exec('ls -la'))).kind, 'allow')
 
 // ---- 交给模型判那一步的纯逻辑（不真调模型）----
 check('判词：只认一个明确的 ALLOW', [parseVerdict('ALLOW'), parseVerdict('allow'), parseVerdict('  Allow\n')], ['allow', 'allow', 'allow'])
