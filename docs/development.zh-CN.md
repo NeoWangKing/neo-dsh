@@ -116,8 +116,8 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 
 `scripts/patch-harness.mjs` 把几处来不及推上游的本地修复应用到 `node_modules/@deepseek-ai/*`。
 它挂在 `pnpm run install:app` 和 `pnpm run resources`（所有构建与打包脚本都会走）上，所以一次全新的
-安装和每个产物都会带上；`--check` 在补丁缺失时失败，锚点找不到时也会**大声失败**，而不是悄悄发一个
-没有修复的版本。
+安装和每个产物都会带上；`pnpm run patches:check`（即 `--check`）在补丁缺失时失败，锚点找不到时也会
+**大声失败**，而不是悄悄发一个没有修复的版本。
 
 目前它给 `dsh-host-open-in-app` 里两条 Linux 条目补上了 desktop 条目 id
 （`filemanager` → `org.gnome.Nautilus`，`androidstudio` → `android-studio`）：没有这个 id，
@@ -125,11 +125,16 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 也有旁边拆分出来的源文件**，而运行时加载的是 bundle —— 两个文件都得打，这正是这个脚本要把这件事
 收在一处的原因。
 
-给已安装的那份打补丁：`--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`。
+它还给 `dsh-client-ui-conversation` 的权限图标表补上了「智能批准」这一项：输入框旁的档位按钮只会为
+表里写明的档位画图标，我们自己的档位不在其中，于是只剩下光秃秃的文字。档位表本身没有图标字段可填，
+所以这里只能是补丁，不是配置。
 
-补丁只改 `platforms.linux` 里的内容，所以脚本在 Linux 构建时生效、其它平台直接跳过
-（`--package-dir` 是显式指定目标，永远执行）：macOS / Windows 的产物里的 harness 保持原样，
-它们的构建也不会因为某个 Linux 专用行的锚点变了而失败。
+给已安装的那份打补丁：`--package-dir <app>/node_modules`，也可以指向它的 `@deepseek-ai` 目录，
+或只指向某一个包目录（那样就只改那个包）。
+
+open-in-app 那两条只改 `platforms.linux` 里的内容，所以它们在 Linux 构建时生效、其它平台直接跳过
+（`--package-dir` 是显式指定目标，永远执行）：macOS / Windows 的产物里这部分保持原样，它们的构建也
+不会因为某个 Linux 专用行的锚点变了而失败。图标那条与平台无关，任何平台都会执行。
 
 ### 网络代理
 

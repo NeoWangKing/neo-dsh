@@ -166,8 +166,9 @@ of self-modification: seeing your own composition.
 `scripts/patch-harness.mjs` applies the few local fixes to `node_modules/@deepseek-ai/*`
 that we cannot make upstream in time. It runs from `pnpm run install:app` and from
 `pnpm run resources` (which every build and packaging script calls), so a fresh install and
-every artifact carry them; `--check` fails when a patch is missing, and a patch whose anchor
-disappeared fails loudly instead of silently shipping without it.
+every artifact carry them; `pnpm run patches:check` (`--check`) fails when a patch is
+missing, and a patch whose anchor disappeared fails loudly instead of silently shipping
+without it.
 
 Today it gives `dsh-host-open-in-app` a desktop entry id for the two Linux rows that have
 none (`filemanager` → `org.gnome.Nautilus`, `androidstudio` → `android-studio`). Without one
@@ -176,12 +177,19 @@ applications are installed. Note that the package ships a pre-bundled `lib/index
 the region-split sources beside it, and the bundle is what the host loads — both files have
 to be patched, which is exactly the mistake this script exists to keep in one place.
 
-An installed copy can be patched with `--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`.
+It also adds the 智能批准 glyph to the permission table in `dsh-client-ui-conversation`: the
+composer chip draws an icon only for preset values that table names, and a preset of ours is
+not one of them, so the chip would show a bare label. The preset schema has no icon field to
+fill in, which is why this is a patch and not configuration.
 
-The patches only touch `platforms.linux` specs, so the script runs on Linux builds and skips
-everywhere else (`--package-dir` is an explicit target and always runs): a macOS or Windows
-artifact ships the harness untouched, and their builds cannot be broken by an anchor that
-moved in a Linux-only line.
+An installed copy can be patched with `--package-dir <app>/node_modules`, or its
+`@deepseek-ai` directory, or one package directory to touch only that package.
+
+The open-in-app patches only touch `platforms.linux` specs, so those run on Linux builds and
+skip everywhere else (`--package-dir` is an explicit target and always runs): a macOS or
+Windows artifact ships that part of the harness untouched, and their builds cannot be broken
+by an anchor that moved in a Linux-only line. The glyph patch is not platform-specific and
+always runs.
 
 ### Network proxy
 
