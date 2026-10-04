@@ -55,6 +55,15 @@ const PATCHES = [
   },
 ]
 
+// Every patch below touches a `platforms.linux` spec and nothing else, so a macOS or
+// Windows build has no reason to apply them — and no reason to fail when the anchor moves.
+// An explicit `--package-dir` is somebody pointing at a tree on purpose, so it always runs.
+// (Cross-building the Linux artifact from another OS is not supported by this repository.)
+if (flagIndex === -1 && process.platform !== 'linux') {
+  console.log(`patch-harness: nothing to do on ${process.platform} (the patches are Linux-only)`)
+  process.exit(0)
+}
+
 const catalogFiles = [join(packageDir, 'lib', 'index.js'), join(packageDir, 'lib', 'types', 'catalog.js')]
 
 const missing = catalogFiles.filter((file) => !existsSync(file))

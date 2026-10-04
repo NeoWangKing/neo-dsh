@@ -127,6 +127,10 @@ harness 自带的自我检视工具（`dsh-tool-cordis`、设置里的插件清�
 
 给已安装的那份打补丁：`--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`。
 
+补丁只改 `platforms.linux` 里的内容，所以脚本在 Linux 构建时生效、其它平台直接跳过
+（`--package-dir` 是显式指定目标，永远执行）：macOS / Windows 的产物里的 harness 保持原样，
+它们的构建也不会因为某个 Linux 专用行的锚点变了而失败。
+
 ### 网络代理
 
 harness host 是个 Node 进程，而 Node 默认**不读** `http_proxy`——必须显式告诉它

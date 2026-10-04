@@ -178,6 +178,11 @@ to be patched, which is exactly the mistake this script exists to keep in one pl
 
 An installed copy can be patched with `--package-dir <app>/node_modules/@deepseek-ai/dsh-host-open-in-app`.
 
+The patches only touch `platforms.linux` specs, so the script runs on Linux builds and skips
+everywhere else (`--package-dir` is an explicit target and always runs): a macOS or Windows
+artifact ships the harness untouched, and their builds cannot be broken by an anchor that
+moved in a Linux-only line.
+
 ### Network proxy
 
 The harness host is a Node process, and Node ignores `http_proxy` unless it is told to look
