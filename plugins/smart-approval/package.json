@@ -1,0 +1,55 @@
+{
+  "name": "dsh-smart-approval",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness host plugin: a permission preset that stops asking about operations that cannot hurt (reads, project-scoped installs, fetches) and keeps asking about the ones that can (privilege escalation, deletion, running fetched code, system changes).",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "plugin",
+    "approval",
+    "permission",
+    "sandbox"
+  ],
+  "license": "MIT",
+  "author": "Neo Wang",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NeoWangKing/neo-dsh.git",
+    "directory": "plugins/smart-approval"
+  },
+  "homepage": "https://github.com/NeoWangKing/neo-dsh/tree/main/plugins/smart-approval",
+  "bugs": {
+    "url": "https://github.com/NeoWangKing/neo-dsh/issues"
+  },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node test/smart-approval.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md"
+  ],
+  "engines": {
+    "node": "^22.19 || >=24"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  }
+}

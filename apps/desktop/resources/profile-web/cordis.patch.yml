@@ -1,4 +1,24 @@
-# Patch layer for this profile, applied after every bundle layer:
-# a top-level YAML array of loader patch entries (id-targeted config
-# overrides, disables, and insert lists; `!!js` expressions allowed).
-[]
+- id: permission
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+        name: 仅可查看
+        description: 只读：任何修改都会被沙箱拒绝。
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+        name: 工作区内修改
+        description: 可以改工作区内的文件；需要越界时会问你。
+      smart-approval:
+        sandbox: workspace-write
+        approval: ask
+        name: 智能批准
+        description: 只读命令、项目内的依赖安装与拉取自动放行；提权、删除、动系统、越出工作区仍然会问你。
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+        name: 完全权限
+        description: 不再限制文件改动，也不再询问。
+    defaultPreset: smart-approval

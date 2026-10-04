@@ -1,0 +1,13 @@
+# dsh-smart-approval bundle patch
+#
+# The `dsh.bundle.patch` layer of this package: installing it —
+#
+#   dsh plugin --profile web add link:/path/to/dsh-smart-approval
+#
+# — appends `dsh-smart-approval` to `dsh.profile.bundles`, and profile boot merges this
+# patch (a single `insert` of the plugin row) exactly like a manual cordis.patch.yml
+# mount line. The plugin listens on `tools/pre-execute`; the preset that pairs it with
+# a sandbox mode lives in the profile's own patch layer (see the README).
+- insert:
+    - id: smart-approval
+      name: 'dsh-smart-approval'
