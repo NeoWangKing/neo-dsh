@@ -38,14 +38,16 @@ check('force push 问', [ask(bash('git push --force origin main')), ask(bash('gi
 check('装系统包 问', [ask(bash('pacman -Syu')), ask(bash('apt install nginx'))], ['ask', 'ask'])
 check('动 systemd 问', ask(bash('systemctl restart NetworkManager')), 'ask')
 check('写得进 /etc 的读命令也问', ask(bash('cat /etc/hosts > /etc/hosts.bak')), 'ask')
+check('系统路径规则真的生效（之前一条坏正则让它形同虚设）', [ask(bash('cp a /usr/bin/b')), ask(bash('chmod 777 /srv/x')), allow(bash('cat /etc/hosts'))], ['ask', 'ask', 'allow'])
 check('写入系统目录 问', [ask(bash('echo x > /etc/foo.conf')), ask(bash('cp a /usr/bin/b'))], ['ask', 'ask'])
 check('关机 / 用户管理 问', [ask(bash('reboot')), ask(bash('useradd foo'))], ['ask', 'ask'])
 check('dd 到设备 问', ask(bash('dd if=/x.img of=/dev/sda bs=4M')), 'ask')
 check('带 -delete 的 find 问', ask(bash('find . -name "*.tmp" -delete')), 'ask')
 check('sed -i 改文件 问（会写）', ask(bash('sed -i "s/a/b/" file.txt')), 'ask')
-check('不认识的命令 问（默认保守）', [ask(bash('weirdtool --do-things')), ask(bash('echo hi && rm -rf x && sudo y'))], ['ask', 'ask'])
+check('不认识的命令 → 交给模型判（不是直接问）', [bash('weirdtool --do-things').decision, bash('hexdump -C README.md | head -3').decision], ['judge', 'judge'])
+check('危险命令仍然直接问（黑名单优先于模型）', ask(bash('echo hi && rm -rf x')), 'ask')
 check('空命令 问', ask(bash('   ')), 'ask')
-check('不认识的工具 问', ask(classify({ name: 'frobnicate', arguments: {} })), 'ask')
+check('不认识的工具 → 交给模型判', classify({ name: 'frobnicate', arguments: {} }).decision, 'judge')
 
 // ---- 沙箱升级：只有升到本预设自己的模式才放行 ----
 check('升级到 workspace-write（有界）放行', allow(bash('pnpm install', { sandbox_permissions: 'workspace-write', justification: 'needs the package cache' })), 'allow')

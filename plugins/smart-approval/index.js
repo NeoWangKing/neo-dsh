@@ -16,9 +16,13 @@
  * one call under a wider *file* policy — and every escalation goes to the human, whatever mode
  * it names, because a widening is the one thing a rule cannot judge from the outside.
  *
- * Rules only, by request: no model call, no network, no surprise latency, and the same
- * command always gets the same answer. Anything it does not recognise falls through to
- * the normal policy, which under the preset is a question for the user.
+ * Three answers, in this order:
+ *   * `ask`   — the blacklist: system-level or irreversible work never leaves the decision
+ *               to a rule that only sees a string. These always reach the user.
+ *   * `allow` — a short list of things whose worst case is a wasted turn (reads, project
+ *               scripts, dependency fetches, a bounded escalation).
+ *   * `judge` — everything else, which the shell hands to the session's own model for a
+ *               risk opinion before deciding. A judge failure of any kind resolves to `ask`.
  *
  * @module dsh-smart-approval
  */
@@ -45,7 +49,7 @@ const DANGEROUS = [
   /\bdd\b[^|;]*\bof=\/dev\//,
   /\b(curl|wget)\b[^|;]*\|\s*(ba|z|k|c|da)?sh\b/,
   /\bgit\s+push\b[^\n]*(--force\b|--force-with-lease\b|(?<![\w-])-f\b)/,
-  /\b(pacman|apt|apt-get|dnf|yum|zypper|apk|brew)\b[^\n]*\b(-S\b|-R\b|-U\b|install\b|remove\b|purge\b|upgrade\b|update\b)/,
+  /\b(pacman|apt|apt-get|dnf|yum|zypper|apk|brew)\b[^\n]*(-[SRU]\w*|\binstall\b|\bremove\b|\bpurge\b|\bupgrade\b|\bupdate\b)/,
   /\b(systemctl|service|loginctl)\s+(start|stop|restart|reload|enable|disable|mask|unmask|set-default)\b/,
   /\b(chmod|chown|chgrp|setfacl)\b[^\n]*\s(\/(etc|usr|boot|var|opt|srv|root)\b|~\/\.ssh\b)/,
   /(^|[\s;&|])(>>?|\|\s*tee)\s*\/(etc|usr|boot|var|opt|srv|root)\b/,
@@ -87,14 +91,14 @@ const READ_ONLY = [
 const WRITE_FLAGS = /(\s|^)(-delete|-exec|-execdir|-ok|-okdir|--in-place|-i\s*$)/;
 
 /** Absolute paths whose modification is a system change, not a project change. */
-const SYSTEM_PATHS = /(^|[\s"'=([:]])\/(etc|usr|boot|var|opt|srv|root|lib|bin|sbin)\b/;
+const SYSTEM_PATHS = /(^|[\s"'=(\[])\/(etc|usr|boot|var|opt|srv|root|lib|bin|sbin)\b/;
 
 /**
  * Decide one pending call.
  *
  * @param exec - `{name, arguments}` from `tools/pre-execute`.
- * @returns `{decision: 'allow'|'ask', reason}` — `ask` means "fall through to the normal
- *   policy", which under this preset is a question for the user.
+ * @returns `{decision: 'allow'|'ask'|'judge', reason}`. `ask` is the blacklist (never
+ *   delegated), `judge` means "no rule covers this; ask the session's model".
  */
 function classify(exec) {
   const name = typeof exec?.name === 'string' ? exec.name : '';
@@ -102,7 +106,8 @@ function classify(exec) {
   const escalate = typeof args.sandbox_permissions === 'string' ? args.sandbox_permissions : undefined;
 
   if (!COMMAND_TOOLS.has(name) && !READ_ONLY_TOOLS.has(name) && !WRITE_TOOLS.has(name)) {
-    return { decision: 'ask', reason: `unknown tool ${name}` };
+    // An unknown tool is not automatically dangerous, but nothing here understands it.
+    return { decision: 'judge', reason: `unknown tool ${name}` };
   }
 
   const command = COMMAND_TOOLS.has(name) && typeof args.command === 'string' ? args.command : '';
@@ -130,6 +135,9 @@ function classify(exec) {
       : { decision: 'ask', reason: `escalation to ${escalate}` };
   }
 
+  // Nothing above decided it, and no rule claims to know better than the model that wrote
+  // the command — so it goes to the judge, not to the user.
+
   if (READ_ONLY_TOOLS.has(name)) return { decision: 'allow', reason: 'read-only tool' };
   if (WRITE_TOOLS.has(name)) return { decision: 'allow', reason: 'write confined by the file sandbox' };
   if (READ_ONLY.some((pattern) => pattern.test(command))) return { decision: 'allow', reason: 'read-only command' };
@@ -137,7 +145,7 @@ function classify(exec) {
   for (const pattern of NETWORK_OK) {
     if (pattern.test(command)) return { decision: 'allow', reason: 'network use that does not change the system' };
   }
-  return { decision: 'ask', reason: 'unrecognised command' };
+  return { decision: 'judge', reason: 'no rule covers this command' };
 }
 
 /**
@@ -147,9 +155,11 @@ function classify(exec) {
 function apply(ctx) {
   ctx.on('tools/pre-execute', (exec, next) => {
     const verdict = classify(exec);
-    // `ask` means "not mine to answer": let the normal policy — and the user — decide.
-    if (verdict.decision !== 'allow') return next();
-    return { kind: 'allow' };
+    if (verdict.decision === 'allow') return { kind: 'allow' };
+    // `judge` is where the session's own model gets a say (see README); until that is
+    // wired, both it and the blacklist fall through to the normal policy, which under this
+    // preset is a question for the user.
+    return next();
   });
 }
 
