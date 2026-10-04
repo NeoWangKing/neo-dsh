@@ -144,6 +144,20 @@ DSH_NODE=~/.nvm/versions/node/v22.23.1/bin/node neo-dsh
 The override is printed to `$DSH_HOME/desktop.log` as `starting host: …`, so
 there is never any doubt which build is running.
 
+**When a check needs a real host, give it its own `DSH_HOME`:**
+
+```sh
+DSH_HOME=/tmp/neo-verify-home node apps/desktop/node_modules/@deepseek-ai/dsh/lib/bin.js \
+  --profile headless "run the command and report back"
+```
+
+A headless run against the app's own home writes a **real session** into the app's
+session store — it shows up in the sidebar as an ungrouped session the user never
+started, titled after the test prompt, and the only honest cleanup is to find those
+sessions by their first user message and delete their `session-<id>` directories
+under `sessions/<cwd>/`. Every check that runs a prompt belongs in a throwaway home
+or in a `dev-window.sh` window, both of which already work that way.
+
 ### Manage the installed app's plugins
 
 ```sh

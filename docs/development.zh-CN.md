@@ -96,6 +96,18 @@ DSH_NODE=~/.nvm/versions/node/v22.23.1/bin/node neo-dsh
 
 实际用的是哪个构建，会写进 `$DSH_HOME/desktop.log` 的 `starting host: …` 一行，绝不会有歧义。
 
+**凡是要起真 host 的验证，都给它单独的 `DSH_HOME`：**
+
+```sh
+DSH_HOME=/tmp/neo-verify-home node apps/desktop/node_modules/@deepseek-ai/dsh/lib/bin.js \
+  --profile headless "运行命令并报告结果"
+```
+
+拿 app 自己的 home 跑 headless，会往**用户的会话库里写一条真会话**：它会在侧栏里以「未分组」出现，
+标题就是那句测试提示词，而唯一诚实的清理方式是按首条用户消息把那些会话找出来、删掉它们在
+`sessions/<cwd>/` 下的 `session-<id>` 目录。任何"发一句提示词"的验证都该用一次性 home 或
+`dev-window.sh` 窗口 —— 这两条路本来就是隔离的。
+
 ### 管理安装版的插件
 
 ```sh
