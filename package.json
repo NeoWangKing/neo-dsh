@@ -16,7 +16,7 @@
     "dist:linux": "node scripts/check-node.mjs && pnpm run resources && pnpm --dir apps/desktop exec electron-builder --linux --publish never",
     "dist:mac": "node scripts/check-node.mjs && pnpm run resources && pnpm --dir apps/desktop exec electron-builder --mac --publish never",
     "dist:win": "node scripts/check-node.mjs && pnpm run resources && pnpm --dir apps/desktop exec electron-builder --win --publish never",
-    "test": "node plugins/activity-line/test/activity.test.mjs && node presets/liangshen/todo-closer.test.mjs && node apps/desktop/test/update-logic.test.mjs && node plugins/desktop-settings/test/settings.test.mjs && node apps/desktop/test/desktop-preferences.test.mjs && node apps/desktop/test/desktop-home.test.mjs && node apps/desktop/test/host-guard.test.mjs && node apps/desktop/test/boot-guard.test.mjs && node apps/desktop/test/proxy-env.test.mjs && node plugins/smart-approval/test/smart-approval.test.mjs",
+    "test": "node plugins/activity-line/test/activity.test.mjs && node presets/liangshen/todo-closer.test.mjs && node apps/desktop/test/update-logic.test.mjs && node plugins/desktop-settings/test/settings.test.mjs && node apps/desktop/test/desktop-preferences.test.mjs && node apps/desktop/test/desktop-home.test.mjs && node apps/desktop/test/host-guard.test.mjs && node apps/desktop/test/boot-guard.test.mjs && node apps/desktop/test/proxy-env.test.mjs && node scripts/test/patch-harness.test.mjs && node plugins/smart-approval/test/smart-approval.test.mjs",
     "app-home": "node apps/desktop/scripts/app-home.mjs"
   },
   "packageManager": "pnpm@11.13.0",

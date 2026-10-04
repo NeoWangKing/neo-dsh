@@ -180,7 +180,10 @@ to be patched, which is exactly the mistake this script exists to keep in one pl
 It also adds the 智能批准 glyph to the permission table in `dsh-client-ui-conversation`: the
 composer chip draws an icon only for preset values that table names, and a preset of ours is
 not one of them, so the chip would show a bare label. The preset schema has no icon field to
-fill in, which is why this is a patch and not configuration.
+fill in, which is why this is a patch and not configuration. The glyph is a shield holding
+two content lines with a four-pointed star over its lower-right corner; because that star
+reaches past the shield's outline, a small mask cuts the stroke away inside the corner — the
+same move the workspace-write pen makes with its own path.
 
 An installed copy can be patched with `--package-dir <app>/node_modules`, or its
 `@deepseek-ai` directory, or one package directory to touch only that package.
