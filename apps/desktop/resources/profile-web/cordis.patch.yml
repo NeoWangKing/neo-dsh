@@ -22,3 +22,22 @@
         name: 完全权限
         description: 不再限制文件改动，也不再询问。
     defaultPreset: smart-approval
+
+# 官方把三个 flash 合并成了一个模型（deepseek-flash / deepseek-v4-flash /
+# deepseek-v4-flash-vision-exp 现在指向同一个东西），所以目录里只留一个
+# DeepSeek-Flash：能看图（vision 那条并入其中），上下文 1M。
+# 目录是整份替换的，因此把仍然独立的 DeepSeek-V4-Pro 一起写在这里。
+# 旧会话里钉着老 id 的仍然能继续跑：目录里找不到就按裸 id 直接发给 API。
+- id: llm-deepseek
+  config:
+    models:
+      - id: deepseek-flash
+        name: DeepSeek-Flash
+        description: 快速、经济，适合日常、例行和并行任务；文本与图片都能收。
+        contextWindow: 1000000
+        inputModalities: [text, image]
+        systemPromptUpdate: in-history
+      - id: deepseek-v4-pro
+        name: DeepSeek-V4-Pro
+        description: 更强的 agentic 编码、知识与难题推理；适合复杂或对质量要求高的任务，成本更高。
+        contextWindow: 1000000
