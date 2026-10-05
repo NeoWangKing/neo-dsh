@@ -224,6 +224,8 @@ mv "$NEW" "$PREFIX"
 ok "已安装 $VER → $PREFIX"
 
 echo
-echo "回滚：  rm -rf '$PREFIX' && mv '$BAK' '$PREFIX'"
+if [ -d "$BAK" ]; then
+  echo "回滚：  rm -rf '$PREFIX' && mv '$BAK' '$PREFIX'"
+fi
 echo "启动：  '$PREFIX/neo-dsh'      （或你平时用的桌面图标）"
 echo "提示：  数据、会话、设置都在各自的数据目录里，这次替换没碰它们。"
