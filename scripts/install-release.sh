@@ -40,8 +40,8 @@ done
 
 case "$(uname -s)" in
   Linux) PLATFORM=linux ;;
-  Darwin) PLATFORM=mac ;;
-  *) die "这个脚本只处理 Linux 与 macOS" ;;
+  Darwin) die "macOS 用的是 .app 套件（结构和 Linux 树不同），请用 dmg 覆盖 /Applications/Neo DSH.app（或找我要已校验的 dmg）" ;;
+  *) die "这个脚本只处理 Linux" ;;
 esac
 ARCH="$(uname -m)"
 case "$ARCH" in
@@ -49,7 +49,6 @@ case "$ARCH" in
   arm64|aarch64) ARCH=arm64 ;;
   *) die "不认识的架构：$ARCH" ;;
 esac
-[ "$PLATFORM" = mac ] && [ "$ARCH" = x64 ] && die "没有 Intel Mac 的产物（上游只发 arm64）"
 
 if ! command -v sha256sum >/dev/null; then
   command -v shasum >/dev/null || die "缺少 sha256sum / shasum"
