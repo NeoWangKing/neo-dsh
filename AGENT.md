@@ -113,6 +113,15 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
 - **Agent preset**: `presets/liangshen` (梁神模式). Its `tool-bootstrap.mjs` keeps the first
   request on the Minimal tool pair and opens the full catalog after the first durable tool
   call; `compaction-epoch.mjs` re-arms that after a compaction.
+- **App icon**: `apps/desktop/build/icon.png` (1024, what electron-builder derives platform
+  icons from) and `apps/desktop/assets/icon.png` (512, the window icon). Both are
+  composed, not drawn in code: the whale-girl art (`~/Downloads/dsh.png` on the user's
+  machine) fills the canvas, with a navy `NEO` speech bubble at her upper left. The
+  bubble and its tail are **one mask** — the tail's base sits inside the rounded body and
+  the union is dilated for the outline — because a rectangle plus a triangle reads as two
+  shapes, and a stroked-then-filled tail comes out hollow when the outline is thick
+  relative to the tail. The composing script is not in the repo; redo it from the source
+  art if the icon ever changes.
 - **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, the 智能批准
   composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
   persistent shells before a preset switch (the harness refuses the change while a PTY is
