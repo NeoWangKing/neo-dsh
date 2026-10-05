@@ -56,8 +56,14 @@ jobs:
           cache-dependency-path: apps/desktop/pnpm-lock.yaml
       - name: Install the app
         run: pnpm --dir apps/desktop install --frozen-lockfile
-      - name: Assemble shipped resources
-        run: node scripts/build-resources.mjs
+      # `resources` is patch-harness + build-resources; calling build-resources alone
+      # silently shipped artifacts WITHOUT the vendored patches (the 智能批准 glyph, the
+      # open-in-app icon ids, the sandbox-mode fence) — v0.1.16 and every release before
+      # it were built that way
+      - name: Assemble shipped resources (and apply the vendored patches)
+        run: pnpm run resources
+      - name: Every vendored patch must be in place before packaging
+        run: pnpm run patches:check
       - name: Fetch the Node runtime this platform ships
         run: node scripts/fetch-node.mjs
       - name: Package

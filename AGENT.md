@@ -74,7 +74,9 @@ gh run watch                                # or: gh run list -L 3
 ```
 
 `.github/workflows/build.yml` runs one job per platform (ubuntu / macos-14 / windows-latest),
-each of which runs `scripts/fetch-node.mjs` **for its own platform** and then
+each of which runs `pnpm run resources` (which applies the vendored patches *and* assembles the
+resources — calling `build-resources.mjs` alone ships an app without the patches, which is
+exactly what every release up to v0.1.16 did), then `scripts/fetch-node.mjs` **for its own platform** and then
 `electron-builder … --publish never`, uploads the artifacts, and attaches them to the GitHub
 release with `softprops/action-gh-release` — but it does **not** write the release body.
 
