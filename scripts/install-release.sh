@@ -16,11 +16,33 @@ REPO="${NEO_DSH_REPO:-NeoWangKing/neo-dsh}"
 PREFIX="${HOME}/.local/opt/neo-dsh"
 VERSION="latest"
 ASSET="auto"
-MIRRORS=("" "https://gh-proxy.com/" "https://ghfast.top/")
+MIRRORS=("https://gh-proxy.com/" "https://ghfast.top/" "")
 DRY_RUN=0
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/neo-dsh-update"
 
 die() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
+
+# curl 的两种走法：先用环境里的代理变量，失败就 --noproxy 直连。
+# 用户的 shell 里可能有个指向没在监听的端口的 http_proxy（一个 `proxy` 别名就能做到），
+# 那时 curl 会 0ms 就失败；这条命在网络里是通的，所以必须能退回去。
+curl_with_fallback() {
+  local out="$1"; shift
+  local -a extra=()
+  while [ "${1:-}" = "-C" ]; do extra+=("$1"); shift; done
+  local url="$1"
+  # 1) 环境里的代理设置（可能是坏的：一个指向死端口的 proxy 别名就够）
+  if curl -fsSL --connect-timeout 15 --max-time 1800 "${extra[@]}" -o "$out" "$url" 2>"$WORK/curl.err"; then
+    return 0
+  fi
+  grep -qE "over proxy|Could not connect to server|Failed to connect" "$WORK/curl.err" 2>/dev/null \
+    && info "代理不可用，改直连/镜像"
+  # 2) 直连或镜像：进度条留在屏幕上（之前把 curl 的输出吞了，看着就像卡住），
+  #    并且"慢得不像话"就自己放弃，交给下一个源
+  curl -fL --progress-bar --noproxy '*' --connect-timeout 15 --max-time 1800 \
+    --retry 3 --retry-delay 2 --speed-limit 4096 --speed-time 60 "${extra[@]}" -o "$out" "$url" 2>&1
+}
+
+
 info() { printf '  %s\n' "$*"; }
 ok() { printf '\033[32m✓ %s\033[0m\n' "$*"; }
 
@@ -61,16 +83,19 @@ echo "Neo DSH 本地更新：$PLATFORM-$ARCH → $PREFIX"
 # ---------------------------------------------------------------- release metadata
 API="https://api.github.com/repos/$REPO/releases"
 command -v python3 >/dev/null || die "缺少 python3（用来解析 release 的 JSON）"
-
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/neo-dsh-update-XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
+
 META="$WORK/release.json"
 ASSETS="$WORK/assets.tsv"
 
 if [ "$VERSION" = latest ]; then API_URL="$API/latest"; else API_URL="$API/tags/v$VERSION"; fi
 info "查询 release 元数据（走你 shell 里的代理）…"
-curl -fsSL --max-time 60 -H 'accept: application/vnd.github+json' -H 'user-agent: neo-dsh-installer' \
-  -o "$META" "$API_URL" || die "取不到 release 信息（curl 需要能走 http_proxy/https_proxy）"
+curl -fsSL --connect-timeout 15 --max-time 60 -H 'accept: application/vnd.github+json' -H 'user-agent: neo-dsh-installer' \
+  -o "$META" "$API_URL" 2>"$WORK/curl.err" \
+  || curl -fsSL --noproxy '*' --connect-timeout 15 --max-time 60 -H 'accept: application/vnd.github+json' \
+       -H 'user-agent: neo-dsh-installer' -o "$META" "$API_URL" \
+  || die "取不到 release 信息（代理与直连都不通）：$(head -1 "$WORK/curl.err" 2>/dev/null)"
 
 python3 - "$META" > "$ASSETS" <<'PYEOF'
 import json, sys
@@ -134,7 +159,7 @@ else
     [ "$pass" = fresh ] && rm -f "$FILE"
     for mirror in "${MIRRORS[@]}"; do
       info "下载 ${mirror:-（直连 GitHub）}…（$pass）"
-      if curl -fL --retry 2 --retry-delay 2 --max-time 1800 -C - -o "$FILE" "${mirror}${URL}" 2>/dev/null && verify; then
+      if curl_with_fallback "$FILE" -C "${mirror}${URL}" && verify; then
         got=1; break 2
       fi
       info "  这次没拿到完整文件（本网络常见），换下一个源"
