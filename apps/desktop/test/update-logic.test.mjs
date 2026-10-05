@@ -154,5 +154,21 @@ rmSync(join(tmpdir(), 'neo-dsh-update'), { recursive: true, force: true })
   check('  不会挂住（5 秒内一定有结果）', message.includes('TIMED OUT'), false)
 }
 
+
+// ---- 注入的 fetch 必须被真的用上 ----
+// 应用把 Electron 的 net.fetch（Chromium 栈：走系统代理与系统信任库）注进来，
+// 而不是 Node 的全局 fetch；这里锁住"注入会被用"，免得哪天被改回默认值。
+{
+  const seen = []
+  const fake = async (url, init) => {
+    seen.push({ url, ua: init?.headers?.['user-agent'] })
+    return { ok: true, status: 200, json: async () => ({ tag_name: 'v9.9.9', assets: [] }) }
+  }
+  const release = await fetchLatestRelease(fake, { repo: UPDATE_REPO })
+  check('注入的 fetch 收到了 GitHub releases API 地址', seen[0]?.url, `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`)
+  check('注入的 fetch 收到了 updater 的 UA', seen[0]?.ua, 'neo-dsh-updater')
+  check('返回值原样透出', release.tag_name, 'v9.9.9')
+}
+
 console.log(failures === 0 ? '\nall update-logic checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)

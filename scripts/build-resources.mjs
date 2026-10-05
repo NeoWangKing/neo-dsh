@@ -73,7 +73,10 @@ function chmodTree(root) {
 
 const steps = []
 
-// 1. the agent preset
+// 1. the agent preset. The parent directory is wiped first: copyTree replaces one
+//    preset by name, so a preset that was removed from the repo would otherwise
+//    stay in the build (and ship) forever.
+rmSync(join(RES, 'presets'), { recursive: true, force: true })
 copyTree(PRESET, join(RES, 'presets', 'liangshen'))
 steps.push('presets/liangshen')
 

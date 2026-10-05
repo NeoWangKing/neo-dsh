@@ -127,6 +127,18 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   persistent shells before a preset switch (the harness refuses the change while a PTY is
   alive, which used to block switching presets mid-conversation).
 
+## Shell gotchas worth keeping in mind
+
+- **The updater uses Electron's `net.fetch`, never the global one.** Node's `fetch` carries its
+  own CA list and only honours `http_proxy` when `NODE_USE_ENV_PROXY` was set *before* its
+  dispatcher existed, so from a desktop launch the request goes direct — behind a proxy that
+  intercepts direct traffic that fails as `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` while the browser
+  (system proxy, system trust store) is perfectly happy. Measured on this machine: global fetch
+  → that error; `net.fetch` → HTTP 200, from the same Electron process with the proxy variables
+  removed. `update-logic.mjs` keeps `fetchImpl` injectable; `main.mjs` wires `net.fetch` in.
+- **Anything the shell does over the network has the same choice to make** — the proxy env the
+  shell applies to itself is not enough for Node's own HTTP stack.
+
 ## Data and paths
 
 - App home: Linux `$XDG_DATA_HOME/neo-dsh`, macOS `~/Library/Application Support/neo-dsh`;

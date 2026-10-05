@@ -30,7 +30,7 @@ import { createRequire } from 'node:module'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { fileURLToPath } from 'node:url'
-import { app, BrowserWindow, crashReporter, dialog, Menu, shell } from 'electron'
+import { app, BrowserWindow, crashReporter, dialog, Menu, net, shell } from 'electron'
 import { UPDATE_REPO, downloadRelease, fetchLatestRelease, isNewer, pickAsset } from './update-logic.mjs'
 import { readPreferences, wantsNativeFrame, writePreferences } from './desktop-preferences.mjs'
 import {
@@ -1251,9 +1251,28 @@ function sendUpdateState(state) {
 /** The release and file the last download produced; `install` only trusts this. */
 let downloadedUpdate = null
 
+/**
+ * The fetch the updater uses, and why it is not the global one.
+ *
+ * Node's `fetch` carries its own CA list and only honours `http_proxy` when
+ * `NODE_USE_ENV_PROXY` was set before its dispatcher existed — from a desktop launch
+ * neither holds, so the request goes direct. Behind a proxy that intercepts direct
+ * traffic that fails as `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` while the browser, which
+ * uses the system proxy and the system trust store, is perfectly happy. `net.fetch`
+ * runs on Chromium's stack, so the updater sees exactly what the browser sees.
+ *
+ * @param input - request target.
+ * @param init - request options.
+ * @returns the response.
+ */
+function updateFetch(input, init) {
+  return net.fetch(input, init)
+}
+
 /** Download this platform's asset for a release, reporting progress to the page. */
 async function downloadUpdate(release, asset) {
   const done = await downloadRelease(asset, {
+    fetchImpl: updateFetch,
     onProgress: (progress) => sendUpdateState({ phase: 'downloading', version: release.version, ...progress }),
   })
   downloadedUpdate = { release, asset, path: done.path, bytes: done.bytes }
@@ -1348,7 +1367,7 @@ nohup "${launcher}" >/dev/null 2>&1 &
 async function handleUpdateCommand(action) {
   try {
     if (action === 'check') {
-      const release = await fetchLatestRelease()
+      const release = await fetchLatestRelease(updateFetch)
       const latest = String(release.tag_name ?? '').replace(/^v/i, '')
       const current = app.getVersion()
       const checkAsset = pickAsset(release.assets, {
@@ -1370,7 +1389,7 @@ async function handleUpdateCommand(action) {
       return
     }
     if (action === 'download') {
-      const release = await fetchLatestRelease()
+      const release = await fetchLatestRelease(updateFetch)
       const latest = String(release.tag_name ?? '').replace(/^v/i, '')
       const current = app.getVersion()
       if (!isNewer(latest, current)) {
