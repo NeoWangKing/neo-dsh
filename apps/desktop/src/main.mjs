@@ -45,8 +45,8 @@ import {
   PROXY_MODES, describeProxy, proxyEnvFor, readSystemProxy, resolveProxy,
 } from './proxy-env.mjs'
 import {
-  defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan, resolveHome, syncHome,
-  writeDataHome,
+  copyMissingEntries, defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan,
+  resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
 import { missingPatchEntryIds } from './profile-patch.mjs'
 
@@ -291,7 +291,12 @@ function seedHome() {
   }
   // Safe mode materialises the plugins for its own profile and leaves the user's alone.
   seeded.push(...syncBundledPlugins(safeMode ? SAFE_PROFILE : 'web'))
-  if (seedDirectory(join(RESOURCES, 'presets'), join(DSH_HOME, '.agent-presets'))) seeded.push('.agent-presets')
+  // A fresh home gets the whole shipped roster; an existing one gets whatever
+  // preset this build adds, because `seedDirectory` skips a destination that already
+  // exists and a new preset would otherwise never arrive.
+  const shippedPresets = join(RESOURCES, 'presets')
+  if (seedDirectory(shippedPresets, join(DSH_HOME, '.agent-presets'))) seeded.push('.agent-presets')
+  seeded.push(...copyMissingEntries(shippedPresets, join(DSH_HOME, '.agent-presets'), { log }).map((name) => `.agent-presets/${name}`))
   const settings = join(DSH_HOME, 'settings.yaml')
   const defaults = join(RESOURCES, 'settings.defaults.yaml')
   if (!existsSync(settings) && existsSync(defaults)) {

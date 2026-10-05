@@ -578,3 +578,39 @@ export function syncHome(options) {
   const report = mergeHome({ ...options, version })
   return { kind: 'merge', migrated: [], added: report.added, reason: report.reason }
 }
+
+/**
+ * Copy every shipped entry the destination is missing, one level deep.
+ *
+ * The shell's `seedDirectory` is all-or-nothing: it copies a shipped tree only
+ * when the destination does not exist at all, so an entry added by a later build
+ * — a new agent preset, say — never reaches a home that already has the parent
+ * directory. This fills those in, and still leaves anything already present
+ * alone: once an entry is copied it belongs to the user, edits included.
+ *
+ * @param from - shipped directory of per-id subdirectories.
+ * @param to - destination directory, created when missing.
+ * @param seams - `readdir`, `exists`, `copy`, `mkdir`, `log`.
+ * @returns the entry names copied, for the log.
+ */
+export function copyMissingEntries(from, to, seams = {}) {
+  const {
+    readdir = (dir) => readdirSync(dir, { withFileTypes: true }),
+    exists = existsSync,
+    copy = (source, target) => cpSync(source, target, { recursive: true, dereference: true, errorOnExist: false, force: false }),
+    mkdir = (dir) => mkdirSync(dir, { recursive: true }),
+    log = () => {},
+  } = seams
+  if (!exists(from)) return []
+  const copied = []
+  for (const entry of readdir(from)) {
+    if (!entry.isDirectory()) continue
+    const target = join(to, entry.name)
+    if (exists(target)) continue
+    mkdir(dirname(target))
+    copy(join(from, entry.name), target)
+    copied.push(entry.name)
+  }
+  if (copied.length > 0) log(`presets: added ${copied.join(', ')} to ${to}`)
+  return copied
+}

@@ -7,8 +7,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
-  defaultHome, defaultUserDataDir, legacyHome, migrateHome, migrationPlan, MIGRATION_ITEMS,
-  MIGRATION_MARKER,
+  copyMissingEntries, defaultHome, defaultUserDataDir, legacyHome, migrateHome, migrationPlan,
+  MIGRATION_ITEMS, MIGRATION_MARKER,
   MOVE_SKIP, MOVED_MARKER, MERGE_ITEMS, isEffectivelyEmpty, mergeHome, moveHome, pathRelation,
   readDataHome, readMigrationMarker, relocationPlan, resolveHome, syncHome, writeDataHome,
 } from '../src/desktop-home.mjs'
@@ -202,6 +202,31 @@ writeFileSync(join(upOld, '.credentials.yaml'), 'auth: other\n')
 mergeHome({ from: upOld, to: upNew, version: '0.1.14' })
 check('升级不会覆盖应用里的设置', readFileSync(join(upNew, 'settings.yaml'), 'utf8'), 'model: old\n')
 check('配置类条目不在合并清单里', MERGE_ITEMS.includes('settings.yaml') || MERGE_ITEMS.includes('.credentials.yaml'), false)
+
+// ---- 新预设要能到达已有 home（seedDirectory 做不到）----
+{
+  const from = mkdtempSync(join(tmpdir(), 'neo-presets-src-'))
+  const to = mkdtempSync(join(tmpdir(), 'neo-presets-dst-'))
+  try {
+    mkdirSync(join(from, 'liangshen'))
+    mkdirSync(join(from, 'strict'))
+    writeFileSync(join(from, 'liangshen', 'preset.yml'), 'name: 梁神模式\n')
+    writeFileSync(join(from, 'strict', 'preset.yml'), 'name: 严格模式\n')
+    // 目标里已经有 liangshen（而且被用户改过），只有 strict 是新的
+    mkdirSync(join(to, 'liangshen'))
+    writeFileSync(join(to, 'liangshen', 'preset.yml'), 'name: 我改过的\n')
+
+    const added = copyMissingEntries(from, to)
+    check('只补新预设，不动已有的', added, ['strict'])
+    check('已有的那份保持原样（用户改动优先）', readFileSync(join(to, 'liangshen', 'preset.yml'), 'utf8'), 'name: 我改过的\n')
+    check('新预设真的落盘了', existsSync(join(to, 'strict', 'preset.yml')), true)
+    check('再跑一次不重复复制（幂等）', copyMissingEntries(from, to), [])
+    check('源目录不存在时安全返回空', copyMissingEntries(join(from, 'nope'), to), [])
+  } finally {
+    rmSync(from, { recursive: true, force: true })
+    rmSync(to, { recursive: true, force: true })
+  }
+}
 
 rmSync(root, { recursive: true, force: true })
 console.log(failures === 0 ? '\nall desktop-home checks passed' : `\n${failures} CHECK(S) FAILED`)
