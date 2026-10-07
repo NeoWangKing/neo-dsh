@@ -730,6 +730,48 @@ let mainWindow = null
 let host = null
 let resolvedUrl = null
 let quitting = false
+let exiting = false
+
+/**
+ * Bound on how long the shell may take to leave after something asked it to.
+ *
+ * `app.quit()` waits for windows, and a window whose renderer is not answering waits
+ * forever — at logout that meant the process sat until systemd's DefaultTimeoutStopSec
+ * fired 90 s later and SIGKILLed it (measured in `journalctl -b -1`:
+ * `app-neo-dsh-desktop-*.scope: Stopping timed out. Killing.`). So the exit path
+ * destroys windows instead of asking them to close, and a timer guarantees the process
+ * is gone well inside any stop timeout. The host is unaffected either way: it gets its
+ * own SIGTERM from the same session teardown, and the watchdog SIGTERMs it if the shell
+ * goes first.
+ */
+const EXIT_GRACE_MS = 1500
+
+/**
+ * Leave promptly: host asked to stop, windows destroyed, bounded exit as a backstop.
+ * @param reason - what asked, for the log.
+ */
+function requestExit(reason) {
+  if (exiting) {
+    app.exit(0)
+    return
+  }
+  exiting = true
+  quitting = true
+  log(`exiting: ${reason}`)
+  try {
+    for (const window of BrowserWindow.getAllWindows()) window.destroy()
+  } catch (error) {
+    log(`exiting: destroying windows failed: ${String(error?.message ?? error)}`)
+  }
+  Promise.resolve()
+    .then(() => shutdownHost())
+    .catch((error) => log(`exiting: host shutdown failed: ${String(error?.message ?? error)}`))
+  setTimeout(() => {
+    log('exiting: forcing app.exit(0)')
+    app.exit(0)
+  }, EXIT_GRACE_MS)
+  app.quit()
+}
 /** Automatic renderer recoveries spent; refilled after a healthy minute. */
 let rendererRecoveries = 0
 let rendererRecoveryTimer = null
@@ -1569,19 +1611,20 @@ if (!gotLock) {
     }
   })
 
-  // A shell that is asked to stop should take its host with it.
+  // A shell that is asked to stop should take its host with it — and it must be gone
+  // before systemd's stop timeout, which is why this goes through requestExit.
   for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
-    process.on(signal, () => {
-      log(`received ${signal}`)
-      app.quit()
-    })
+    process.on(signal, () => requestExit(`signal ${signal}`))
   }
 
   app.on('before-quit', (event) => {
-    if (quitting || !host) return
+    if (exiting) return
+    if (quitting || !host) {
+      quitting = true
+      return
+    }
     event.preventDefault()
-    quitting = true
-    shutdownHost().finally(() => app.quit())
+    requestExit('before-quit')
   })
 
   app.on('window-all-closed', () => {

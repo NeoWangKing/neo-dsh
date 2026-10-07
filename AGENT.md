@@ -142,6 +142,18 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
 - **Anything the shell does over the network has the same choice to make** — the proxy env the
   shell applies to itself is not enough for Node's own HTTP stack.
 
+- **The shell must be gone within a second or two of being asked to stop.** systemd's
+  `DefaultTimeoutStopSec` is 90 s and it SIGKILLs whatever is left; `app.quit()` waits for
+  windows, and a window whose renderer is not answering waits forever. That is what happened
+  at logout: `journalctl -b -1` shows `app-neo-dsh-desktop-*.scope: Stopping timed out. Killing.`
+  and then `Killing process … (neo-dsh) with signal SIGKILL`. Signals and `before-quit` go
+  through `requestExit()` now: windows are destroyed rather than asked to close, the host gets
+  its SIGTERM, and a 1.5 s timer forces `app.exit(0)`. Verified inside a `systemd-run --scope`
+  unit — stop → `Result=success` in 868 ms, where it used to be the 90 s timeout.
+- **A signal test must go through a scope, not `kill <pid>`.** Sending SIGTERM straight to the
+  main process exited cleanly in 1 s even *before* this fix, because the stall only happens
+  once a real renderer is in the picture; the scope is what makes it reproduce.
+
 ## Data and paths
 
 - App home: Linux `$XDG_DATA_HOME/neo-dsh`, macOS `~/Library/Application Support/neo-dsh`;
