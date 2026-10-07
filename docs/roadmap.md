@@ -36,3 +36,15 @@
 2. 哪些事件要通知：审批必须有；**工作完成**、长任务（job）结束、需要 `ask_user_question`、
    host 崩溃——各自要不要？
 3. 外观：像 Codex 那样 图标 + 标题 + 正文 + 按钮？标题用什么（"Neo DSH" vs 会话标题）？
+
+---
+
+## 待发布（等用户说"发"）
+
+`main` 上已经攒了三处修复，合起来发一次 `v0.1.17` 就行（发版步骤见 AGENT.md：改两处版本号 → commit → tag → push tag → CI 自动打包并附到 release → 补发布说明）：
+
+1. **应用内"检查更新"走 Chromium 栈**（`net.fetch`）——修 `无法连接 GitHub：fetch failed（UNABLE_TO_GET_ISSUER_CERT_LOCALLY）`。
+2. **关机不再卡 90 秒**——信号退出改成"销毁窗口 + 杀 host + 1.5 秒兜底 `app.exit(0)`"，systemd 里实测 868 ms `Result=success`。
+3. **CI 产物带上 vendored 补丁**（智能批准图标 / open-in-app 图标 / 切档位先关持久终端）——CI 已改成 `pnpm run resources` + `patches:check`。
+
+注：0.1.16 的两台机器已经手工把第 3 条补上，所以那三处功能眼下是好的；第 1、2 条要等 0.1.17。
