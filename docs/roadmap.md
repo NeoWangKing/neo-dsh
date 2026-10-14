@@ -104,3 +104,18 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
 **其它可借鉴的小东西**：它用 `docs/schema-baseline.json` 记录工具 schema 的 token 基线（我们也可以量自己的）；
 "错误循环 / 只顾思考不交付"的护栏思路（我们已有 `todo-closer.mjs` / `instruction-hint.mjs`，可以再加一条）。
 原生 IPC 那套（Rust）成本太高，先不碰。
+
+**升级到 harness 0.2.x = 迁移，不是改版本号**（2026-10-07 实测）
+
+- `@deepseek-ai/dsh@0.2.0-rc.2` 在 npm 上存在 ✓，整个 harness 家族也发过 `0.2.0-rc.2` ✓；
+- 但 **`@deepseek-ai/dsh-agent-presets` 与 `@deepseek-ai/dsh-code-runtime` 在 npm 上已经一个版本都不剩** ✗
+  （改名/合并），`@deepseek-ai/dsh-agent` 的最新是 `0.2.1-alpha.*` ✗；
+- 我们 `apps/desktop/package.json` 里 **91 个 `@deepseek-ai/*` 依赖**（84 个 0.1.5-rc.3 + 若干独立线）都要按 0.2 的
+  实际发布重新对齐 ✗；
+- 迁移面：liangshen 预设（引用了 `dsh-tool-bash-persistent` / `dsh-terminal-bash` / `dsh-code-runtime` 等行）逐行核对、
+  三处 vendored 补丁重新锚定、`smart-approval` / `desktop-settings` 插件 API 复核、外壳与新 CLI 对接、全量回归。
+
+**建议顺序**：先搭一个**独立的 0.2.0 试用实例**（新 harness 自带默认 profile + 从源码编 dsh-ops，全在临时目录与独立 home，
+不碰 0.1.16 安装）验证"0.2 + dsh-ops 是否值得"；确认值得再迁 Neo DSH 本体，并按"
+最小 0.2 实例 → 迁预设 → 迁插件 → 迁补丁 → 回归"分段做。安装脚本会备份旧树，迁移期间随时可回滚。
+
