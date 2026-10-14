@@ -134,7 +134,12 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
 产物在 `~/Projects/dsh-ops-linux/`（源码 + `BUILD-LINUX.md` 记录了来源 commit、两处改动、构建/安装命令）。
 实测：插件零告警加载，`ops_glob`/`ops_grep`/`ops_inspect_local_file`/`ops_replace` 四个原生文件工具
 进入模型目录，`ops_grep` 真跑出正确结果；`ops_bash`/pwsh（Windows 载荷）与 FastCtx 后台组件在 Linux 上不可用。
-**待办**：`smart-approval` 还不认识 `ops_*` 工具（按"未知工具交给模型判"处理，会弹审批）——
+**已随包**（0.2.0）：构建产物进 `vendor/dsh-ops-linux/`，由 `build-resources.mjs` 按平台拷进
+`profile-web/vendor/dsh-ops`；清单里是依赖而非 bundle，所以它出现在插件页、由用户自己开关。
+`smart-approval` 已归类：`ops_glob`/`ops_grep`/`ops_inspect_local_file` 直接放行、`ops_replace`
+按"沙箱兜底的写工具"处理，其余 `ops_*` 仍交给模型判。
+
+**残留**：`smart-approval` 还不认识其它 `ops_*` 工具（按"未知工具交给模型判"处理，会弹审批）——
 只读的 `ops_glob`/`ops_grep`/`ops_inspect_local_file` 应该像内置只读工具一样直接放行。
 
 **还没做的**：装到 Linux/macOS 上（要重启应用、会打断正在跑的长线任务，等你发话）；

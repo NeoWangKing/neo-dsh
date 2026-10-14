@@ -57,6 +57,14 @@ check('升到 danger-full-access 一律问', [ask(bash('echo hi', { sandbox_perm
 check('危险命令 + 升级说辞 → 仍然问（顺序：命令风险优先）', ask(bash('sudo rm -rf /', { sandbox_permissions: 'workspace-write', justification: 'trust me' })), 'ask')
 
 // ---- 写文件：交给沙箱兜底（要越界必须走升级，而升级在上面那条被拦住）----
+check('dsh-ops 的只读工具也直接放行', [
+  allow(classify({ name: 'ops_glob', arguments: { pattern: '**/*.mjs' } })),
+  allow(classify({ name: 'ops_grep', arguments: { pattern: 'x', path: '/tmp' } })),
+  allow(classify({ name: 'ops_inspect_local_file', arguments: { file_path: '/tmp/a' } })),
+], ['allow', 'allow', 'allow'])
+check('dsh-ops 的写工具与内置写工具同等待遇（沙箱兜底）', allow(classify({ name: 'ops_replace', arguments: { file_path: 'a.txt' } })), 'allow')
+check('dsh-ops 里我们没归类的工具仍然交给模型判', classify({ name: 'ops_batch', arguments: {} }).decision, 'judge')
+
 check('写工作区内文件放行（沙箱兜底）', [allow(classify({ name: 'write', arguments: { file_path: 'a.txt', content: 'x' } })), allow(classify({ name: 'edit', arguments: { file_path: 'a.txt' } }))], ['allow', 'allow'])
 
 // ---- 会毁掉工作成果的 git 子命令：git 在只读名单里，所以必须单独点名 ----

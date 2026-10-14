@@ -35,10 +35,16 @@ const { createHash } = require('node:crypto')
  */
 
 /** Tools that a user would not expect to be asked about at all. */
-const READ_ONLY_TOOLS = new Set(['read', 'glob', 'grep', 'web_search', 'web_fetch']);
+const READ_ONLY_TOOLS = new Set([
+  'read', 'glob', 'grep', 'web_search', 'web_fetch',
+  // `dsh-ops` ships native equivalents of the three read tools. It is a plain dependency of
+  // our profile (switched on from the plugin page), and without these the guard would treat
+  // every call as an unknown tool and ask — the one thing a read-only search should never do.
+  'ops_glob', 'ops_grep', 'ops_inspect_local_file',
+]);
 
 /** Tools whose writes the sandbox already confines; a wider request arrives as an escalation. */
-const WRITE_TOOLS = new Set(['write', 'edit']);
+const WRITE_TOOLS = new Set(['write', 'edit', 'ops_replace']);
 
 /** Tools that run a command string, with or without a PTY. */
 const COMMAND_TOOLS = new Set(['bash', 'pwsh', 'bash_persistent', 'pwsh_persistent']);

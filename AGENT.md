@@ -66,8 +66,9 @@ Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 **The CI builds the artifacts. Do not build them locally.**
 
 ```sh
-# 1. bump both versions
-#    package.json + apps/desktop/package.json : 0.1.15 → 0.1.16
+# 1. bump both versions  (the app version tracks the harness generation: the
+#    0.2.0-rc.2 harness shipped as app 0.2.0, after 0.1.17 pinned it)
+#    package.json + apps/desktop/package.json : 0.1.17 → 0.2.0
 git commit -m "chore(release): 0.1.16"
 git tag v0.1.16
 git push && git push origin v0.1.16        # the tag push is what starts the release
@@ -135,6 +136,15 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   shapes, and a stroked-then-filled tail comes out hollow when the outline is thick
   relative to the tail. The composing script is not in the repo; redo it from the source
   art if the icon ever changes.
+- **Third-party plugin, our build**: `vendor/dsh-ops-linux/` is `dsh-ops` (Rust-backed native file
+  and PTC tools) rebuilt for Linux x64, because upstream ships Windows x64 only. It is a
+  *dependency* of the shipped profile, not a bundle: `build-resources.mjs` copies its payload
+  only on Linux (`OPTIONAL_PLUGINS`), the shipped manifest lists it as `file:vendor/dsh-ops`,
+  and the app materialises it into the live profile without mounting it — so it shows up in the
+  plugin page and the user switches it on. `profilePresetPackages()` skips any shipped
+  dependency whose payload this platform does not carry, which is what keeps the absent
+  macOS/Windows copy from becoming a dangling `file:` entry. Its `BUILD-LINUX.md` records the
+  upstream commit, the two edits (platform allowlist + `os`), and the build/stage commands.
 - **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, the 智能批准
   composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
   persistent shells before a preset switch (the harness refuses the change while a PTY is

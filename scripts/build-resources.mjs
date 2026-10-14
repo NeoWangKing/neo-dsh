@@ -40,6 +40,19 @@ const PLUGINS = [
 ]
 const YAML = createRequire(join(APP, 'package.json'))('yaml')
 const PRESET = join(REPO, 'presets', 'liangshen')
+/**
+ * Third-party builds that ship as a *dependency* of the shipped profile rather than as a
+ * bundle, so they land in the live profile's `node_modules` and wait for the user to switch
+ * them on (the plugin page, or `dsh plugin --profile web add dsh-ops`).
+ *
+ * `dsh-ops` is ours: upstream publishes Windows x64 only (`os: ["win32"]`, win32-only runtime
+ * payloads), so this copy carries a linux-x64 Rust worker we built from their source. Its
+ * `BUILD-LINUX.md` records the commit and the two edits; the platform list keeps a Linux
+ * payload out of the macOS/Windows artifacts, where the manifest entry simply stays missing.
+ */
+const OPTIONAL_PLUGINS = [
+  { dir: join(REPO, 'vendor', 'dsh-ops-linux'), name: 'dsh-ops', platforms: ['linux'] },
+]
 /** The preset's local plugin modules travel as a package the profile can resolve. */
 const PRESET_PACKAGE = 'dsh-liangshen-preset'
 /** Local plugin modules the preset mounts by subpath, shipped beside the package. */
@@ -153,6 +166,16 @@ rmSync(join(RES, 'presets'), { recursive: true, force: true })
 //    seeded profile's node_modules from this copy (see src/main.mjs seedHome).
 for (const plugin of PLUGINS) {
   copyTree(plugin.dir, join(RES, 'profile-web', 'vendor', plugin.name))
+  steps.push(`profile-web/vendor/${plugin.name}`)
+}
+for (const plugin of OPTIONAL_PLUGINS) {
+  const target = join(RES, 'profile-web', 'vendor', plugin.name)
+  if (!plugin.platforms.includes(process.platform)) {
+    rmSync(target, { recursive: true, force: true })
+    steps.push(`profile-web/vendor/${plugin.name} (skipped on ${process.platform})`)
+    continue
+  }
+  copyTree(plugin.dir, target)
   steps.push(`profile-web/vendor/${plugin.name}`)
 }
 

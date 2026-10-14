@@ -167,7 +167,11 @@ function profilePresetPackages() {
           !name.startsWith('@deepseek-ai/') &&
           !bundles.has(name) &&
           typeof spec === 'string' &&
-          spec.startsWith('file:vendor/'),
+          spec.startsWith('file:vendor/') &&
+          // A shipped dependency whose payload this platform does not carry stays out of the
+          // live manifest entirely: a `file:` dependency pointing at nothing is worse than
+          // an absent one (see the platform list in build-resources.mjs).
+          existsSync(join(RESOURCES, 'profile-web', 'vendor', name)),
       )
       .map(([name]) => name)
   } catch {

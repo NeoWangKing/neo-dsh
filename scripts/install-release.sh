@@ -28,7 +28,10 @@ die() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 curl_with_fallback() {
   local out="$1"; shift
   local -a extra=()
-  while [ "${1:-}" = "-C" ]; do extra+=("$1"); shift; done
+  # `-C` 的值必须一起收走：只把 "-C" 塞进 extra 的话，它会把后面的
+  # `-o` 当成自己的参数，curl 就报 "option -C: expected a proper numerical
+  # parameter"，每个源都在 0.0 秒里"失败"一遍。要续传就传 `-C -`。
+  if [ "${1:-}" = "-C" ]; then extra=(-C "${2:?内部错误：-C 需要跟一个值，续传用 -C -}"); shift 2; fi
   local url="$1"
   # 1) 环境里的代理设置（可能是坏的：一个指向死端口的 proxy 别名就够）
   if curl -fsSL --connect-timeout 15 --max-time 1800 "${extra[@]}" -o "$out" "$url" 2>"$WORK/curl.err"; then
@@ -48,6 +51,9 @@ ok() { printf '\033[32m✓ %s\033[0m\n' "$*"; }
 
 usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
 
+# 重跑自己时要用原始参数：下面的 while 把所有参数都 shift 掉了，$@ 到那时是空的，
+# 直接 exec "$0" "$@" 会变成"装最新版"——一个悄悄装错版本的坑。
+ORIG_ARGS=("$@")
 while [ $# -gt 0 ]; do
   case "$1" in
     --version) VERSION="${2:?--version 需要一个版本号}"; shift 2 ;;
@@ -91,11 +97,43 @@ ASSETS="$WORK/assets.tsv"
 
 if [ "$VERSION" = latest ]; then API_URL="$API/latest"; else API_URL="$API/tags/v$VERSION"; fi
 info "查询 release 元数据（走你 shell 里的代理）…"
-curl -fsSL --connect-timeout 15 --max-time 60 -H 'accept: application/vnd.github+json' -H 'user-agent: neo-dsh-installer' \
-  -o "$META" "$API_URL" 2>"$WORK/curl.err" \
-  || curl -fsSL --noproxy '*' --connect-timeout 15 --max-time 60 -H 'accept: application/vnd.github+json' \
-       -H 'user-agent: neo-dsh-installer' -o "$META" "$API_URL" \
-  || die "取不到 release 信息（代理与直连都不通）：$(head -1 "$WORK/curl.err" 2>/dev/null)"
+# 匿名查 api.github.com 是 60 次/小时，而且和整个出口 IP 的人共用——重试几次就 403 了。
+# 这台机器上 gh 已经登录过，借它的 token 就换成 5000 次/小时（不加 --show-token，别把 token 打进日志）。
+API_AUTH=()
+if [ -n "${GH_TOKEN:-}" ] || [ -n "${GITHUB_TOKEN:-}" ]; then
+  API_AUTH=(-H "authorization: Bearer ${GH_TOKEN:-${GITHUB_TOKEN:-}}")
+elif command -v gh >/dev/null 2>&1 && gh auth token >/dev/null 2>&1; then
+  API_AUTH=(-H "authorization: Bearer $(gh auth token)")
+  info "（借 gh 的登录态查 API，避免匿名限额）"
+fi
+# 这里要的是 HTTP 状态码，不是"成功/失败"：GitHub 上还没有这个 release 时它给 404，
+# 而 404 的意思是"tag 推了但 CI 还没把 Release 建出来"（Release 是构建完才建的），
+# 和"代理不通"完全是两回事。混成一句会把要查的方向指错。
+API_CODE="$(curl -sSL --connect-timeout 15 --max-time 60 "${API_AUTH[@]}" -H 'accept: application/vnd.github+json' \
+  -H 'user-agent: neo-dsh-installer' -o "$META" -w '%{http_code}' "$API_URL" 2>"$WORK/curl.err")" || API_CODE=000
+if [ "$API_CODE" = 000 ]; then
+  API_CODE="$(curl -sSL --noproxy '*' --connect-timeout 15 --max-time 60 "${API_AUTH[@]}" -H 'accept: application/vnd.github+json' \
+    -H 'user-agent: neo-dsh-installer' -o "$META" -w '%{http_code}' "$API_URL" 2>"$WORK/curl.err")" || API_CODE=000
+fi
+case "$API_CODE" in
+  200) ;;
+  404)
+    if [ "$VERSION" = latest ]; then
+      die "GitHub 上没有 release（连 latest 都是 404）：$REPO 这个仓库对吗？"
+    fi
+    LATEST_TAG="$(curl -sSL --noproxy '*' --connect-timeout 15 --max-time 30 \
+      "${API_AUTH[@]}" -H 'accept: application/vnd.github+json' -H 'user-agent: neo-dsh-installer' "$API/latest" 2>/dev/null \
+      | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
+    die "GitHub 上还没有 v$VERSION 这个 release。Release 是 CI 构建完才建的，所以要么 tag 还没推，要么它的构建还在跑。
+   看构建状态：https://github.com/$REPO/actions
+   现在能装的最新版：bash $0 --version ${LATEST_TAG#v}"
+    ;;
+  000) die "取不到 release 信息（代理与直连都不通）：$(head -1 "$WORK/curl.err" 2>/dev/null)" ;;
+  401) die "GitHub 说 token 无效（401）：检查 GH_TOKEN / gh auth status" ;;
+  403) die "GitHub 拒绝了这次查询（403）：多半是匿名限额（60 次/小时）用完了。
+   装上并登录 gh（或设 GH_TOKEN）就能用 5000 次/小时的额度：gh auth login" ;;
+  *) die "查询 release 元数据失败（HTTP $API_CODE）：$API_URL" ;;
+esac
 
 python3 - "$META" > "$ASSETS" <<'PYEOF'
 import json, sys
@@ -112,10 +150,16 @@ VER="${TAG#v}"
 info "目标版本：$VER"
 
 if [ "$ASSET" = auto ]; then
-  CANDIDATES=("neo-dsh-$VER-linux-x64.zip" "neo-dsh-$VER-mac-arm64.dmg" "neo-dsh-$VER-linux-x86_64.AppImage")
+  # 只挑本机能装的东西。Release 是各平台 job 谁先跑完谁先建（先建的那个里只有它自己的产物），
+  # 所以在 Linux 上完全可能先看到一个只挂着 mac dmg 的 v0.1.17 —— 那个装不了，
+  # 也绝不能靠"名字对不上就退到下一个候选"滑过去。
+  case "$PLATFORM-$ARCH" in
+    linux-x64) CANDIDATES=("neo-dsh-$VER-linux-x64.zip" "neo-dsh-$VER-linux-x86_64.AppImage") ;;
+    *) die "还没有 $PLATFORM-$ARCH 的产物规则（这个脚本目前只装 linux-x64）" ;;
+  esac
 else
   case "$ASSET" in
-    zip) CANDIDATES=("neo-dsh-$VER-linux-x64.zip" "neo-dsh-$VER-mac-arm64.zip") ;;
+    zip) CANDIDATES=("neo-dsh-$VER-linux-x64.zip") ;;
     appimage) CANDIDATES=("neo-dsh-$VER-linux-x86_64.AppImage") ;;
     *) die "--asset 只支持 auto / zip / appimage" ;;
   esac
@@ -132,7 +176,12 @@ for name in "${CANDIDATES[@]}"; do
     break
   fi
 done
-[ -n "$CHOSEN" ] || die "release v$VER 里没有适合 $PLATFORM-$ARCH 的产物（见 https://github.com/$REPO/releases/tag/$TAG）"
+if [ -z "$CHOSEN" ]; then
+  die "release $TAG 里还没有适合 $PLATFORM-$ARCH 的产物。各平台分开构建、分头上传，多半是还没传完。
+   这个 release 现在有的：$(awk -F'\t' '$1=="asset"{printf "%s ", $2}' "$ASSETS")
+   构建状态：https://github.com/$REPO/actions
+   几分钟后再跑一次即可（见 https://github.com/$REPO/releases/tag/$TAG）"
+fi
 info "产物：$CHOSEN（$(( ${SIZE:-0} / 1048576 )) MB）"
 [ -n "$SHA" ] || die "这个 release 没有 sha256 摘要，拒绝在无法校验的情况下替换应用"
 info "期望 sha256：${SHA:0:16}…"
@@ -159,7 +208,7 @@ else
     [ "$pass" = fresh ] && rm -f "$FILE"
     for mirror in "${MIRRORS[@]}"; do
       info "下载 ${mirror:-（直连 GitHub）}…（$pass）"
-      if curl_with_fallback "$FILE" -C "${mirror}${URL}" && verify; then
+      if curl_with_fallback "$FILE" -C - "${mirror}${URL}" && verify; then
         got=1; break 2
       fi
       info "  这次没拿到完整文件（本网络常见），换下一个源"
@@ -168,7 +217,9 @@ else
   if [ "$got" != 1 ]; then
     if [ -t 0 ]; then
       read -r -p "  所有源都没下全（缓存里是半截文件）。要清掉重下一次吗？[y/N] " answer || true
-      case "$answer" in y|Y) rm -f "$FILE"; exec "$0" "$@" ;; esac
+      # 用 bash 显式重启：脚本自己不一定是可执行的（仓库里是 600），
+      # 而且必须带原始参数，否则重跑会变成装 latest。
+      case "$answer" in y|Y) rm -f "$FILE"; exec bash "$0" "${ORIG_ARGS[@]}" ;; esac
     fi
     die "下载后 sha256 仍不一致（半截文件留在 $FILE，下次运行会尝试续传）"
   fi
@@ -176,7 +227,12 @@ else
 fi
 
 # ------------------------------------------------------------------- sanity checks
-if pgrep -f "$PREFIX/neo-dsh" >/dev/null 2>&1; then
+# `pgrep -f` 匹配的是整条命令行文本，所以任何"提到"这个路径的进程都会命中：
+# 外层包装器、终端标题，甚至一条写着这个路径的 pgrep 命令自己（今天就误报过一次，
+# 明明没开应用却说"正在运行"）。锚到命令行开头，就只认真正把自己当那个可执行文件跑的进程；
+# 路径里的 `.` 是正则元字符，得转义。
+PREFIX_RE="$(printf '%s' "$PREFIX" | sed 's/[.[\*^$()+?{}|]/\\&/g')"
+if pgrep -f -- "^${PREFIX_RE}/neo-dsh([[:space:]]|\$)" >/dev/null 2>&1; then
   die "Neo DSH 正在从 $PREFIX 运行，请先退出它（或选另一个 --prefix）再更新"
 fi
 case "$(findmnt -no TARGET --target "$(dirname "$PREFIX")" 2>/dev/null || echo /)" in
