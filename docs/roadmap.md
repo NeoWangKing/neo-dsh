@@ -74,3 +74,33 @@ Web 端发消息用的是 **`next-step`**（`@deepseek-ai/dsh-api-session-contro
 3. **显式"打断并回答"按钮**：停当前轮（后台 job 继续跑）→ 先回答插话 → 再收 job 结果继续。多数情况够用。
 
 **注意**：真要动的是**下一版**的代码；分析阶段只读代码与日志，不碰正在运行的会话。
+
+---
+
+## 3. 评估：外部项目 `T-Auto/dsh-ops`（token 优化）
+
+*提出：2026-10-07，用户从网上看到（1213 star 的 DSH 插件）。结论：**现在整合不了，但它的"对标基线"提示了一个零成本的大杀器**。*
+
+**它是什么**：npm 包 `dsh-ops`，一个 DSH host 插件，四个组件（`ptc` / `file` / `shell` / `background`），
+Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相比 Linux 原装 PTC 模式省 65%。
+
+**为什么现在整合不进 Neo DSH**
+
+1. npm 包 **`os: ["win32"]`, `cpu: ["x64"]`**，可选依赖全是 `@dsh-ops/*-win32-x64` → Arch 上连载荷都取不到；
+   源码号称跨平台，但要自己编 Rust + 造 bash/pwsh 载荷。
+2. `peerDependencies: { "@deepseek-ai/dsh": "^0.2.0-rc.2" }` + 新一代插件清单（`dsh-plugin.json` v0.15 /
+   `tools.dsh/v1alpha1` contracts）→ **我们 vendored 的 harness 是 0.1.5-rc.3**，插件装载机制完全不同，
+   根本挂不起来。
+3. 即便移植，它**替换整个工具层**（file/shell/ptc），与 liangshen 预设（bash / str_replace_editor / fs 行 +
+   bootstrap 门）正面冲突。
+4. 许可证是 `MIT AND Apache-2.0`（宽松）→ **借鉴想法/代码没问题**，标注出处即可。
+
+**真正值得偷的一条（零代码）**：harness **自带 PTC**，`tools` 插件有 `mode: native|ptc|both`
+（`dsh-web-app/cordis.patch.yml` 里通过 `DSH_TOOLS_MODE` 环境变量开启，默认 native）。dsh-ops 的 65% 就是
+"相对 Linux 原装 PTC" 算的——所以**先试 PTC 本身**：`DSH_TOOLS_MODE=ptc bash scripts/dev-window.sh`
+（独立 dev 窗口，不碰正在跑的会话），比 token 用量与工具调用轮数。若确实大赢，就在
+`resources/profile-web/cordis.patch.yml` 里给 `tools` 加一行 `mode: ptc`（或 `both`）当作随包默认。
+
+**其它可借鉴的小东西**：它用 `docs/schema-baseline.json` 记录工具 schema 的 token 基线（我们也可以量自己的）；
+"错误循环 / 只顾思考不交付"的护栏思路（我们已有 `todo-closer.mjs` / `instruction-hint.mjs`，可以再加一条）。
+原生 IPC 那套（Rust）成本太高，先不碰。
