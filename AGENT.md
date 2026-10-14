@@ -169,6 +169,23 @@ four places:
   session dies at `turn/end`, with no hint that a package manifest is at fault. Ours
   (`dsh-liangshen-preset`) hit exactly that.
 
+- **Peer dependencies are not installed for you.** A row the profile mounts can come from a
+  package nothing depends on. `@deepseek-ai/dsh-deepseek-account` is a *peer* of four 0.2
+  packages — the account provider, the account controller, `dsh-llm-deepseek-account` and
+  `dsh-web-search-deepseek` — and no upstream package depends on it, so the app has to pin it
+  itself. Without that pin every one of those rows silently fails to import, and the only sign
+  is `dsh: warning: N entries did not activate … failed to import` in the host log; the
+  user-visible casualty is the built-in web search, which is why it is worth a sweep rather
+  than a per-symptom fix. Audit an installed tree with a `createRequire(anchor).resolve.paths(name)`
+  loop over `node_modules/@deepseek-ai/*/package.json`'s `peerDependencies`; the only
+  acceptable remaining gaps are packages behind `dsh-experimental-*` rows we do not mount.
+- **A shipped profile must use `file:vendor/…`, never `link:`.** A dev-time `link:` dependency
+  left in a live profile breaks the next time pnpm rewrites `node_modules`: pnpm replaces it
+  with a relative symlink, and when that path is wrong the bundle becomes unresolvable and the
+  host refuses to start (`cannot resolve profile bundle "…"`). `syncBundledPlugins` never
+  touches a symlink (a symlink is treated as the user's own install), so it will not repair
+  one either.
+
 Two more 0.2 changes worth knowing: the reasoning-effort levels are `off`/`low`/`high`/`max`
 (0.1.5 shipped `medium`, which the provider rejects rather than falling back —
 `repairReasoningEffort` in `apps/desktop/src/boot-guard.mjs` fixes a home seeded by an older
