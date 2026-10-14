@@ -5,6 +5,7 @@
 #   bash scripts/install-release.sh                        # 装最新版到 ~/.local/opt/neo-dsh
 #   bash scripts/install-release.sh --version 0.1.16       # 装指定版本
 #   bash scripts/install-release.sh --prefix /tmp/try      # 装到别处（试跑用）
+#   bash scripts/install-release.sh --from ~/neo-dsh.zip    # 用本地已下好的包（仍校验 sha256）
 #
 # Why a script: the in-app update check needs Chromium's network stack (fixed after
 # 0.1.16), and on this network GitHub downloads arrive truncated without an error —
@@ -15,6 +16,7 @@ set -euo pipefail
 REPO="${NEO_DSH_REPO:-NeoWangKing/neo-dsh}"
 PREFIX="${HOME}/.local/opt/neo-dsh"
 VERSION="latest"
+FROM=""
 ASSET="auto"
 MIRRORS=("https://gh-proxy.com/" "https://ghfast.top/" "")
 DRY_RUN=0
@@ -60,6 +62,8 @@ while [ $# -gt 0 ]; do
     --prefix) PREFIX="${2:?--prefix 需要一个目录}"; shift 2 ;;
     --asset) ASSET="${2:?--asset 需要 zip 或 appimage}"; shift 2 ;;
     --mirror) MIRRORS=("${2:?}"); shift 2 ;;
+    # 镜像不通时先手动下好，再用这个装：省掉下载，校验和安装逻辑一个字不改。
+    --from) FROM="${2:?--from 需要一个 zip 文件}"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     -h|--help) usage ;;
     *) die "不认识的参数：$1（--help 看用法）" ;;
@@ -199,6 +203,11 @@ mkdir -p "$CACHE"
 FILE="$CACHE/$CHOSEN"
 verify() { [ -f "$FILE" ] && [ "$(sha256sum "$FILE" | awk '{print $1}')" = "$SHA" ]; }
 
+if [ -n "$FROM" ]; then
+  [ -f "$FROM" ] || die "--from 指定的文件不存在：$FROM"
+  cp -f "$FROM" "$FILE" || die "无法把 $FROM 复制到 $FILE"
+  info "使用本地文件：$FROM"
+fi
 if verify; then
   ok "缓存里已有校验通过的文件，跳过下载"
 else
