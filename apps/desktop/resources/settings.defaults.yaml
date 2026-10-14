@@ -3,9 +3,7 @@
 agent-default-model:
   provider: deepseek-official
   model: deepseek-flash
-  reasoningEffort: medium
-agent-presets:
-  default: liangshen
+  reasoningEffort: high
 ui-theme:
   preference: dark
 ui-chat:

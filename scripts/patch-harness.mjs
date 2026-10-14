@@ -170,12 +170,16 @@ const openInAppPatches = [
 ]
 
 /**
- * The permission glyph table in `dsh-client-ui-conversation` is a fixed design set, and
- * the composer chip draws nothing for a preset value it does not know — which is what
- * happened to our own `smart-approval` preset, a shipped row of the default composition.
- * The preset table itself has no icon field to fill in, so the glyph has to join the
- * table. Upstream would take this as a real contribution; until then this is the patch
- * that keeps the chip from losing its icon while the user is on 智能批准.
+ * The permission glyph table is a fixed design set, and the composer chip draws nothing
+ * for a preset value it does not know — which is what happened to our own `smart-approval`
+ * preset, a shipped row of the default composition. The preset table itself has no icon
+ * field to fill in, so the glyph has to join the table. Upstream would take this as a real
+ * contribution; until then this is the patch that keeps the chip from losing its icon
+ * while the user is on 智能批准.
+ *
+ * 0.2 moved the table (and `PermissionSelect` itself) out of the conversation bundle into
+ * the standalone `dsh-client-ui-permission-presets` package; the entry spliced in is
+ * unchanged, so only the target below follows the move.
  */
 const clientPatches = [
   {
@@ -260,7 +264,7 @@ const targets = [
     patches: openInAppPatches,
   },
   {
-    package: 'dsh-client-ui-conversation',
+    package: 'dsh-client-ui-permission-presets',
     files: ['lib/client.js'],
     linuxOnly: false,
     patches: clientPatches,

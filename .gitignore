@@ -16,6 +16,7 @@ out/
 apps/desktop/resources/node/
 apps/desktop/resources/profile-web/node_modules/
 apps/desktop/resources/profile-web/vendor/
+apps/desktop/resources/profile-web/presets/
 apps/desktop/resources/presets/
 
 # npm pack output

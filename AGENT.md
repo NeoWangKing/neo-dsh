@@ -8,7 +8,8 @@
 
 Neo DSH — a desktop suite around the DeepSeek Harness. The shell is Electron; everything
 that makes it *this* product (plugins, agent preset, profile, resources) lives here. The
-harness itself is vendored under `apps/desktop/node_modules/@deepseek-ai/`.
+harness itself is vendored under `apps/desktop/node_modules/@deepseek-ai/` (0.2.0-rc.2;
+see "The 0.2 harness migration" below before touching those versions).
 
 | Path | What lives there |
 | --- | --- |
@@ -113,9 +114,18 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   and `DeepSeek-V4-Pro`. `models` replaces the whole catalog, so both entries are written
   out; a session pinned to an id no longer listed still runs, it is just absent from the
   picker.
-- **Agent preset**: `presets/liangshen` (梁神模式). Its `tool-bootstrap.mjs` keeps the first
-  request on the Minimal tool pair and opens the full catalog after the first durable tool
-  call; `compaction-epoch.mjs` re-arms that after a compaction.
+- **Agent preset**: `presets/liangshen` (梁神模式, id `liangshen`). Its `tool-bootstrap.mjs`
+  keeps the first request on the Minimal tool pair and opens the full catalog after the
+  first durable tool call; `compaction-epoch.mjs` re-arms that after a compaction. Since the
+  harness moved to 0.2 the preset ships as **two pieces**, because 0.2 deleted the
+  `$DSH_HOME/.agent-presets/<id>/` directory: `presets/liangshen/{agent.cordis.yml,*.mjs,
+  package.json}` is the source, and `scripts/build-resources.mjs` assembles it into
+  `resources/profile-web/vendor/dsh-liangshen-preset/` (a resolvable package — its own
+  modules, referenced as `dsh-liangshen-preset/tool-bootstrap`) plus
+  `resources/profile-web/presets/liangshen.patch.yml`, the patch layer that declares the
+  preset entry. `apps/desktop/src/main.mjs` passes that layer with its own `--patch`, and
+  materialises the package into the live profile's `node_modules/` **without** adding it to
+  `dsh.profile.bundles` (a bundle is mounted; a preset package must only be resolvable).
 - **App icon**: `apps/desktop/build/icon.png` (1024, what electron-builder derives platform
   icons from) and `apps/desktop/assets/icon.png` (512, the window icon). Both are
   composed, not drawn in code: the whale-girl art (`~/Downloads/dsh.png` on the user's
@@ -129,6 +139,43 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
   persistent shells before a preset switch (the harness refuses the change while a PTY is
   alive, which used to block switching presets mid-conversation).
+
+## The 0.2 harness migration (what actually bit)
+
+The harness is vendored, so its version is a real dependency bump, not a config change. The
+route that works: resolve every `@deepseek-ai/*` dependency against **`dsh@<version>`'s own
+lockstep set** (`cd /tmp && npm install --package-lock-only @deepseek-ai/dsh@0.2.0-rc.2`,
+then read the resolved versions out of that `package-lock.json` — never "latest"), rewrite
+`apps/desktop/package.json`, `pnpm --dir apps/desktop install`, and then expect fallout in
+four places:
+
+- **Vendored patch targets move.** 0.2 moved the permission glyph table out of
+  `dsh-client-ui-conversation` into `dsh-client-ui-permission-presets`; the open-in-app and
+  terminal anchors happened to survive. A moved target is a silent miss otherwise, so
+  `pnpm run patches:check` runs after `pnpm run resources` in CI.
+- **Agent presets are profile entries now.** `@deepseek-ai/dsh-agent-preset-registry` takes
+  only `{default, selectedDefault}`; there is no directory discovery, no `roots`, and
+  `.agent-presets/` is dead. A preset is a `@deepseek-ai/dsh-agent-preset` entry whose
+  `config.plugins` is the old entry list, and the default preset is that registry row's
+  `config.default` (0.1.5 kept it in `settings.yaml` as `agent-presets.default`). Sessions
+  record the preset **id**, so it has to stay `liangshen` or old conversations stop opening.
+- **A patch cannot add an entry.** Patch rows target an existing `id` (`name`+fields) or
+  append inside an entry-list config with `insert:`. A row for an unknown id is warned and
+  skipped, so a new top-level entry needs `- insert: [...]` — and a root-level `insert` is
+  what `build-resources.mjs` emits.
+- **Every plugin package needs `name` *and* `version`.** `dsh-plugin-package-inventory-deepseek`
+  reports the active plugin packages on *every* request and throws when one has no version —
+  surfacing as `REQUEST_EXTENSION`/`DeepSeek request extension preparation failed` while the
+  session dies at `turn/end`, with no hint that a package manifest is at fault. Ours
+  (`dsh-liangshen-preset`) hit exactly that.
+
+Two more 0.2 changes worth knowing: the reasoning-effort levels are `off`/`low`/`high`/`max`
+(0.1.5 shipped `medium`, which the provider rejects rather than falling back —
+`repairReasoningEffort` in `apps/desktop/src/boot-guard.mjs` fixes a home seeded by an older
+build *before* the host starts, because the harness renames `settings.yaml` to
+`settings.yaml.imported` on first read), and 0.2 enforces plugin peer ranges: the third-party
+`dshmarket` in the user's home is `^0.1.x`-only and gets skipped with a loud log line until
+it ships a 0.2-compatible release or the user grants an exact-version exemption.
 
 ## Shell gotchas worth keeping in mind
 

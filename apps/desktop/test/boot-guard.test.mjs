@@ -8,7 +8,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   SAFE_PROFILE, clearBootFailures, isSafeRequested, profileBundles, readBootState, recordBootFailure,
-  repairProfile, repairSettings, shouldOfferSafeMode, unresolvedBundles, writeBootState,
+  repairProfile, repairReasoningEffort, repairSettings, shouldOfferSafeMode, unresolvedBundles,
+  writeBootState,
 } from '../src/boot-guard.mjs'
 
 let failures = 0
@@ -111,6 +112,44 @@ check('  名字里带时间戳', repaired.movedTo, join(repairHome, 'profiles', 
 
 const missingShipped = repairProfile({ home: repairHome, profile: 'web', shipped: join(repairHome, 'nope') })
 check('随包 profile 不在 → 报告失败', missingShipped.repaired, false)
+
+// ---- 0.2 renamed the reasoning-effort levels ------------------------------
+// `medium` was our own shipped default up to 0.1.16, and 0.2's DeepSeek provider answers
+// only off/low/high/max: it rejects an unknown level instead of falling back, so every
+// turn in a home seeded by an older build failed until this ran. The harness renames
+// settings.yaml to settings.yaml.imported when it first reads it, so this has to happen
+// before the host starts — which is why it is a boot step and not a settings migration.
+const effortHome = mkdtempSync(join(tmpdir(), 'neo-dsh-effort-'))
+const effortFile = join(effortHome, 'settings.yaml')
+// The seam takes any parser/serializer pair, so the test uses JSON instead of YAML.
+const effortSeams = { parse: (text) => JSON.parse(text), serialize: (value) => JSON.stringify(value, null, 2) }
+
+writeFileSync(effortFile, JSON.stringify({ 'agent-default-model': { provider: 'deepseek-official', model: 'deepseek-flash', reasoningEffort: 'medium' }, 'ui-theme': { preference: 'dark' } }))
+const effortLog = []
+const repairedEffort = repairReasoningEffort(effortHome, { ...effortSeams, log: (line) => effortLog.push(line) })
+check('旧档位 medium 被判为要修', [repairedEffort.repaired, repairedEffort.from, repairedEffort.to], [true, 'medium', 'high'])
+check('  文件里改成了 high', JSON.parse(readFileSync(effortFile, 'utf8'))['agent-default-model'].reasoningEffort, 'high')
+check('  其它键原样保留', JSON.parse(readFileSync(effortFile, 'utf8'))['ui-theme'], { preference: 'dark' })
+check('  日志说明改了什么', /medium → high/.test(effortLog.join('\n')), true)
+
+writeFileSync(effortFile, JSON.stringify({ 'agent-default-model': { reasoningEffort: 'high' } }))
+check('已经是 0.2 的档位 → 不动它', repairReasoningEffort(effortHome, effortSeams).repaired, false)
+check('  文件一个字节没变', JSON.parse(readFileSync(effortFile, 'utf8'))['agent-default-model'].reasoningEffort, 'high')
+
+check('没有 settings.yaml → 不报错', repairReasoningEffort(join(effortHome, 'nope'), effortSeams).repaired, false)
+
+writeFileSync(effortFile, '{ not json')
+const brokenLog = []
+check('读不出来的文件 → 只记日志', repairReasoningEffort(effortHome, { ...effortSeams, log: (line) => brokenLog.push(line) }).repaired, false)
+check('  而且说了是哪一步', /could not read/.test(brokenLog.join('\n')), true)
+
+writeFileSync(effortFile, JSON.stringify({ 'agent-default-model': { reasoningEffort: 'medium' } }))
+const writeLog = []
+const unwritable = repairReasoningEffort(effortHome, { ...effortSeams, write: () => { throw new Error('EROFS') }, log: (line) => writeLog.push(line) })
+check('写不进去 → 报告没修，而不是崩掉', unwritable.repaired, false)
+check('  日志里有原因', /EROFS/.test(writeLog.join('\n')), true)
+
+rmSync(effortHome, { recursive: true, force: true })
 
 rmSync(home, { recursive: true, force: true })
 rmSync(settingsHome, { recursive: true, force: true })

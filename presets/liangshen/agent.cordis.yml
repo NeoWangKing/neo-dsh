@@ -12,7 +12,7 @@
 # A service row here MUST sit inside a group carrying an `isolate` realm.
 # Without one it publishes into the root realm, where it is process-global —
 # another preset publishing the same name collides, and a host reader would
-# resolve one preset's instance for every session; `dsh-agent-presets` rejects
+# resolve one preset's instance for every session; `dsh-agent-preset-registry` rejects
 # that at mount. `true` means an entry-local realm: this standing mount's own
 # private instance, apart from every other preset's. (A shared label does NOT
 # pool instances — `provide()` throws on the second registration under the
@@ -55,7 +55,7 @@
 # bootstrap pair until a NEW durable tool call exists past the boundary
 # (epoch-aware, see compaction-epoch.mjs).
 - id: tool-bootstrap
-  name: ./tool-bootstrap.mjs
+  name: dsh-liangshen-preset/tool-bootstrap
   config:
     bootstrapTools: [bash, str_replace_editor]
     promoteOn: tool-call
@@ -83,7 +83,7 @@
 # exist; read them before acting" — and the model reads the files itself via
 # the filesystem tools when relevant.
 - id: instruction-hint
-  name: ./instruction-hint.mjs
+  name: dsh-liangshen-preset/instruction-hint
   config:
     promoteOn: tool-call
     includeSubagents: true
@@ -161,7 +161,7 @@
 # No OS sandbox confinement on Windows (landlock is linux-only); the tool
 # description says so.
 - id: custom-bash
-  name: ./custom-bash.mjs
+  name: dsh-liangshen-preset/custom-bash
   disabled: !!js process.platform !== 'win32'
 
 # ── filesystem ──────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@
   name: '@deepseek-ai/dsh-skill-filesystem'
 
 - id: skill-search
-  name: ./skill-search.mjs
+  name: dsh-liangshen-preset/skill-search
 
 # ── goals ───────────────────────────────────────────────────────────────────
 
@@ -350,7 +350,7 @@
       config:
         provider: codex
         toolName: subagent_codex
-        enableRunInBackground: false
+        backgroundMode: one-shot
         maxDepth: provider-managed
 
     - id: tool-subagent-claude-code
@@ -359,11 +359,11 @@
       config:
         provider: claude-code
         toolName: subagent_claude_code
-        enableRunInBackground: false
+        backgroundMode: one-shot
         maxDepth: provider-managed
 
-    - id: workflow-worker-thread
-      name: '@deepseek-ai/dsh-workflow-worker-thread'
+    - id: workflow-ptc
+      name: '@deepseek-ai/dsh-workflow-ptc'
       config:
         provider: spawn
 
@@ -397,7 +397,7 @@
 # todo-closer.mjs. `leftover: pending` (default) shows the abandoned rows as
 # 待办; `leftover: drop` hides the panel outright at turn end.
 - id: todo-closer
-  name: ./todo-closer.mjs
+  name: dsh-liangshen-preset/todo-closer
   config:
     leftover: pending
 

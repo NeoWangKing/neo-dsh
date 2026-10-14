@@ -28,7 +28,7 @@ function check(name, actual, expected) {
 function bundleWith(entries) {
   return [
     'window.__ModuleLoader__.load({',
-    '\tid: "@deepseek-ai/dsh-client-ui-conversation",',
+    '\tid: "@deepseek-ai/dsh-client-ui-permission-presets",',
     '\tfactory: (require) => {',
     '\t\tvar react_jsx_runtime = require("react/jsx-runtime");',
     '\t\tconst FULL_ACCESS = "danger-full-access";',
@@ -84,7 +84,7 @@ const TERMINAL_BUNDLE = [
 function tree(entries, { terminal = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'patch-harness-'))
   dirs.push(dir)
-  const pkg = join(dir, '@deepseek-ai', 'dsh-client-ui-conversation', 'lib')
+  const pkg = join(dir, '@deepseek-ai', 'dsh-client-ui-permission-presets', 'lib')
   mkdirSync(pkg, { recursive: true })
   const file = join(pkg, 'client.js')
   writeFileSync(file, bundleWith(entries))

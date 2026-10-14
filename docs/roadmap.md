@@ -105,17 +105,28 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
 "错误循环 / 只顾思考不交付"的护栏思路（我们已有 `todo-closer.mjs` / `instruction-hint.mjs`，可以再加一条）。
 原生 IPC 那套（Rust）成本太高，先不碰。
 
-**升级到 harness 0.2.x = 迁移，不是改版本号**（2026-10-07 实测）
+**升级到 harness 0.2.x：已在仓库里完成**（2026-10-14，harness 现在钉 `0.2.0-rc.2`）
 
-- `@deepseek-ai/dsh@0.2.0-rc.2` 在 npm 上存在 ✓，整个 harness 家族也发过 `0.2.0-rc.2` ✓；
-- 但 **`@deepseek-ai/dsh-agent-presets` 与 `@deepseek-ai/dsh-code-runtime` 在 npm 上已经一个版本都不剩** ✗
-  （改名/合并），`@deepseek-ai/dsh-agent` 的最新是 `0.2.1-alpha.*` ✗；
-- 我们 `apps/desktop/package.json` 里 **91 个 `@deepseek-ai/*` 依赖**（84 个 0.1.5-rc.3 + 若干独立线）都要按 0.2 的
-  实际发布重新对齐 ✗；
-- 迁移面：liangshen 预设（引用了 `dsh-tool-bash-persistent` / `dsh-terminal-bash` / `dsh-code-runtime` 等行）逐行核对、
-  三处 vendored 补丁重新锚定、`smart-approval` / `desktop-settings` 插件 API 复核、外壳与新 CLI 对接、全量回归。
+原先只敢说"这是迁移"的 8 个担心，实际动手后长这样（细节见 `AGENT.md` 的 "The 0.2 harness migration"）：
 
-**建议顺序**：先搭一个**独立的 0.2.0 试用实例**（新 harness 自带默认 profile + 从源码编 dsh-ops，全在临时目录与独立 home，
-不碰 0.1.16 安装）验证"0.2 + dsh-ops 是否值得"；确认值得再迁 Neo DSH 本体，并按"
-最小 0.2 实例 → 迁预设 → 迁插件 → 迁补丁 → 回归"分段做。安装脚本会备份旧树，迁移期间随时可回滚。
+- 91 个 `@deepseek-ai/*` 依赖里有 **87 个只是照 `dsh@0.2.0-rc.2` 的 lockstep 表跳版本** ✓
+  （独立线只动 3 个：`cordis-plugin-group` 1.0.4 / `cordis-plugin-timer` 1.1.6 / `schemastery` 3.18.4）；
+- 真正被改名/删除的只有两个 ✗ → 已按上游替换：`dsh-code-runtime` → `dsh-ptc-runtime` + `dsh-ptc-runtime-node`，
+  `dsh-agent-presets` → `dsh-agent-preset-registry`；
+- 三处 vendored 补丁里 **1 处锚点随代码搬走**（权限字形表从 `dsh-client-ui-conversation` 挪到了
+  `dsh-client-ui-permission-presets`），另两处原样可用；
+- **预设要换形态**（最大的那块）：0.2 删掉了 `$DSH_HOME/.agent-presets/<id>/` 目录发现，预设变成 profile 里的
+  `@deepseek-ai/dsh-agent-preset` 条目，默认预设也改由注册器行配置。已搬完，id 保持 `liangshen`，老会话照常打开；
+- 途中抓到一个会**让每一轮都失败**的坑：0.2 的 `plugin-package-inventory-deepseek` 每轮上报活跃插件清单，
+  包清单里少一个 `version` 字段就抛 `REQUEST_EXTENSION`（症状是回合在 `turn/end` 静默死掉，看不出是包清单问题）；
+- 另外 0.2 的 `reasoningEffort` 档位改成 `off/low/high/max`，而**我们自己发的默认值是 `medium`** ✗ →
+  已加开机修复（`repairReasoningEffort`），否则凡是用旧默认值起的 home 每轮都会报 `UNSUPPORTED_REASONING_EFFORT`；
+- 回归：`pnpm test` 全绿、`patches:check` 全绿、隔离 home 的 smoke 启动 ✓，
+  并且用 web 的 HTTP RPC（`POST /api/session/create` + `session/prompt`）真的建了 `agentPreset: liangshen` 的会话跑完
+  一轮问答 ✓ —— 这条 RPC 路径值得留着，它是唯一能**非交互地端到端验证 agent 平面**的办法（`dsh headless` 明确拒绝
+  带 agent preset 的会话）。
+
+**还没做的**：装到 Linux/macOS 上（要重启应用、会打断正在跑的长线任务，等你发话）；
+第三方插件 `dshmarket@1.45.1` 的 peer 范围只到 `^0.1.x`，0.2 会**跳过它**并打日志——要么等上游发兼容版，
+要么用 `dsh plugin allow-version` 显式放行。
 

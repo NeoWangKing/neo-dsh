@@ -1,0 +1,14 @@
+{
+  "name": "dsh-liangshen-preset",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tool-bootstrap": "./tool-bootstrap.mjs",
+    "./instruction-hint": "./instruction-hint.mjs",
+    "./custom-bash": "./custom-bash.mjs",
+    "./skill-search": "./skill-search.mjs",
+    "./todo-closer": "./todo-closer.mjs",
+    "./compaction-epoch": "./compaction-epoch.mjs"
+  }
+}

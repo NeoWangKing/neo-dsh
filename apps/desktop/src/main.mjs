@@ -39,13 +39,13 @@ import {
 } from './host-guard.mjs'
 import {
   SAFE_PROFILE, clearBootFailures, isSafeRequested, profileBundles, readBootState,
-  recordBootFailure, repairProfile, repairSettings, shouldOfferSafeMode, unresolvedBundles,
+  recordBootFailure, repairProfile, repairReasoningEffort, repairSettings, shouldOfferSafeMode, unresolvedBundles,
 } from './boot-guard.mjs'
 import {
   PROXY_MODES, describeProxy, proxyEnvFor, readSystemProxy, resolveProxy,
 } from './proxy-env.mjs'
 import {
-  copyMissingEntries, defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan,
+  defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan,
   resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
 import { missingPatchEntryIds } from './profile-patch.mjs'
@@ -149,6 +149,33 @@ function bundledPlugins() {
 }
 
 /**
+ * Packages the shipped profile keeps resolvable without mounting them: the agent
+ * preset's own plugin modules, which its profile entry mounts by subpath
+ * (`dsh-liangshen-preset/tool-bootstrap`). They still have to be materialised into the
+ * live profile, because that is where the preset resolves them from.
+ * @returns the package names the shipped profile depends on but does not bundle.
+ */
+function profilePresetPackages() {
+  const manifest = join(RESOURCES, 'profile-web', 'package.json')
+  if (!existsSync(manifest)) return []
+  try {
+    const profile = JSON.parse(readFileSync(manifest, 'utf8'))
+    const bundles = new Set(profile?.dsh?.profile?.bundles ?? [])
+    return Object.entries(profile?.dependencies ?? {})
+      .filter(
+        ([name, spec]) =>
+          !name.startsWith('@deepseek-ai/') &&
+          !bundles.has(name) &&
+          typeof spec === 'string' &&
+          spec.startsWith('file:vendor/'),
+      )
+      .map(([name]) => name)
+  } catch {
+    return []
+  }
+}
+
+/**
  * Which app version materialised this copy of a bundled plugin.
  * @param target - the plugin directory in the live profile.
  * @param marker - marker file name.
@@ -174,7 +201,9 @@ function syncBundledPlugins(profileName = 'web') {
   const liveDir = join(DSH_HOME, 'profiles', profileName)
   const liveManifest = join(liveDir, 'package.json')
   if (!existsSync(liveManifest)) return []
-  const names = bundledPlugins()
+  const bundles = bundledPlugins()
+  const presets = profilePresetPackages()
+  const names = [...new Set([...bundles, ...presets])]
   if (names.length === 0) return []
 
   const version = app.getVersion()
@@ -212,11 +241,14 @@ function syncBundledPlugins(profileName = 'web') {
   }
   const section = profile?.dsh?.profile
   if (section === undefined || !Array.isArray(section.bundles)) return added
-  const missing = names.filter((name) => !section.bundles.includes(name))
-  if (missing.length === 0) return added
-  section.bundles.push(...missing)
   profile.dependencies = profile.dependencies ?? {}
-  for (const name of missing) {
+  const missing = bundles.filter((name) => !section.bundles.includes(name))
+  // A preset package is never mounted as a bundle: the preset entry mounts the modules
+  // it names, and a bundle would try to load the package root instead.
+  const undeclared = presets.filter((name) => profile.dependencies[name] === undefined)
+  if (missing.length === 0 && undeclared.length === 0) return added
+  section.bundles.push(...missing)
+  for (const name of [...missing, ...undeclared]) {
     if (profile.dependencies[name] === undefined) profile.dependencies[name] = `file:vendor/${name}`
   }
   const serialized = `${JSON.stringify(profile, null, 2)}\n`
@@ -291,17 +323,17 @@ function seedHome() {
   }
   // Safe mode materialises the plugins for its own profile and leaves the user's alone.
   seeded.push(...syncBundledPlugins(safeMode ? SAFE_PROFILE : 'web'))
-  // A fresh home gets the whole shipped roster; an existing one gets whatever
-  // preset this build adds, because `seedDirectory` skips a destination that already
-  // exists and a new preset would otherwise never arrive.
-  const shippedPresets = join(RESOURCES, 'presets')
-  if (seedDirectory(shippedPresets, join(DSH_HOME, '.agent-presets'))) seeded.push('.agent-presets')
-  seeded.push(...copyMissingEntries(shippedPresets, join(DSH_HOME, '.agent-presets'), { log }).map((name) => `.agent-presets/${name}`))
+  // The agent preset is a profile entry since 0.2 (`profile-web/presets/`) and no longer a
+  // directory under $DSH_HOME/.agent-presets, so nothing is seeded there any more. A home
+  // that carries the old directory keeps it: it is the user's data, and 0.2 does not read it.
   const settings = join(DSH_HOME, 'settings.yaml')
   const defaults = join(RESOURCES, 'settings.defaults.yaml')
   if (!existsSync(settings) && existsSync(defaults)) {
     cpSync(defaults, settings, { errorOnExist: false, force: false })
     seeded.push('settings.yaml')
+  }
+  if (repairReasoningEffort(DSH_HOME, { parse: yaml.load, serialize: yaml.dump, log }).repaired) {
+    seeded.push('settings.yaml (reasoningEffort)')
   }
   return seeded
 }
@@ -609,7 +641,12 @@ function startHost() {
   // selector: the `web` subcommand passes everything after its own options through to the
   // web app, and `--patch` there is not an option the app knows.
   const overlay = shippedPatchOverlay()
-  const patches = overlay === undefined ? [] : ['--patch', overlay]
+  // The agent preset is a profile entry in 0.2, so it rides its own patch layer.
+  const presetPatch = join(RESOURCES, 'profile-web', 'presets', 'liangshen.patch.yml')
+  const patches = [
+    ...(overlay === undefined ? [] : ['--patch', overlay]),
+    ...(existsSync(presetPatch) ? ['--patch', presetPatch] : []),
+  ]
   const child = spawn(node, [
     ...(existsSync(watchdog) ? ['--require', watchdog] : []),
     bin, ...(safeMode ? ['--profile', SAFE_PROFILE, ...patches] : ['web', ...patches]),

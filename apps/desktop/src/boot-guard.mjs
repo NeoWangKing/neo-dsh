@@ -176,6 +176,60 @@ export function repairSettings(home, defaultsPath, options = {}) {
   }
 }
 
+/**
+ * Effort levels an earlier build wrote into `settings.yaml`.
+ *
+ * 0.1.5's default was `medium`, and 0.2 answers only `off`/`low`/`high`/`max`: the provider
+ * rejects an unknown level instead of falling back, so a home seeded by an older build
+ * would fail every turn. The harness moves `settings.yaml` to `settings.yaml.imported` the
+ * first time 0.2 reads it, so the correction has to happen before the host starts.
+ */
+export const LEGACY_REASONING_EFFORTS = Object.freeze({ medium: 'high', minimal: 'low', balanced: 'high' })
+
+/**
+ * Rewrite a legacy `agent-default-model.reasoningEffort` into a level 0.2 knows.
+ *
+ * The app seeded this file (see `settings.defaults.yaml`), so correcting its own value is
+ * a repair, not an edit of user state; every other key is written back unchanged.
+ *
+ * @param home - the harness home.
+ * @param options - injectable `parse` (text → value), `serialize` (value → text), fs seams, `log`.
+ * @returns `{repaired, from?, to?}`.
+ */
+export function repairReasoningEffort(home, options = {}) {
+  const {
+    parse,
+    serialize,
+    read = readFileSync,
+    write = writeFileSync,
+    exists = existsSync,
+    log = () => {},
+  } = options
+
+  const file = join(home, 'settings.yaml')
+  if (!exists(file)) return { repaired: false }
+  let document
+  try {
+    document = parse(read(file, 'utf8'))
+  } catch (error) {
+    log(`settings: could not read settings.yaml for a reasoningEffort check (${String(error?.message ?? error)})`)
+    return { repaired: false }
+  }
+  const model = document?.['agent-default-model']
+  const from = model?.reasoningEffort
+  const to = LEGACY_REASONING_EFFORTS[from]
+  if (to === undefined) return { repaired: false }
+  try {
+    model.reasoningEffort = to
+    write(file, serialize(document))
+  } catch (error) {
+    log(`settings: could not repair reasoningEffort (${String(error?.message ?? error)})`)
+    return { repaired: false }
+  }
+  log(`settings: reasoningEffort ${from} → ${to} (0.2 renamed the effort levels)`)
+  return { repaired: true, from, to }
+}
+
 // ---- is the normal profile even loadable? ---------------------------------
 
 /**
