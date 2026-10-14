@@ -1689,9 +1689,14 @@ if (!gotLock) {
     app.setName('Neo DSH')
     /* Keep crash dumps local: the shell ships no upload channel, and a dump is the
        only artifact that says WHY a renderer died (the kernel core from the previous
-       crash carried no symbols and no reason). */
-    crashReporter.start({ uploadToServer: false, compress: true })
-    log(`crash dumps: ${app.getPath('crashDumps')}`)
+       crash carried no symbols and no reason).
+       Only a packaged build arms it. A source checkout is where crashes are *expected* —
+       arming the reporter there writes a dump and a desktop notification for every
+       deliberate abort, which is noise the developer did not ask for. */
+    if (app.isPackaged) {
+      crashReporter.start({ uploadToServer: false, compress: true })
+      log(`crash dumps: ${app.getPath('crashDumps')}`)
+    }
     Menu.setApplicationMenu(buildMenu())
     boot()
   })

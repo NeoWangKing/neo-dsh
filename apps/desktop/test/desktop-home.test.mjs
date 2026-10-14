@@ -3,7 +3,7 @@
  *
  *   node apps/desktop/test/desktop-home.test.mjs
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, symlinkSync, readlinkSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
@@ -229,5 +229,26 @@ check('配置类条目不在合并清单里', MERGE_ITEMS.includes('settings.yam
 }
 
 rmSync(root, { recursive: true, force: true })
+// ---- 迁移时的符号链接：自己重建，绝不交给 cpSync ------------------------
+// 真实的 live home 里 full of 指向安装树的链接；升级换掉安装树后它们会变成断链。
+// 把一条*好的*源链接 cpSync 到一条*断*的目标链上，会让 Electron 的 Node 直接 abort
+// 整个进程（纯 Node 只是抛错）。所以链接一律自己重建，目标已有东西就跳过。
+const linkHome = mkdtempSync(join(tmpdir(), 'neo-dsh-link-'))
+const linkFrom = join(linkHome, 'from')
+const linkTo = join(linkHome, 'to')
+mkdirSync(join(linkFrom, 'profiles', 'demo'), { recursive: true })
+mkdirSync(join(linkTo, 'profiles', 'demo'), { recursive: true })
+symlinkSync('/tmp/neo-dsh-source-target', join(linkFrom, 'profiles', 'demo', 'kept'))
+symlinkSync('/tmp/neo-dsh-broken', join(linkTo, 'profiles', 'demo', 'kept'))
+symlinkSync('/tmp/neo-dsh-carried', join(linkFrom, 'profiles', 'demo', 'carried'))
+symlinkSync('/tmp/neo-dsh-broken2', join(linkTo, 'profiles', 'demo', 'already-broken'))
+
+const linkReport = syncHome({ from: linkFrom, to: linkTo, version: '0.2.1', log: () => {} })
+check('迁移不因断链崩溃（能正常返回）', linkReport.kind, 'migrate')
+check('目标已有的链接原样保留（哪怕是断的）', readlinkSync(join(linkTo, 'profiles', 'demo', 'kept')), '/tmp/neo-dsh-broken')
+check('目标已有的断链也不动', readlinkSync(join(linkTo, 'profiles', 'demo', 'already-broken')), '/tmp/neo-dsh-broken2')
+check('缺失的链接按链接重建（不解引用）', readlinkSync(join(linkTo, 'profiles', 'demo', 'carried')), '/tmp/neo-dsh-carried')
+rmSync(linkHome, { recursive: true, force: true })
+
 console.log(failures === 0 ? '\nall desktop-home checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)

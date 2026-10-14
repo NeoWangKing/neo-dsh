@@ -23,7 +23,7 @@
  * @module desktop-home
  */
 
-import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, win32 } from 'node:path'
 
@@ -453,6 +453,8 @@ function carryMissing(options) {
     readdir = (dir) => readdirSync(dir, { withFileTypes: true }),
     copy = (source, target) => cpSync(source, target, { recursive: true, errorOnExist: false, force: false }),
     mkdir = mkdirSync,
+    readlink = readlinkSync,
+    symlink = symlinkSync,
     log = () => {},
   } = options
 
@@ -463,6 +465,27 @@ function carryMissing(options) {
       stat = lstat(source)
     } catch (error) {
       if (error?.code !== 'ENOENT') log(`home: could not read ${source}: ${String(error?.message ?? error)}`)
+      return
+    }
+    if (stat.isSymbolicLink()) {
+      // A link is re-created as a link, never handed to `cpSync`: copying one onto a
+      // destination that is itself a *broken* link makes Electron's Node abort the whole
+      // process (plain Node survives the same call), and a live home is full of links into
+      // the installed tree that the previous upgrade left dangling. The destination's own
+      // entry wins when anything is there at all — broken or not, it belongs to this home.
+      let carried = false
+      try {
+        carried = lstat(target) !== undefined
+      } catch {
+        carried = false
+      }
+      if (carried) return
+      try {
+        symlink(readlink(source), target)
+        added.push(relative(from, source))
+      } catch (error) {
+        log(`home: could not carry over ${source}: ${String(error?.message ?? error)}`)
+      }
       return
     }
     if (stat.isDirectory()) {
