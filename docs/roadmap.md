@@ -126,6 +126,17 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
   一轮问答 ✓ —— 这条 RPC 路径值得留着，它是唯一能**非交互地端到端验证 agent 平面**的办法（`dsh headless` 明确拒绝
   带 agent preset 的会话）。
 
+**dsh-ops 在 Linux 上已经自己编出来了**（2026-10-14，实测可用）
+
+上游只发 Windows x64（README 明说其它平台不在兼容承诺内），但 Rust worker 与打包脚本本身跨平台：
+只需改两处（`lib/ptc/runtime.js` 的平台白名单 + `package.json` 的 `os`），`cargo build --release`
+后 `bin/native-runtime.mjs stage --platform linux-x64` 就会校验 ELF 架构并写 provenance。
+产物在 `~/Projects/dsh-ops-linux/`（源码 + `BUILD-LINUX.md` 记录了来源 commit、两处改动、构建/安装命令）。
+实测：插件零告警加载，`ops_glob`/`ops_grep`/`ops_inspect_local_file`/`ops_replace` 四个原生文件工具
+进入模型目录，`ops_grep` 真跑出正确结果；`ops_bash`/pwsh（Windows 载荷）与 FastCtx 后台组件在 Linux 上不可用。
+**待办**：`smart-approval` 还不认识 `ops_*` 工具（按"未知工具交给模型判"处理，会弹审批）——
+只读的 `ops_glob`/`ops_grep`/`ops_inspect_local_file` 应该像内置只读工具一样直接放行。
+
 **还没做的**：装到 Linux/macOS 上（要重启应用、会打断正在跑的长线任务，等你发话）；
 第三方插件 `dshmarket@1.45.1` 的 peer 范围只到 `^0.1.x`，0.2 会**跳过它**并打日志——要么等上游发兼容版，
 要么用 `dsh plugin allow-version` 显式放行。
