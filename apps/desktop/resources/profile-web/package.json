@@ -6,7 +6,8 @@
     "dsh-desktop-settings": "file:vendor/dsh-desktop-settings",
     "dsh-liangshen-preset": "file:vendor/dsh-liangshen-preset",
     "dsh-ops": "file:vendor/dsh-ops",
-    "dsh-smart-approval": "file:vendor/dsh-smart-approval"
+    "dsh-smart-approval": "file:vendor/dsh-smart-approval",
+    "dshmarket": "file:vendor/dshmarket"
   },
   "dsh": {
     "profile": {

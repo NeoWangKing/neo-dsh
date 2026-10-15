@@ -2,6 +2,12 @@
 node_modules/
 .pnpm-store/
 
+# …except the one plugin that has to carry its own dependencies. The desktop never runs
+# pnpm at install time, so `vendor/dshmarket/` ships them inside itself (see its
+# VENDOR.md). Git will not descend into an ignored directory, so the directory itself has
+# to be re-included — a `!…/node_modules/**` line on its own would do nothing.
+!vendor/dshmarket/node_modules/
+
 # A root-level `pnpm run …` leaves a lockfile behind, but the repo root has no
 # dependencies — the real one is apps/desktop/pnpm-lock.yaml. Anchor the pattern
 # so it cannot swallow that one.

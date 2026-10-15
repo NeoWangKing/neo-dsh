@@ -41,17 +41,34 @@ const PLUGINS = [
 const YAML = createRequire(join(APP, 'package.json'))('yaml')
 const PRESET = join(REPO, 'presets', 'liangshen')
 /**
- * Third-party builds that ship as a *dependency* of the shipped profile rather than as a
+ * Third-party plugins that ship as a *dependency* of the shipped profile rather than as a
  * bundle, so they land in the live profile's `node_modules` and wait for the user to switch
- * them on (the plugin page, or `dsh plugin --profile web add dsh-ops`).
+ * them on (the plugin page, or `dsh plugin --profile web add <name>`).
+ *
+ * `platforms` is optional — omit it for a plugin that ships on every platform. When it is
+ * given, the assembler deletes the vendor copy on any other platform and the manifest entry
+ * is left dangling **on purpose**: `src/main.mjs` skips a `file:vendor/...` dependency whose
+ * payload is absent, so on that platform the plugin simply never appears.
  *
  * `dsh-ops` is ours: upstream publishes Windows x64 only (`os: ["win32"]`, win32-only runtime
- * payloads), so this copy carries a linux-x64 Rust worker we built from their source. Its
- * `BUILD-LINUX.md` records the commit and the two edits; the platform list keeps a Linux
- * payload out of the macOS/Windows artifacts, where the manifest entry simply stays missing.
+ * payloads), so each platform carries a copy we built from their source. `BUILD-LINUX.md`
+ * and `BUILD-MACOS.md` record the upstream commit and the two edits per platform; the two
+ * copies are byte-identical outside `runtime/` and those two edits, which is what keeps an
+ * upstream bump a two-line change per platform.
+ *
+ * `dshmarket` is upstream's (npm `dshmarket`). It has two runtime dependencies and the
+ * desktop never runs pnpm at install time, so they travel *inside* the package as
+ * `vendor/dshmarket/node_modules/`; that entry sets `keepNodeModules` because the tree copy
+ * drops `node_modules` by default (see `copyTree`). See `vendor/dshmarket/VENDOR.md`.
+ *
+ * Several entries may share one `name`: `dsh-ops` has one per platform. The assembler picks
+ * the entry whose `platforms` covers the build host, and removes the target only when none
+ * does — otherwise the second entry would delete what the first just copied.
  */
 const OPTIONAL_PLUGINS = [
   { dir: join(REPO, 'vendor', 'dsh-ops-linux'), name: 'dsh-ops', platforms: ['linux'] },
+  { dir: join(REPO, 'vendor', 'dsh-ops-macos'), name: 'dsh-ops', platforms: ['darwin'] },
+  { dir: join(REPO, 'vendor', 'dshmarket'), name: 'dshmarket', keepNodeModules: true },
 ]
 /** The preset's local plugin modules travel as a package the profile can resolve. */
 const PRESET_PACKAGE = 'dsh-liangshen-preset'
@@ -61,17 +78,28 @@ const PRESET_MODULES = ['tool-bootstrap', 'instruction-hint', 'custom-bash', 'sk
 /**
  * Copy a directory tree as real files, normalising modes: a source file that
  * happens to be 0600 must not ship unreadable to another user.
+ *
+ * `node_modules` is dropped by default. That is deliberate: a plugin's own
+ * dependencies are normally materialised by pnpm in the live profile, and a pnpm tree
+ * is full of symlinks that `cpSync` would have to dereference into a second copy of
+ * everything. A plugin that cannot rely on that — because the desktop never runs pnpm
+ * at install time — ships its dependencies *inside* itself instead and sets
+ * `keepNodeModules`, which is only safe because those copies are hand-built real files
+ * with no symlinks (see `vendor/dshmarket/VENDOR.md`).
+ *
  * @param from - source directory.
  * @param to - destination directory (replaced).
+ * @param options.keepNodeModules - keep nested `node_modules` instead of dropping it.
  */
-function copyTree(from, to) {
+function copyTree(from, to, { keepNodeModules = false } = {}) {
   if (!existsSync(from)) throw new Error(`build-resources: missing source ${from}`)
   rmSync(to, { recursive: true, force: true })
   mkdirSync(dirname(to), { recursive: true })
   cpSync(from, to, {
     recursive: true,
     dereference: true,
-    filter: (src) => !src.includes('node_modules') && !src.endsWith('.git'),
+    filter: (src) =>
+      (keepNodeModules || !src.includes('node_modules')) && !src.endsWith('.git'),
   })
   chmodTree(to)
 }
@@ -160,23 +188,35 @@ steps.push(`profile-web/presets/liangshen.patch.yml (${declared.length} rows)`)
 // The old directory form is dead in 0.2; drop it so it cannot ship again.
 rmSync(join(RES, 'presets'), { recursive: true, force: true })
 
-// 2. the plugin, as `vendor/`: electron-builder filters `node_modules` out of
-//    extraResources, and shipping no node_modules at all is also what keeps the
-//    package free of symlinks. The first launch materialises the plugin into the
-//    seeded profile's node_modules from this copy (see src/main.mjs seedHome).
+// 2. the plugin, as `vendor/`: the tree copy drops `node_modules` (which is what keeps
+//    the payload free of symlinks; a plugin that needs its dependencies to travel sets
+//    `keepNodeModules`). The first launch materialises the plugin into the seeded
+//    profile's node_modules from this copy (see src/main.mjs seedHome).
 for (const plugin of PLUGINS) {
   copyTree(plugin.dir, join(RES, 'profile-web', 'vendor', plugin.name))
   steps.push(`profile-web/vendor/${plugin.name}`)
 }
+// Group by plugin name first: one plugin can have several platform builds, and they all
+// land on the same target. Deciding per entry would let a non-matching one delete the
+// copy a matching one just made.
+const optionalByName = new Map()
 for (const plugin of OPTIONAL_PLUGINS) {
-  const target = join(RES, 'profile-web', 'vendor', plugin.name)
-  if (!plugin.platforms.includes(process.platform)) {
+  if (!optionalByName.has(plugin.name)) optionalByName.set(plugin.name, [])
+  optionalByName.get(plugin.name).push(plugin)
+}
+for (const [name, entries] of optionalByName) {
+  const target = join(RES, 'profile-web', 'vendor', name)
+  // No `platforms` means every platform; otherwise the host's platform must be listed.
+  const chosen = entries.find(
+    (entry) => entry.platforms === undefined || entry.platforms.includes(process.platform),
+  )
+  if (chosen === undefined) {
     rmSync(target, { recursive: true, force: true })
-    steps.push(`profile-web/vendor/${plugin.name} (skipped on ${process.platform})`)
+    steps.push(`profile-web/vendor/${name} (skipped on ${process.platform})`)
     continue
   }
-  copyTree(plugin.dir, target)
-  steps.push(`profile-web/vendor/${plugin.name}`)
+  copyTree(chosen.dir, target, { keepNodeModules: chosen.keepNodeModules === true })
+  steps.push(`profile-web/vendor/${name} ← ${relative(REPO, chosen.dir)}`)
 }
 
 // 3. report what will actually ship, so a silent miss is impossible
@@ -189,5 +229,32 @@ for (const bundle of bundles.filter((b) => !b.startsWith('@deepseek-ai/'))) {
   const target = join(RES, 'profile-web', 'vendor', bundle)
   if (!existsSync(target)) throw new Error(`build-resources: bundle ${bundle} is not in the shipped profile`)
   console.log(`  ✓ ${bundle} → ${relative(REPO, target)}`)
+}
+// The optional third-party plugins are *dependencies* rather than bundles, so the loop above
+// never looks at them — but a silent miss there is just as bad. Two failures are worth
+// catching here rather than in an installed app:
+//   * a `keepNodeModules` plugin whose nested `node_modules` was dropped by the tree copy;
+//   * a platform payload that never made it across, which `resolveWorker()` would only
+//     report at runtime (and a darwin-x64 build would otherwise ship an arm64 worker).
+for (const [name, entries] of optionalByName) {
+  const target = join(RES, 'profile-web', 'vendor', name)
+  const chosen = entries.find(
+    (entry) => entry.platforms === undefined || entry.platforms.includes(process.platform),
+  )
+  if (chosen === undefined) {
+    if (existsSync(target)) throw new Error(`build-resources: ${name} should be absent on ${process.platform}`)
+    console.log(`  – ${name} (not shipped on ${process.platform})`)
+    continue
+  }
+  if (chosen.keepNodeModules === true && !existsSync(join(target, 'node_modules'))) {
+    throw new Error(`build-resources: ${name} declares keepNodeModules but shipped without node_modules`)
+  }
+  const runtimeDir = join(target, 'runtime')
+  if (existsSync(runtimeDir) && !existsSync(join(runtimeDir, `${process.platform}-${process.arch}`))) {
+    throw new Error(
+      `build-resources: ${name} carries no runtime for ${process.platform}-${process.arch}`,
+    )
+  }
+  console.log(`  ✓ ${name} → ${relative(REPO, target)}`)
 }
 if (!existsSync(join(RES, 'settings.defaults.yaml'))) throw new Error('build-resources: settings.defaults.yaml missing')

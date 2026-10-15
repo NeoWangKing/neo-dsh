@@ -72,9 +72,17 @@ the TUI" needs no sync mechanism of its own:
 
 | profile | used by | contents |
 | --- | --- | --- |
-| `web` | the desktop app | `dsh-base` + `dsh-web-app` + the bundled plugins |
+| `web` | the desktop app | `dsh-base` + `dsh-web-app` + bundled bundles (activity-line, desktop-settings, smart-approval) + bundled dependencies (dsh-ops, dshmarket) |
 | `dsh-tui` | the terminal TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
 | `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
+
+**A bundle and a dependency are not the same thing.** A bundle is mounted by the profile
+(listed in `dsh.profile.bundles`); a shipped dependency is only materialised into the profile's
+`node_modules/<name>` (declared as `file:vendor/…`), so it **shows up in the plugin page for the
+user to switch on**. `dsh-ops` (native file tools we build per platform) and `dshmarket` (the
+third-party plugin market) are both the latter, and `dsh-ops` only ships on platforms it has a
+payload for — elsewhere the host skips that `file:` dependency and the plugin simply does not
+appear, rather than becoming a dangling reference.
 
 To install a plugin for the **desktop app**, point the command at the app's home:
 

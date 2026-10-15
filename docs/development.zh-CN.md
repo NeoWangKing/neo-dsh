@@ -44,9 +44,15 @@ bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离�
 
 | profile | 谁在用 | 内容 |
 | --- | --- | --- |
-| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包插件（activity-line、desktop-settings、smart-approval、dshmarket） |
+| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包 bundle（activity-line、desktop-settings、smart-approval）+ 随包依赖（dsh-ops、dshmarket） |
 | `dsh-tui` | 终端 TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
 | `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
+
+**bundle 与依赖不是一回事**：bundle 由 profile 直接挂载（写在 `dsh.profile.bundles` 里）；
+随包依赖只是落地成 profile 的 `node_modules/<name>`（清单里写作 `file:vendor/…`），所以它
+**出现在插件页、由用户自己开关**。`dsh-ops`（我们按平台自建的原生文件工具）与 `dshmarket`
+（第三方插件市场）都是后者，而且 `dsh-ops` 只在有对应载荷的平台上随包——没有载荷的平台，
+那条 `file:` 依赖会被宿主跳过、插件干脆不出现，而不是变成一条悬空引用。
 
 要给**桌面端**装插件，把命令指向 app 的 home：
 

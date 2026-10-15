@@ -126,23 +126,38 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
   一轮问答 ✓ —— 这条 RPC 路径值得留着，它是唯一能**非交互地端到端验证 agent 平面**的办法（`dsh headless` 明确拒绝
   带 agent preset 的会话）。
 
-**dsh-ops 在 Linux 上已经自己编出来了**（2026-10-14，实测可用）
+**dsh-ops 在 Linux 和 macOS 上都已经自己编出来了**（Linux 2026-10-14、macOS 2026-10-15，均实测可用）
 
 上游只发 Windows x64（README 明说其它平台不在兼容承诺内），但 Rust worker 与打包脚本本身跨平台：
-只需改两处（`lib/ptc/runtime.js` 的平台白名单 + `package.json` 的 `os`），`cargo build --release`
-后 `bin/native-runtime.mjs stage --platform linux-x64` 就会校验 ELF 架构并写 provenance。
-产物在 `~/Projects/dsh-ops-linux/`（源码 + `BUILD-LINUX.md` 记录了来源 commit、两处改动、构建/安装命令）。
-实测：插件零告警加载，`ops_glob`/`ops_grep`/`ops_inspect_local_file`/`ops_replace` 四个原生文件工具
-进入模型目录，`ops_grep` 真跑出正确结果；`ops_bash`/pwsh（Windows 载荷）与 FastCtx 后台组件在 Linux 上不可用。
-**已随包**（0.2.0）：构建产物进 `vendor/dsh-ops-linux/`，由 `build-resources.mjs` 按平台拷进
-`profile-web/vendor/dsh-ops`；清单里是依赖而非 bundle，所以它出现在插件页、由用户自己开关。
-`smart-approval` 已归类：`ops_glob`/`ops_grep`/`ops_inspect_local_file` 直接放行、`ops_replace`
-按"沙箱兜底的写工具"处理，其余 `ops_*` 仍交给模型判。
+每个平台只需改两处（`lib/ptc/runtime.js` 的平台白名单 + `package.json` 的 `os`/`cpu`），
+`cargo build --release` 后 `bin/native-runtime.mjs stage --platform <target>` 会校验二进制架构并写 provenance。
+两份产物在 `vendor/dsh-ops-linux/` 与 `vendor/dsh-ops-macos/`，各自的 `BUILD-*.md` 记录来源 commit、
+那两处改动、构建与安装命令；除 `runtime/` 与那两个文件外两份**逐字节一致**，`pnpm test` 会断言这一点——
+这就是为什么上游升级在每个平台上只是两行改动。
 
-**残留**：`smart-approval` 还不认识其它 `ops_*` 工具（按"未知工具交给模型判"处理，会弹审批）——
-只读的 `ops_glob`/`ops_grep`/`ops_inspect_local_file` 应该像内置只读工具一样直接放行。
+实测（Linux）：插件零告警加载，`ops_glob`/`ops_grep`/`ops_inspect_local_file`/`ops_replace` 四个原生文件工具
+进入模型目录，`ops_grep` 真跑出正确结果；`ops_bash`/pwsh（Windows 载荷）与 FastCtx 后台组件不可用。
+`smart-approval` 已归类：前三个只读工具直接放行、`ops_replace` 按"沙箱兜底的写工具"处理，其余 `ops_*` 仍交给模型判。
 
-**还没做的**：装到 Linux/macOS 上（要重启应用、会打断正在跑的长线任务，等你发话）；
-第三方插件 `dshmarket@1.45.1` 的 peer 范围只到 `^0.1.x`，0.2 会**跳过它**并打日志——要么等上游发兼容版，
-要么用 `dsh plugin allow-version` 显式放行。
+**随包方式**（0.2.0 起）：`build-resources.mjs` 的 `OPTIONAL_PLUGINS` 按构建平台选对应载荷，
+拷进 `profile-web/vendor/dsh-ops`；清单里是依赖而非 bundle，所以它出现在插件页、由用户自己开关。
+
+**dshmarket 也随包了**（2026-10-15）
+
+它是第三方 npm 包、有两个运行时依赖，而桌面端安装时**不跑 pnpm**，所以连依赖一起 vendor 成自包含目录
+（`vendor/dshmarket/`，版本与 sha256 见其 `VENDOR.md`）。`copyTree` 默认丢弃 `node_modules`——因为 pnpm 装的树
+全是符号链接——所以这个条目用 `keepNodeModules` 显式保留。版本下限有讲究：`1.45.1` 的 peer 范围只到 `^0.1.x`，
+0.2 会**跳过它**并打日志（表现为"已安装但未生效"）；钉的 `1.66.22` 实测可用。
+
+**还没做的**
+- macOS 的 `ops_bash`：上游 PR #67 打开了 macOS 的 shell 支持，但它要求给 `dsh-ops/shell` 配 `bashPath`，
+  而 profile 补丁层是**平台无关**的——写死 `/opt/homebrew/bin/bash` 会污染 Linux。要做干净得先有
+  「按平台覆盖 profile 补丁」的机制。
+- `smart-approval` 还不认识其它 `ops_*` 工具（按"未知工具交给模型判"，会弹审批）。
+- 上游每次发版都要重走"取源码 → 打两处补丁 → build → stage"，命令在各 `BUILD-*.md` 里；
+  dshmarket 则重走 `VENDOR.md` 里的 `npm pack` 流程。
+- `docs/packaging.md` 对「随包插件从哪来」的描述已经过时（第 13 行的来源表只写了
+  `plugins/activity-line`，第 123 行的冒烟验证也只提它一个）——实际上来源有 `plugins/*`、
+  `presets/*`，以及 `vendor/*` 里那两类（自建的平台载荷、上游 npm 包连依赖一起 vendor）。
+  这是**既有**的不完整，不是这次改动引入的；要不要补，等用户发话。
 

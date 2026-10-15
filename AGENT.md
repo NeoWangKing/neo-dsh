@@ -136,15 +136,31 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   shapes, and a stroked-then-filled tail comes out hollow when the outline is thick
   relative to the tail. The composing script is not in the repo; redo it from the source
   art if the icon ever changes.
-- **Third-party plugin, our build**: `vendor/dsh-ops-linux/` is `dsh-ops` (Rust-backed native file
-  and PTC tools) rebuilt for Linux x64, because upstream ships Windows x64 only. It is a
-  *dependency* of the shipped profile, not a bundle: `build-resources.mjs` copies its payload
-  only on Linux (`OPTIONAL_PLUGINS`), the shipped manifest lists it as `file:vendor/dsh-ops`,
-  and the app materialises it into the live profile without mounting it — so it shows up in the
-  plugin page and the user switches it on. `profilePresetPackages()` skips any shipped
-  dependency whose payload this platform does not carry, which is what keeps the absent
-  macOS/Windows copy from becoming a dangling `file:` entry. Its `BUILD-LINUX.md` records the
-  upstream commit, the two edits (platform allowlist + `os`), and the build/stage commands.
+- **Third-party plugin, our build**: `vendor/dsh-ops-{linux,macos}/` are `dsh-ops` (Rust-backed
+  native file and PTC tools) rebuilt per platform, because upstream ships Windows x64 only. It is
+  a *dependency* of the shipped profile, not a bundle: `build-resources.mjs` copies the payload
+  for the build host's platform (`OPTIONAL_PLUGINS`) and deletes the target when no entry claims
+  that platform, the shipped manifest lists it as `file:vendor/dsh-ops`, and the app materialises
+  it into the live profile without mounting it — so it shows up in the plugin page and the user
+  switches it on. `profilePresetPackages()` skips any shipped dependency whose payload this
+  platform does not carry, which is what keeps an absent copy from becoming a dangling `file:`
+  entry. Each build records the upstream commit, the two edits (platform allowlist + `os`/`cpu`),
+  and the build/stage commands in its own `BUILD-*.md`. The two copies are deliberately
+  byte-identical outside `runtime/` and those two files, and `pnpm test` asserts it — that is what
+  keeps an upstream bump a two-line change per platform.
+- **Third-party plugin, upstream's build**: `vendor/dshmarket/` is upstream's npm package plus its
+  two runtime dependencies, vendored whole. The desktop never runs pnpm at install time, so the
+  dependencies travel *inside* the package as `vendor/dshmarket/node_modules/` and the entry sets
+  `keepNodeModules` — the tree copy drops `node_modules` by default, because a pnpm-installed tree
+  is full of symlinks. `vendor/dshmarket/VENDOR.md` pins the four versions and their sha256 and
+  records how to re-vendor. A version floor matters here: `dshmarket` older than ~1.66 declares
+  peer ranges that 0.2 skips, which reads as "installed but not in effect".
+  **A `keepNodeModules` entry is only half the mechanism**: `.gitignore` excludes `node_modules/`
+  at every level, so the plugin also needs a negation rule in `.gitignore` naming that
+  *directory* — git will not descend into an ignored parent, so a `!…/node_modules/**` line on
+  its own does nothing. Miss either half and the build, the dev window and a working-tree test all
+  look healthy while the commit carries a plugin with no dependencies in it. `pnpm test` asserts
+  the pair holds, and that assertion was confirmed to fail when the rule is removed.
 - **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, the 智能批准
   composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
   persistent shells before a preset switch (the harness refuses the change while a PTY is
