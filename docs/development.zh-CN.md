@@ -44,7 +44,7 @@ bash scripts/dev-window.sh       # 再看界面：端口 3199，home 是隔离�
 
 | profile | 谁在用 | 内容 |
 | --- | --- | --- |
-| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包 bundle（activity-line、desktop-settings、smart-approval）+ 随包依赖（dsh-ops、dshmarket） |
+| `web` | 桌面 app | `dsh-base` + `dsh-web-app` + 随包 bundle（activity-line、desktop-settings、smart-approval）+ 随包依赖（dsh-ops、dshmarket，以及 `vendor/` 下那批社区插件——见 AGENT.md） |
 | `dsh-tui` | 终端 TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
 | `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
 

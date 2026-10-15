@@ -7,7 +7,15 @@
     "dsh-liangshen-preset": "file:vendor/dsh-liangshen-preset",
     "dsh-ops": "file:vendor/dsh-ops",
     "dsh-smart-approval": "file:vendor/dsh-smart-approval",
-    "dshmarket": "file:vendor/dshmarket"
+    "dshmarket": "file:vendor/dshmarket",
+    "dsh-whale-widget": "file:vendor/dsh-whale-widget",
+    "dsh-mnemon": "file:vendor/dsh-mnemon",
+    "dsh-context": "file:vendor/dsh-context",
+    "dsh-cost-meter": "file:vendor/dsh-cost-meter",
+    "cc-safety-net": "file:vendor/cc-safety-net",
+    "@liustack/modsearch": "file:vendor/@liustack/modsearch",
+    "@nanmicoder/dsh-agent-teams": "file:vendor/@nanmicoder/dsh-agent-teams",
+    "@michengai/dsh-skills-manager": "file:vendor/@michengai/dsh-skills-manager"
   },
   "dsh": {
     "profile": {

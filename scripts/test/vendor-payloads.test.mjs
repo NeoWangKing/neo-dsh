@@ -169,57 +169,131 @@ for (const { dir, platform, arch, magic } of OPS_TARGETS) {
   check(`${dir}: provenance names the target`, provenance.target, `${platform}-${arch}`)
 }
 
-// ── a vendored npm plugin carries everything it declares ──────────────────────────────
-
-const MARKET = join(vendor, 'dshmarket')
-const marketPkg = JSON.parse(readFileSync(join(MARKET, 'package.json'), 'utf8'))
-
-check(
-  'dshmarket ships its own dependencies, since the installer never runs pnpm',
-  Object.keys(marketPkg.dependencies ?? {}).filter((name) => !existsSync(join(MARKET, 'node_modules', name))),
-  [],
-)
-
-// …including the transitive ones, which is why they are hoisted into that same directory.
-const hoisted = existsSync(join(MARKET, 'node_modules')) ? readdirSync(join(MARKET, 'node_modules')) : []
-for (const name of hoisted) {
-  const depPkg = join(MARKET, 'node_modules', name, 'package.json')
-  if (!existsSync(depPkg)) continue
-  const missing = Object.keys(JSON.parse(readFileSync(depPkg, 'utf8')).dependencies ?? {}).filter(
-    (child) => !hoisted.includes(child),
-  )
-  check(`${name}: its own dependencies are hoisted alongside it`, missing, [])
+// ── every vendored npm plugin carries what it declares ────────────────────────────────
+//
+// The desktop never runs pnpm at install time, so a plugin's dependencies have to be inside its
+// own `node_modules/`. These run over every vendored plugin; dshmarket is where the rules came
+// from, but nothing here is specific to it.
+const vendoredPlugins = []
+for (const entry of readdirSync(vendor)) {
+  const dir = join(vendor, entry)
+  if (!statSync(dir).isDirectory()) continue
+  // A scope directory is not itself a package; the packages live one level down.
+  if (entry.startsWith('@')) {
+    for (const inner of readdirSync(dir)) vendoredPlugins.push(join(dir, inner))
+  } else {
+    vendoredPlugins.push(dir)
+  }
 }
 
-check('dshmarket is vendored as real files, not symlinks', existsSync(join(MARKET, 'node_modules')) && statSync(join(MARKET, 'node_modules')).isDirectory(), true)
+/** Every package directory below a `node_modules`, following npm's own nesting. */
+function packagesIn(nodeModules) {
+  const found = []
+  for (const entry of readdirSync(nodeModules)) {
+    if (entry === '.bin') continue
+    const candidates = entry.startsWith('@')
+      ? readdirSync(join(nodeModules, entry)).map((inner) => join(nodeModules, entry, inner))
+      : [join(nodeModules, entry)]
+    for (const dir of candidates) {
+      if (!existsSync(join(dir, 'package.json'))) continue
+      found.push(dir)
+      const deeper = join(dir, 'node_modules')
+      if (existsSync(deeper) && statSync(deeper).isDirectory()) found.push(...packagesIn(deeper))
+    }
+  }
+  return found
+}
 
-// Shipping the dependencies is only half the mechanism: `.gitignore` excludes `node_modules/`
-// at every level, so the plugin also needs a negation rule naming that *directory* (git will
-// not descend into an ignored parent, so a `!…/node_modules/**` line alone is a no-op). The
-// build cannot see this and neither can a test that only looks at the working tree — both look
-// perfectly healthy while the commit carries a dshmarket with no dependencies in it.
-function notIgnoredByGit() {
+for (const dir of vendoredPlugins) {
+  const label = relative(vendor, dir)
+  const nested = join(dir, 'node_modules')
+  if (!existsSync(nested)) continue
+  const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+
+  check(
+    `${label}: ships the dependencies it declares, since the installer never runs pnpm`,
+    Object.keys(pkg.dependencies ?? {}).filter((name) => !existsSync(join(nested, name))),
+    [],
+  )
+  check(`${label}: node_modules is real files, not symlinks`, statSync(nested).isDirectory(), true)
+}
+
+// ── no vendored dependency is locked to one platform ─────────────────────────────────
+//
+// One payload per plugin has to serve all three targets, so every package inside it must be
+// usable on each. A package that pins `os`/`cpu` narrower than that (a native image library, a
+// vendor's per-platform CLI) works on the machine it was vendored on and fails on the others —
+// which is how the one plugin left out of the 2026-10 batch was caught, before it landed.
+const TARGETS = [
+  ['linux', 'x64'],
+  ['darwin', 'arm64'],
+  ['win32', 'x64'],
+]
+const locked = []
+for (const dir of vendoredPlugins) {
+  const nested = join(dir, 'node_modules')
+  if (!existsSync(nested)) continue
+  for (const dep of packagesIn(nested)) {
+    const depPkg = JSON.parse(readFileSync(join(dep, 'package.json'), 'utf8'))
+    const { os: oses, cpu: cpus } = depPkg
+    if (!oses && !cpus) continue
+    const usable = TARGETS.every(
+      ([platform, arch]) =>
+        (!oses || oses.includes(platform)) && (!cpus || cpus.includes(arch)),
+    )
+    if (!usable) {
+      locked.push(
+        `${relative(vendor, dir)} → ${depPkg.name} os=${JSON.stringify(oses)} cpu=${JSON.stringify(cpus)}`,
+      )
+    }
+  }
+}
+check('no vendored dependency is locked to one platform', locked, [])
+
+// ── the dependencies actually reach the commit ────────────────────────────────────────
+//
+// Shipping them is only half the mechanism: `.gitignore` excludes `node_modules/` at every
+// level, so each vendored plugin needs a negation rule naming that *directory* (git will not
+// descend into an ignored parent, so a `!…/node_modules/**` line alone is a no-op). The build
+// cannot see this and a test that only looks at the working tree cannot either — both look
+// healthy while the commit carries a plugin with no dependencies in it.
+function ignoredByGit() {
   try {
     execFileSync('git', ['rev-parse', '--git-dir'], { cwd: root, stdio: 'ignore' })
   } catch {
     return null // not a checkout (a tarball, say) — nothing to assert
   }
-  const ignored = []
-  for (const path of filesUnder(join(MARKET, 'node_modules'))) {
-    const relativeToRoot = relative(root, join(MARKET, 'node_modules', path))
-    try {
-      execFileSync('git', ['check-ignore', '--quiet', relativeToRoot], { cwd: root, stdio: 'ignore' })
-      ignored.push(relativeToRoot)
-    } catch {
-      // exit 1 means "not ignored", which is the healthy case
-    }
+  const paths = []
+  for (const dir of vendoredPlugins) {
+    const nested = join(dir, 'node_modules')
+    if (!existsSync(nested)) continue
+    for (const path of filesUnder(nested)) paths.push(relative(root, join(nested, path)))
   }
-  return ignored
+  if (paths.length === 0) return []
+  // `--stdin` answers the whole list in one process; it exits non-zero when anything matches,
+  // so the matching paths have to be read off the error rather than the return value.
+  try {
+    return execFileSync('git', ['check-ignore', '--stdin'], {
+      cwd: root,
+      input: paths.join('\n'),
+      encoding: 'utf8',
+    })
+      .split('\n')
+      .filter(Boolean)
+  } catch (error) {
+    return String(error.stdout ?? '')
+      .split('\n')
+      .filter(Boolean)
+  }
 }
 
-const ignoredDeps = notIgnoredByGit()
+const ignoredDeps = ignoredByGit()
 if (ignoredDeps !== null) {
-  check('dshmarket dependencies are not git-ignored, or they never reach the commit', ignoredDeps, [])
+  check(
+    'vendored dependencies are not git-ignored, or they never reach the commit',
+    ignoredDeps.slice(0, 5),
+    [],
+  )
 }
 
 console.log(failures === 0 ? '\nvendor-payloads: all checks passed' : `\nvendor-payloads: ${failures} check(s) failed`)

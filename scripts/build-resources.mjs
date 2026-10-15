@@ -69,6 +69,18 @@ const OPTIONAL_PLUGINS = [
   { dir: join(REPO, 'vendor', 'dsh-ops-linux'), name: 'dsh-ops', platforms: ['linux'] },
   { dir: join(REPO, 'vendor', 'dsh-ops-macos'), name: 'dsh-ops', platforms: ['darwin'] },
   { dir: join(REPO, 'vendor', 'dshmarket'), name: 'dshmarket', keepNodeModules: true },
+  // Community plugins the desktop now carries by default, one payload each on every platform.
+  // They are ordinary npm packages, so they are vendored with their dependencies inside them —
+  // that is what `keepNodeModules` is for, and why `.gitignore` re-includes
+  // `vendor/<name>/node_modules/`. `scripts/vendor-npm-plugin.sh` builds each of these.
+  { dir: join(REPO, 'vendor', 'dsh-whale-widget'), name: 'dsh-whale-widget', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', 'dsh-mnemon'), name: 'dsh-mnemon', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', 'dsh-context'), name: 'dsh-context', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', 'dsh-cost-meter'), name: 'dsh-cost-meter', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', 'cc-safety-net'), name: 'cc-safety-net', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', '@liustack', 'modsearch'), name: '@liustack/modsearch', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', '@nanmicoder', 'dsh-agent-teams'), name: '@nanmicoder/dsh-agent-teams', keepNodeModules: true },
+  { dir: join(REPO, 'vendor', '@michengai', 'dsh-skills-manager'), name: '@michengai/dsh-skills-manager', keepNodeModules: true },
 ]
 /** The preset's local plugin modules travel as a package the profile can resolve. */
 const PRESET_PACKAGE = 'dsh-liangshen-preset'

@@ -149,13 +149,29 @@ Rust 原生工具 + IPC，宣称相比 Windows 标准模式省 97% token、相�
 全是符号链接——所以这个条目用 `keepNodeModules` 显式保留。版本下限有讲究：`1.45.1` 的 peer 范围只到 `^0.1.x`，
 0.2 会**跳过它**并打日志（表现为"已安装但未生效"）；钉的 `1.66.22` 实测可用。
 
+**社区插件批量随包**（2026-10-15，用户给的下载榜 9 个里落地 8 个）
+
+`dsh-whale-widget`、`dsh-mnemon`、`dsh-context`、`dsh-cost-meter`、`cc-safety-net`、
+`@liustack/modsearch`、`@nanmicoder/dsh-agent-teams`、`@michengai/dsh-skills-manager` 各做成一份
+自包含 vendor（`vendor/<name>/` + 依赖在自己 `node_modules/` 里），一律是**依赖**而非 bundle，
+三平台通用。产出它们的脚本进了仓库：`scripts/vendor-npm-plugin.sh`（`npm install --legacy-peer-deps`
+→ 插件本体作根、依赖搬进它自己的 `node_modules` → 校验每个声明的依赖都能在包内解析）。
+`.gitignore` 的两条反忽略规则（`vendor/*/node_modules/`、`vendor/*/*/node_modules/`）覆盖
+unscoped 与 scoped，所以以后再加插件不必动它。vendor 总量从约 11MB 涨到约 78MB（`dsh-mnemon` 一个
+16MB/1427 文件），这是"依赖自包含"的必然代价。
+
 **还没做的**
+- **`dsh-im`（`@xmanrui/dsh-im`）按用户意见暂不随包**：它的依赖树里有 3 个 darwin-arm64 锁定的二进制
+  （`@img/sharp-darwin-arm64`、`@img/sharp-libvips-darwin-arm64`、`@tencent-qqmail/agently-cli-darwin-arm64`），
+  单一载荷在 Linux/Windows 上会坏；单平台就该像 `dsh-ops` 那样按平台各出一份（约 73MB × 3）。用户说之后再定。
+  `pnpm test` 已经加了"依赖不得平台锁定"这条检查，将来谁误加会直接报错。
 - macOS 的 `ops_bash`：上游 PR #67 打开了 macOS 的 shell 支持，但它要求给 `dsh-ops/shell` 配 `bashPath`，
   而 profile 补丁层是**平台无关**的——写死 `/opt/homebrew/bin/bash` 会污染 Linux。要做干净得先有
   「按平台覆盖 profile 补丁」的机制。
 - `smart-approval` 还不认识其它 `ops_*` 工具（按"未知工具交给模型判"，会弹审批）。
 - 上游每次发版都要重走"取源码 → 打两处补丁 → build → stage"，命令在各 `BUILD-*.md` 里；
-  dshmarket 则重走 `VENDOR.md` 里的 `npm pack` 流程。
+  上游 npm 包则重跑 `scripts/vendor-npm-plugin.sh <spec> <vendor 路径>`（`dshmarket` 的版本与 sha256 记在
+  它的 `VENDOR.md` 里）。
 - `docs/packaging.md` 对「随包插件从哪来」的描述已经过时（第 13 行的来源表只写了
   `plugins/activity-line`，第 123 行的冒烟验证也只提它一个）——实际上来源有 `plugins/*`、
   `presets/*`，以及 `vendor/*` 里那两类（自建的平台载荷、上游 npm 包连依赖一起 vendor）。

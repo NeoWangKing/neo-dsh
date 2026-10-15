@@ -72,7 +72,7 @@ the TUI" needs no sync mechanism of its own:
 
 | profile | used by | contents |
 | --- | --- | --- |
-| `web` | the desktop app | `dsh-base` + `dsh-web-app` + bundled bundles (activity-line, desktop-settings, smart-approval) + bundled dependencies (dsh-ops, dshmarket) |
+| `web` | the desktop app | `dsh-base` + `dsh-web-app` + bundled bundles (activity-line, desktop-settings, smart-approval) + bundled dependencies (dsh-ops, dshmarket, and the community batch under `vendor/` — see AGENT.md) |
 | `dsh-tui` | the terminal TUI | `dsh-base` + `@deepseek-harness-tui/dsh-tui` |
 | `headless` | `dsh --profile headless "…"` | `dsh-base` + `dsh-headless` |
 

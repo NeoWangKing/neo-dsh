@@ -2,11 +2,14 @@
 node_modules/
 .pnpm-store/
 
-# …except the one plugin that has to carry its own dependencies. The desktop never runs
-# pnpm at install time, so `vendor/dshmarket/` ships them inside itself (see its
-# VENDOR.md). Git will not descend into an ignored directory, so the directory itself has
-# to be re-included — a `!…/node_modules/**` line on its own would do nothing.
-!vendor/dshmarket/node_modules/
+# …except vendored plugins that carry their own dependencies. The desktop never runs pnpm at
+# install time, so a plugin with dependencies ships them inside itself as
+# `vendor/<name>/node_modules/` (see vendor/dshmarket/VENDOR.md). Git will not descend into an
+# ignored directory, so the directory itself has to be re-included — a `!…/node_modules/**` line
+# naming files on its own would do nothing. The two patterns cover `vendor/<name>/` and
+# `vendor/@scope/<name>/`, so a new vendored plugin needs no edit here.
+!vendor/*/node_modules/
+!vendor/*/*/node_modules/
 
 # A root-level `pnpm run …` leaves a lockfile behind, but the repo root has no
 # dependencies — the real one is apps/desktop/pnpm-lock.yaml. Anchor the pattern
