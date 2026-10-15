@@ -258,8 +258,22 @@ for (const [name, entries] of optionalByName) {
     console.log(`  – ${name} (not shipped on ${process.platform})`)
     continue
   }
-  if (chosen.keepNodeModules === true && !existsSync(join(target, 'node_modules'))) {
-    throw new Error(`build-resources: ${name} declares keepNodeModules but shipped without node_modules`)
+  if (chosen.keepNodeModules === true) {
+    // Compare the copy against the source instead of asserting the directory exists. A plugin
+    // with no dependencies has an empty `node_modules`, and git cannot store an empty directory,
+    // so on a fresh clone — which is what CI builds — it is simply absent. Asserting that it
+    // exists passes locally and fails there; what actually matters is that nothing the source
+    // had was dropped in transit.
+    const sourceModules = join(chosen.dir, 'node_modules')
+    const copiedModules = join(target, 'node_modules')
+    const wanted = existsSync(sourceModules) ? readdirSync(sourceModules) : []
+    const got = existsSync(copiedModules) ? readdirSync(copiedModules) : []
+    const dropped = wanted.filter((entry) => !got.includes(entry))
+    if (dropped.length > 0) {
+      throw new Error(
+        `build-resources: ${name} dropped ${dropped.length} node_modules entr${dropped.length === 1 ? 'y' : 'ies'} (${dropped.slice(0, 3).join(', ')})`,
+      )
+    }
   }
   const runtimeDir = join(target, 'runtime')
   if (existsSync(runtimeDir) && !existsSync(join(runtimeDir, `${process.platform}-${process.arch}`))) {

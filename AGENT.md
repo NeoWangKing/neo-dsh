@@ -172,6 +172,11 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   `@img/sharp*` and `@tencent-qqmail/agently-cli*`, so it needs a per-platform payload like
   `dsh-ops` rather than a single shared one. `pnpm test` now asserts this for every vendored
   dependency, and both that check and the `.gitignore` one were confirmed to fail when broken.
+  **Verify the build the way CI does, in a fresh clone — not in the working tree.** A plugin with
+  no dependencies has an empty `vendor/<name>/node_modules`, git cannot store an empty directory,
+  and so the working tree has it while a clone does not. Anything that asserts its existence
+  passes locally and fails the release build. (`build-resources.mjs` now compares the copy against
+  the source instead, and `vendor-npm-plugin.sh` no longer creates the empty directory.)
 - **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, the 智能批准
   composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
   persistent shells before a preset switch (the harness refuses the change while a PTY is

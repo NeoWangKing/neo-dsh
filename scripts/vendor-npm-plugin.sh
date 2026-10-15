@@ -39,8 +39,10 @@ echo "vendor-npm-plugin: $NAME@$VERSION → vendor/$DEST_REL"
 rm -rf "$DEST"
 mkdir -p "$DEST"
 cp -R "$WORK/node_modules/$NAME/." "$DEST/"
-mkdir -p "$DEST/node_modules"
 
+# No `node_modules` yet: a plugin with no dependencies must not end up with an empty one, because
+# git cannot store an empty directory — it would exist here and be missing in a fresh clone,
+# which is exactly the difference that makes a check pass locally and fail in CI.
 moved=0
 for entry in "$WORK"/node_modules/* "$WORK"/node_modules/@*/*; do
   [ -e "$entry" ] || continue
@@ -50,6 +52,7 @@ for entry in "$WORK"/node_modules/* "$WORK"/node_modules/@*/*; do
   cp -RL "$entry" "$DEST/node_modules/$rel"
   moved=$((moved + 1))
 done
+[ "$moved" -gt 0 ] || rmdir "$DEST/node_modules" 2>/dev/null || true
 
 echo "  dependencies moved in: $moved"
 echo "  size: $(du -sh "$DEST" | cut -f1)   files: $(find "$DEST" -type f | wc -l | tr -d ' ')"
