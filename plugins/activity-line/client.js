@@ -173,6 +173,14 @@
     el.textContent = `
       #dsh-activity-line {
         display: flex; align-items: center; gap: 6px;
+        /* Own row at the bottom of the composer band: the band is a wrapping flex
+           container the shipped stats line shares, so a full-width basis both breaks
+           the line and keeps the stats row above it. "order" makes the position hold
+           even if another entry is appended later; the grid-column fallback covers a
+           band that lays its entries out as a grid instead. Renders nothing when no
+           turn is running, so a quiet composer gains no empty row. */
+        flex: 1 0 100%; order: 1; width: 100%;
+        grid-column: 1 / -1; box-sizing: border-box;
         font: inherit; font-size: 12px; line-height: 1.4;
         color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, 0.6));
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
