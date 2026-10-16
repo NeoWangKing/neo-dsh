@@ -39,6 +39,17 @@ export async function checkAndApplyPatch({ root, stateDir, appVersion, fetchImpl
   }
   const doFetch = fetchImpl ?? ((...args) => fetch(...args))
 
+  // A patch that is already on disk stays there: re-applying it would only rewrite the same
+  // bytes and, worse, overwrite the rollback copy with patched content.
+  const appliedFile = join(stateDir, 'applied.json')
+  const alreadyApplied = (() => {
+    try {
+      return existsSync(appliedFile) ? JSON.parse(readFileSync(appliedFile, 'utf8'))?.patchId ?? null : null
+    } catch {
+      return null
+    }
+  })()
+
   let manifest
   try {
     const response = await doFetch(address, { redirect: 'follow' })
@@ -53,6 +64,11 @@ export async function checkAndApplyPatch({ root, stateDir, appVersion, fetchImpl
       return null
     }
     log(`patch check skipped: ${error.message}`)
+    return null
+  }
+
+  if (alreadyApplied === manifest.patchId) {
+    log(`patch ${manifest.patchId} is already applied`)
     return null
   }
 

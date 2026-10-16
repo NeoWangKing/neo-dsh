@@ -119,20 +119,27 @@ export function applyPayload({ root, payloadDir, stateDir, manifest }) {
   mkdirSync(backupDir, { recursive: true })
   const replaced = []
   const created = []
+  // The backup is the rollback baseline: if one already exists for this patch id, keep it.
+  // Re-applying a patch must never replace the original file with a patched copy.
+  const recordFile = join(stateDir, `backup-${manifest.patchId}`, 'backup.json')
+  const keepExistingBackup = existsSync(recordFile)
   for (const rel of files) {
     const target = join(root, rel)
     if (existsSync(target)) {
-      const saved = join(backupDir, rel)
-      mkdirSync(dirname(saved), { recursive: true })
-      copyFileSync(target, saved)
+      if (!keepExistingBackup) {
+        const saved = join(backupDir, rel)
+        mkdirSync(dirname(saved), { recursive: true })
+        copyFileSync(target, saved)
+      }
       replaced.push(rel)
-    } else {
+    } else if (!keepExistingBackup) {
       created.push(rel)
     }
   }
   mkdirSync(join(stateDir, 'backup-' + manifest.patchId), { recursive: true })
-  writeFileSync(join(stateDir, `backup-${manifest.patchId}`, 'backup.json'),
-    `${JSON.stringify({ patchId: manifest.patchId, replaced, created }, null, 2)}\n`)
+  if (!keepExistingBackup) {
+    writeFileSync(recordFile, `${JSON.stringify({ patchId: manifest.patchId, replaced, created }, null, 2)}\n`)
+  }
   for (const rel of files) {
     const target = join(root, rel)
     mkdirSync(dirname(target), { recursive: true })
