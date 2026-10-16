@@ -3,6 +3,9 @@
  *
  *   node apps/desktop/test/proxy-env.test.mjs
  */
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   LOOPBACK_BYPASS, composeNoProxy, describeProxy, normaliseProxyUrl, parseGsettings, parseScutil,
   parseWindowsProxy, proxyEnvFor, readProxyEnv, readSystemProxy, resolveProxy,
@@ -118,6 +121,28 @@ check('Linux: 模式 + http 两段 schema 都要读对', readSystemProxy({ platf
 check('某个 key 不存在也不整体失败', readSystemProxy({ platform: 'linux', run: fakeRun }).httpsProxy, 'http://127.0.0.1:7897')
 check('mode 都读不到 → null（不是崩）', readSystemProxy({ platform: 'linux', run: () => { throw new Error('no gsettings') } }), null)
 check('没有 scutil → null（不是崩）', readSystemProxy({ platform: 'darwin', run: () => { throw new Error('no scutil') } }), null)
+
+
+// ---- 每条网络路径都必须走 Chromium 栈 --------------------------------------
+//
+// 这是接线问题，任何单元测试都不会替我们发现：AGENT.md 早就写明"Node 原生 fetch 过不了代理的
+// 证书链，凡是 shell 发起的网络请求都要注入 net.fetch"，更新检查照做了，而**补丁检查新加时漏了**
+// —— 症状是日志 `patch: patch check skipped: fetch failed`，而同一台机器 curl 同一个清单地址
+// 返回 200，已发布的补丁因此一直没被应用（最后靠手工打上）。
+const mainSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'main.mjs'), 'utf8')
+
+const patchCall = mainSource.match(/checkAndApplyPatch\(\{[\s\S]*?\n\s*\}\)/)
+check(
+  '补丁检查注入了 Chromium 栈的 fetch',
+  patchCall !== null && patchCall[0].includes('fetchImpl: updateFetch'),
+  true,
+)
+check('更新检查注入同一份 fetch', mainSource.includes('fetchLatestRelease(updateFetch)'), true)
+check(
+  'updateFetch 就是把 net.fetch 包起来',
+  /function updateFetch\([^)]*\)\s*\{\s*return net\.fetch\(/.test(mainSource),
+  true,
+)
 
 console.log(failures === 0 ? '\nall proxy-env checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)

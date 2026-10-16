@@ -280,6 +280,12 @@ function syncBundledPlugins(profileName = 'web') {
         root: patchRoot,
         stateDir: join(patchRoot, STATE_DIRNAME),
         appVersion: app.getVersion(),
+        // The same Chromium-stack fetch the updater injects (`updateFetch`, below). Node's global
+        // fetch cannot get through a local proxy's certificate chain, and this was the last
+        // network path in the app still using it: the log read
+        // `patch: patch check skipped: fetch failed` while curl on the same machine fetched the
+        // very same manifest fine. Every network path we add belongs on this side of the line.
+        fetchImpl: updateFetch,
         log: (message) => log(`patch: ${message}`),
       })
       if (outcome !== null) {

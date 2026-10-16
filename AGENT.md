@@ -310,7 +310,12 @@ it ships a 0.2-compatible release or the user grants an exact-version exemption.
   → that error; `net.fetch` → HTTP 200, from the same Electron process with the proxy variables
   removed. `update-logic.mjs` keeps `fetchImpl` injectable; `main.mjs` wires `net.fetch` in.
 - **Anything the shell does over the network has the same choice to make** — the proxy env the
-  shell applies to itself is not enough for Node's own HTTP stack.
+  shell applies to itself is not enough for Node's own HTTP stack. The patch check was the one
+  path that forgot: `checkAndApplyPatch` was called without `fetchImpl`, so the app logged
+  `patch: patch check skipped: fetch failed` while `curl` on the same machine fetched the very
+  same manifest fine — a published hot patch sat unapplied until it was applied by hand.
+  `apps/desktop/test/proxy-env.test.mjs` now asserts the wiring of all three call sites, because
+  a missing `fetchImpl` is not something a behavioural test can notice.
 
 - **The shell must be gone within a second or two of being asked to stop.** systemd's
   `DefaultTimeoutStopSec` is 90 s and it SIGKILLs whatever is left; `app.quit()` waits for
