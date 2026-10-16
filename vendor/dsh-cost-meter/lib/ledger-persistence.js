@@ -1,4 +1,5 @@
 /** Cross-process ledger transactions. Runtime secrets never enter these snapshots. */
+import { FX_FIELDS } from './exchange-rates.js'
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, renameSync, unlinkSync, rmdirSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -6,12 +7,15 @@ import { repairDailySessionTotals } from './ledger-totals.js'
 import { isDeepStrictEqual as equal } from 'node:util'
 import { appendHourBucket, pruneHourBuckets, planUsageFingerprint, PLAN_SAMPLE_CAP, PLAN_SAMPLE_MAX_AGE_MS } from './plan-billing.js'
 import { ledgerLockOwner, staleLedgerLockOwner } from './ledger-lock-owner.js'
+import { mergePricingHistory } from './billing-history.js'
 
-const fields = ['input', 'output', 'cacheRead', 'cacheWrite', 'reasoning', 'calls', 'cost', 'apiCost']
+const fields = ['input', 'output', 'cacheRead', 'cacheWrite', 'reasoning', 'calls', 'cost', 'apiCost', ...FX_FIELDS]
 const safe = key => !['__proto__', 'constructor', 'prototype'].includes(key)
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value)
 const clone = value => value === undefined ? undefined : structuredClone(value)
 const pause = new Int32Array(new SharedArrayBuffer(4))
+const meterSource = key => typeof key === 'string' && /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}:[a-f\d]{64}$/i.test(key)
+export const cleanUsageCursors = values => Object.fromEntries(Object.entries(object(values) ? values : {}).filter(([key, value]) => meterSource(key) && Number.isSafeInteger(value) && value >= 0))
 
 /** mkdir is exclusive on Windows and POSIX. A matching live owner is never expired. */
 export function withLedgerLock(path, action, timeoutMs = 5000) {
@@ -83,11 +87,19 @@ export function writeLedger(path, state) {
 
 const empty = () => Object.fromEntries(fields.map(key => [key, 0]))
 function add(target, values) {
-  for (const key of fields) target[key] = (Number(target[key]) || 0) + values[key]
+  for (const key of fields) target[key] = (Number(target[key]) || 0) + (values[key] ?? 0)
 }
 
 /** Replay a priced call, not a snapshot: two equal calls are still two calls. */
 export function applyAccount(state, entry) {
+  if (entry.meter) {
+    const { source, seq } = entry.meter
+    if (!meterSource(source) || !Number.isSafeInteger(seq) || seq < 1) throw Error('Invalid metered call identity')
+    if ((state.usageCursors?.[source] ?? 0) >= seq) return false
+    state.usageCursors ??= {}
+    state.usageCursors[source] = seq
+    if (entry.skip) return true
+  }
   const { date, sessionId, atMs, providerKey, values, planId } = entry
   if (!object(state.days[date])) state.days[date] = { date, ...empty(), byProviderModel: {}, sessions: [] }
   const day = state.days[date]
@@ -109,6 +121,7 @@ export function applyAccount(state, entry) {
   }
   if (planId !== null) state.planHourBuckets = appendHourBucket(state.planHourBuckets, planId, atMs,
     values.input + values.output + values.cacheRead + values.cacheWrite + values.reasoning, values.cost)
+  return true
 }
 
 /** Three-way merge for settings and maintenance; unchanged local fields retain disk values. */
@@ -221,8 +234,14 @@ export function mergeLedger(base, local, disk, pending, now = Date.now(), hourRe
     planSamples: mergeSamples(b.planSamples, l.planSamples, d.planSamples, now),
     planHourBuckets: pruneHourBuckets(merge(b.planHourBuckets, l.planHourBuckets, d.planHourBuckets, true), now),
     openrouterPriceHashes: merge(b.openrouterPriceHashes, l.openrouterPriceHashes, d.openrouterPriceHashes),
+    pricingHistory: mergePricingHistory(l.pricingHistory, d.pricingHistory),
     historyReset: reset ?? null,
   }
+  const cursors = cleanUsageCursors(l.usageCursors)
+  for (const [key, value] of Object.entries(cleanUsageCursors(d.usageCursors))) cursors[key] = Math.max(cursors[key] ?? 0, value)
+  if (Object.keys(cursors).length) out.usageCursors = cursors
+  const providerHashes = merge(b.providerPriceHashes, l.providerPriceHashes, d.providerPriceHashes)
+  if (providerHashes && Object.keys(providerHashes).length) out.providerPriceHashes = providerHashes
   const dates = Object.keys(out.days).sort()
   const keep = Math.max(7, Math.min(3650, Number(out.config.historyDays) || 180))
   while (dates.length > keep) delete out.days[dates.shift()]

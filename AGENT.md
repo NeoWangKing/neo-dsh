@@ -76,8 +76,10 @@ Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 #    the work started. Run `node scripts/deps-latest.mjs` (exits 1 listing everything behind),
 #    bump `apps/desktop/package.json` (+ `pnpm --dir apps/desktop install`) and every
 #    `vendor/*/package.json` it names, and re-run until it prints "every pin is current ✓".
-#    `@deepseek-ai/*` moves as one lockstep set — the newest published `@deepseek-ai/dsh`,
-#    prereleases included — so a single stale pin is a real miss, not a nit.
+#    `@deepseek-ai/*` moves as one lockstep set — the version npm tags `latest` for
+#    `@deepseek-ai/dsh` — so a single stale pin is a real miss, not a nit. An `alpha`/`next`
+#    line newer than `latest` is reported as a note and never taken automatically: moving the
+#    whole app onto an alpha is the operator's call, not a preflight's.
 #
 # 1. bump both versions  (the app version tracks the harness generation: the
 #    0.2.0-rc.2 harness shipped as app 0.2.0, after 0.1.17 pinned it)

@@ -203,6 +203,9 @@ export interface UpdateStatus {
   latest?: string | null
   /** A plain dependency, not a plugin (#793): a newer release may exist but is never offered. */
   notAPlugin?: boolean
+  /** A newer build on a tag other than `latest` (#867): named so a pin ahead of
+      `latest` does not read as "up to date", never an automatic offer. */
+  newerPrerelease?: string
   /** Floating git install whose line moved without a release (#824): the
       unreleased HEAD, shown as a neutral badge — newer commits exist, but the
       market installs versions, not branch heads. */
@@ -313,6 +316,42 @@ export interface ActivationInfo {
   dependencyOf?: string
   /** Loaded by the user's own setup, which the market cannot see (#813). */
   loadedByProfile?: true
+}
+
+/**
+ * The install command shown on a plugin's card, corrected for THIS profile
+ * (#872).
+ *
+ * awesome-dsh-plugin generates the string once, for the catalog — always
+ * `dsh plugin --profile web add <spec>` — which is right on a `web` profile
+ * and wrong on every other one. On a desktop profile it is more than wrong:
+ * the DSH CLI refuses a profile by that name, so the command as printed
+ * cannot install anything there at all. Two outcomes, and the caller renders
+ * them differently because the user's next step differs:
+ *
+ * - `command`: the text to show and copy, with the profile it names corrected;
+ * - `unusable`: show no command at all (the market's own button is the way),
+ *   because handing over a command that cannot work is worse than handing
+ *   over none.
+ *
+ * A command with no `--profile` token is passed through untouched: it is not
+ * this function's business to add one.
+ */
+export function installCommandFor(
+  command: unknown,
+  profile: string | null | undefined,
+): { command: string | null; unusable: boolean } {
+  if (typeof command !== 'string' || command.trim() === '') return { command: null, unusable: false }
+  const named = /--profile(?:=|\s+)(\S+)/u.exec(command)
+  if (named === null) return { command, unusable: false }
+  const wanted = typeof profile === 'string' ? profile.trim() : ''
+  if (wanted === '') return { command, unusable: false }
+  // The CLI refuses the desktop profile by name — inside the running app it
+  // can never be used, whatever the install layout is (src/index.ts states
+  // the same rule where it chooses the plugin manager).
+  if (wanted.toLowerCase() === 'desktop') return { command: null, unusable: true }
+  if (named[1] === wanted) return { command, unusable: false }
+  return { command: command.replace(named[0], `--profile ${wanted}`), unusable: false }
 }
 
 /** The /dsh-market/installed payload (fields the market UI consumes). */

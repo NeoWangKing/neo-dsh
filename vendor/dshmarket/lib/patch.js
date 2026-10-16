@@ -29,7 +29,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logEvent } from './log.js';
 import { parsePatchFile, parsePatchText } from './check.js';
-import { bundlePatchInsertedIds, declaredBundlePatchFiles, parsePatchRows } from './profile.js';
+import { bundleOptOutRowIds, bundlePatchInsertedIds, declaredBundlePatchFiles, parsePatchRows } from './profile.js';
 /**
  * Host infrastructure rows: disabling any of these breaks the very chain
  * the patch layer runs on (e.g. timer → HMR, webserver → the page itself),
@@ -401,9 +401,16 @@ export function packagePatchFlags(host, profileDirectory, names, state) {
     const forced = [];
     for (const name of names) {
         const rows = rowIdsForPackage(host, profileDirectory, name);
-        if (rows.some(id => state.disables.includes(id)))
+        // Rows the package's own layer already ships off say nothing about what
+        // the user decided (#876): `dsh-mnemon` ships four strategy rows as
+        // opt-in, its user patch layer repeats one of them, and the package was
+        // reported as 「已停用 / 重启后保持关闭」 while it was running. Only the
+        // user's decisions ABOVE the bundle's own default count.
+        const optOut = new Set(bundleOptOutRowIds(join(profileDirectory, 'node_modules', name)));
+        const decidedByUser = (id) => !optOut.has(id);
+        if (rows.some(id => decidedByUser(id) && state.disables.includes(id)))
             disabled.push(name);
-        if (rows.some(id => state.forced.includes(id)))
+        if (rows.some(id => decidedByUser(id) && state.forced.includes(id)))
             forced.push(name);
     }
     return { disabled, forced };

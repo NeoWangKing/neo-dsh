@@ -106,9 +106,10 @@ export interface UpdateNotes {
     /**
      * Present for `source`: `missing` when the notes loaded without this
      * plugin, `unavailable` when they could not be loaded at all — a passing
-     * failure, not a fact about the plugin.
+     * failure, not a fact about the plugin — and `unreadable` when the source is
+     * one the market can never read, so waiting will not help (#819).
      */
-    reason?: 'missing' | 'unavailable';
+    reason?: 'missing' | 'unavailable' | 'unreadable';
 }
 /**
  * Resolve the notes for one installed plugin, or `{ kind: 'none' }`.

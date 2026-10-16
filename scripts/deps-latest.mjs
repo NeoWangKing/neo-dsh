@@ -96,8 +96,27 @@ if (harness === null) {
   console.error('deps-latest: npm is unreachable for @deepseek-ai/dsh; re-run when the network is up')
   process.exit(2)
 }
-const target = newest(harness)
-console.log(`  harness target (newest published): ${target}`)
+/**
+ * The target is npm's own `latest` tag — the release upstream is willing to hand a user —
+ * not the numerically greatest version. `alpha`/`next` lines are reported as a note: an
+ * alpha is a deliberate choice for the operator to make, never something a preflight
+ * silently upgrades the app onto.
+ */
+async function distTagsOf(name) {
+  try {
+    const { stdout } = await run('npm', ['view', name, 'dist-tags', '--json'], { timeout: 90_000 })
+    return JSON.parse(stdout)
+  } catch {
+    return null
+  }
+}
+const tags = await distTagsOf('@deepseek-ai/dsh')
+const target = typeof tags?.latest === 'string' ? tags.latest : newest(harness)
+console.log(`  harness target (npm latest): ${target}`)
+for (const [tag, version] of Object.entries(tags ?? {})) {
+  if (tag === 'latest' || typeof version !== 'string' || version === target) continue
+  if (newest([version, target]) === version) console.log(`  note: tag "${tag}" is newer (${version}) — alpha/pre-release, not taken automatically`)
+}
 
 const harnessRows = await mapLimit(pins, async ([name, version]) => {
   if (version === target) return null

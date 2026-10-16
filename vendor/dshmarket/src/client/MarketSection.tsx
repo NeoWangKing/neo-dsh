@@ -45,11 +45,13 @@ import { SearchInput } from './SearchInput.tsx'
 import { downloadStatsText } from './download-stats.ts'
 import { OperationsPanel } from './OperationsPanel.tsx'
 import { applyRecovery, fetchRecovery, initialKeep, RecoveryPanel, watchRestart, type RecoveryView } from './RecoveryPanel.tsx'
+import { HostRecoveryBanner } from './HostRecoveryBanner.tsx'
 import { clearSettled, drop, enqueue, patch as patchRecord, recordForUrl } from './operations.ts'
 import type { OperationRecord } from './operations.ts'
 import { Diagnostics } from './Diagnostics.tsx'
 import { exportMarketLog } from './self-check.ts'
 import {
+  installCommandFor,
   api, applyGithubRouting, avatarColor, catalogEntryForInstalled, entryForDep, failureText, githubRouteCandidates, groupSwitchState, installedForCatalog, isGenerationSpec, isInstalled, localizeBilingual, localizeBilingualList, looksTerminal, matchInstalledName, orderedCategories, pluginCategories,
   formatCount, pageItems, pluginName, blockAliases, pluginScreenshotCandidates, pluginScreenshots, pluginsForFavorites, queuedRowApplies, rankThemeScreenshots, readSession, releaseNotesHttpsImage, rememberGithubRoute, resetScreenshotsCache, resolveCatalogRestore, safeScreenshots, sanitizeReleaseNotesBody, staleFavoriteUrls, themePlugins as themePluginsOf, themeSwatch, TIME_RANGE_DAYS, visiblePlugins, restartHintKey,
 } from './market-data.ts'
@@ -1722,6 +1724,18 @@ function blockedSessions(body: { runningAgents?: unknown }): string[] | undefine
   return names.length === 0 ? undefined : names
 }
 
+/**
+ * Whether the "compatible with this host" filter starts on, and remembers the
+ * answer once the user disagrees with the default (#872).
+ *
+ * Storage may be unavailable (private mode, a locked-down webview); the
+ * default is what matters, so a failure to read it is not a failure.
+ */
+const HOST_FILTER_KEY = 'dshm-host-filter'
+function readHostFilterPreference(): boolean {
+  try { return localStorage.getItem(HOST_FILTER_KEY) !== 'all' } catch { return true }
+}
+
 export function MarketSection(props: MarketSectionProps) {
   const t = props.t
   const initialWebdav = useMemo(savedWebdav, [])
@@ -1996,13 +2010,13 @@ export function MarketSection(props: MarketSectionProps) {
     commits?: { items: NoteCommit[]; found: boolean }
     npmTimes?: Array<{ version: string; date: string }>
     sourceUrl?: string | null
-    reason?: 'missing' | 'unavailable'
+    reason?: 'missing' | 'unavailable' | 'unreadable'
   }
   type ResolvedNotes =
     | { kind: 'release'; release: NoteRelease }
     | { kind: 'commits'; commits: { items: NoteCommit[]; found: boolean } }
     | { kind: 'npm'; npmTimes: Array<{ version: string; date: string }> }
-    | { kind: 'source'; sourceUrl?: string | null; reason?: 'missing' | 'unavailable' }
+    | { kind: 'source'; sourceUrl?: string | null; reason?: 'missing' | 'unavailable' | 'unreadable' }
     | { kind: 'none' }
   interface CompatibilityNotice {
     code: 'soft-incompatible'
@@ -2279,6 +2293,7 @@ export function MarketSection(props: MarketSectionProps) {
   const [restarting, setRestarting] = useState(false)
   const [showTop, setShowTop] = useState(false)
   const [backupBusy, setBackupBusy] = useState(false)
+  const webdavInFlight = useRef(false)
   const [backupMessage, setBackupMessage] = useState<string | null>(null)
   const [backupRestored, setBackupRestored] = useState(false)
   const [pendingBackup, setPendingBackup] = useState<unknown>(null)
@@ -2318,7 +2333,20 @@ export function MarketSection(props: MarketSectionProps) {
   /** Undefined while the first catalog response is pending; null means the host cannot be located. */
   const [hostVersion, setHostVersion] = useState<string | null | undefined>(undefined)
   /** v1 is deliberately opt-in: undeclared/unknown entries stay visible even when enabled. */
-  const [compatibleWithHost, setCompatibleWithHost] = useState(false)
+  // #872: ON by default. The report measured it on a live 0.2.0-rc.2 host —
+  // 175 discovered plugins, 45 of them declaring that host — so the default
+  // list was ~74% installable-in-name-only, with nothing at list level saying
+  // so. That is the wrong default per this project's own rule: the default has
+  // to be the one that is right without reading anything. Turning it off is
+  // one click in the filter menu, and the choice sticks.
+  const [compatibleWithHost, setCompatibleWithHostState] = useState(readHostFilterPreference)
+  const setCompatibleWithHost = useCallback((next: boolean) => {
+    setCompatibleWithHostState(next)
+    try { localStorage.setItem(HOST_FILTER_KEY, next ? 'compatible' : 'all') } catch { /* storage unavailable — the choice just won't survive a reload */ }
+  }, [])
+  /** The profile this page is running in, for the manual command's own
+   * `--profile` token (#872). The catalog's is always `web`. */
+  const [profileName, setProfileName] = useState<string | null>(null)
   const [hostCompatibility, setHostCompatibility] = useState<HostCompatibilityMap>({})
   const [hostCompatibilityPending, setHostCompatibilityPending] = useState(0)
   /** Names already resolved or in flight; failed/unavailable names are released for an explicit retry. */
@@ -2403,6 +2431,7 @@ export function MarketSection(props: MarketSectionProps) {
           setNotes(body.notes as Record<string, string>)
         }
         if (Array.isArray(body.patchDisabled)) setPatchDisabledNames(body.patchDisabled)
+        if (typeof body.profile === 'string') setProfileName(body.profile)
         if (Array.isArray(body.unbundled)) setUnbundledNames(body.unbundled)
         setConfigNamespaceIssues(Array.isArray(body.configNamespaces)
           ? body.configNamespaces.filter((item: unknown): item is { name: string; namespaces: string[]; ownEntryIds: string[] } =>
@@ -2828,14 +2857,23 @@ export function MarketSection(props: MarketSectionProps) {
     setShowTop(false)
   }, [tab, q, cat, sortField, sortDir, timeRange, compatibleWithHost, qThemes, themeSortField, themeSortDir, themeTimeRange, qFavorites, favSortField, favSortDir, favTimeRange, qInstalled, installedView])
 
-  const pluginsAll = useMemo(
-    () => (data === null ? [] : visiblePlugins(data.plugins, {
+  // The list, plus how many entries the host filter took out of it (#872).
+  // Both come from one pass over the same query, so the count is exactly
+  // "what this filter is hiding from what you were looking at" and the chip
+  // can say it without a second trip through the catalog.
+  const { plugins: pluginsAll, hostHiddenCount } = useMemo(() => {
+    if (data === null) return { plugins: [] as RegistryPlugin[], hostHiddenCount: 0 }
+    const query = {
       category: cat, query: q, lang, categories: data.categories,
-      sort: `${sortField}-${sortDir}`,
+      sort: `${sortField}-${sortDir}` as `${typeof sortField}-${typeof sortDir}`,
       sinceDays: timeRange === 'all' ? undefined : TIME_RANGE_DAYS[timeRange],
       hostCompatibility,
-      compatibleWithHost,
-    })),
+    }
+    const unfiltered = visiblePlugins(data.plugins, { ...query, compatibleWithHost: false })
+    if (!compatibleWithHost) return { plugins: unfiltered, hostHiddenCount: 0 }
+    const filtered = visiblePlugins(data.plugins, { ...query, compatibleWithHost: true })
+    return { plugins: filtered, hostHiddenCount: unfiltered.length - filtered.length }
+  },
     [data, q, cat, lang, sortField, sortDir, timeRange, hostCompatibility, compatibleWithHost])
   // One plugin can be stored under the installed name or the catalog name.
   // Both have to hide the card and skip Update all (#657).
@@ -4462,7 +4500,23 @@ export function MarketSection(props: MarketSectionProps) {
   // The market manages itself from its own settings card (Settings → Plugins
   // → Plugin configuration), not as a row here — listing it in both places
   // read as two different controls for the same thing.
-  const installedOtherCount = Object.keys(installed).filter(name => name !== selfName).length
+  /**
+   * Installed packages that are not plugins at all: a plain library some
+   * other plugin pulled in — zustand, bufferutil, a peer of ws (#634's
+   * `dependencyOf`, #857). They were rendered as plugin cards with a
+   * working uninstall, which is a real remove path for something a plugin
+   * needs. Out of the list; the count stays visible in one quiet line, so the
+   * list is not silently shorter than package.json.
+   */
+  const dependencyOnlyNames = useMemo(
+    () => new Set(Object.keys(installed).filter(name => {
+      const act = activations[name]
+      return act?.state === 'inert' && act.dependencyOf !== undefined
+    })),
+    [installed, activations],
+  )
+  const installedOtherCount = Object.keys(installed)
+    .filter(name => name !== selfName && !dependencyOnlyNames.has(name)).length
 
   const ignoreUpdateNotices = useCallback((names: string[]) => {
     if (bootId === null || names.length === 0) return
@@ -4560,7 +4614,8 @@ export function MarketSection(props: MarketSectionProps) {
   }, [finishRestore, pendingBackup])
 
   const runWebdav = useCallback((action: 'backup' | 'restore') => {
-    if (webdavUrl.trim() === '') return
+    if (webdavUrl.trim() === '' || webdavInFlight.current) return
+    webdavInFlight.current = true
     setBackupBusy(true)
     setBackupMessage(null)
     setRestoreErrors([])
@@ -4577,7 +4632,10 @@ export function MarketSection(props: MarketSectionProps) {
         try { localStorage.setItem('dshm-webdav-last', String(Date.now())) } catch { /* storage unavailable */ }
         setBackupMessage(t('backupDone'))
       }
-    }).catch(error => setBackupMessage(String(error))).finally(() => setBackupBusy(false))
+    }).catch(error => setBackupMessage(String(error))).finally(() => {
+      webdavInFlight.current = false
+      setBackupBusy(false)
+    })
   }, [previewBackup, t, webdavPassword, webdavUrl, webdavUser])
 
   /** Map the server's token-source string to a localized label. */
@@ -4702,6 +4760,9 @@ export function MarketSection(props: MarketSectionProps) {
     setExportOpen(true)
   }, [installed, installedBundles])
 
+  const runWebdavRef = useRef(runWebdav)
+  useEffect(() => { runWebdavRef.current = runWebdav }, [runWebdav])
+
   useEffect(() => {
     // Persist only the non-secret WebDAV settings; the password stays
     // server-side/in-memory (see savedWebdav). Storage itself may be
@@ -4709,13 +4770,18 @@ export function MarketSection(props: MarketSectionProps) {
     try {
       localStorage.setItem(WEBDAV_STORAGE_KEY, JSON.stringify({ url: webdavUrl, username: webdavUser, auto: autoBackup }))
     } catch { /* storage unavailable — config just won't survive reload */ }
-    if (!autoBackup || webdavUrl.trim() === '') return
+  }, [autoBackup, webdavUrl, webdavUser])
+
+  // Check when the market opens or daily backup is enabled. Editing the
+  // settings (or changing the locale) must not start another upload.
+  useEffect(() => {
+    if (!autoBackup) return
     let last = 0
     try {
       last = Number(localStorage.getItem('dshm-webdav-last')) || 0
     } catch { /* ignore */ }
-    if (Date.now() - last >= 24 * 60 * 60 * 1000) runWebdav('backup')
-  }, [autoBackup, runWebdav, webdavUrl, webdavUser])
+    if (Date.now() - last >= 24 * 60 * 60 * 1000) runWebdavRef.current('backup')
+  }, [autoBackup])
 
   // #558: count restart-pending session changes (restartNames), not every
   // completed `updatedNames` entry (which would double-count a batch update
@@ -4759,6 +4825,7 @@ export function MarketSection(props: MarketSectionProps) {
   const orderedInstalledEntries = useMemo(() => {
     return Object.entries(displayedInstalled)
       .filter(([name]) => name !== selfName)
+      .filter(([name]) => !dependencyOnlyNames.has(name))
       .sort(([nameA, specA], [nameB, specB]) => {
         // The list reads as "what is running", so a plugin that is off sinks
         // below every one that is on (#745) — even a disabled row with a
@@ -4771,7 +4838,7 @@ export function MarketSection(props: MarketSectionProps) {
         return bUp - aUp
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `updatesLoaded` stands in for `updates`/`updatedNames`: reorder when the check lands, then hold (#631). `effectiveDisabledSet` only re-runs this when a disable state actually changed; the toggled row is the only one that moves.
-  }, [isInstalledListActive, displayedInstalled, selfName, updatesLoaded, effectiveDisabledSet])
+  }, [isInstalledListActive, displayedInstalled, selfName, updatesLoaded, effectiveDisabledSet, dependencyOnlyNames])
   const missingRestoreCount = Object.keys(pendingDependencies).filter(name => !installedFiles.includes(name)).length
   // Self-update lives in the header button and the settings card, not this
   // tab's row list (the market itself is filtered out below) — so a pending
@@ -5520,7 +5587,8 @@ export function MarketSection(props: MarketSectionProps) {
   )
 
   /** Installed plugins the market itself cannot group (#60). */
-  const groupableNames = Object.keys(installed).filter(name => name !== 'dsh-market' && name !== 'dshmarket')
+  const groupableNames = Object.keys(installed)
+    .filter(name => name !== 'dsh-market' && name !== 'dshmarket' && !dependencyOnlyNames.has(name))
   /** Names already inside some group; everything else shows under "ungrouped". */
   const groupedNames = useMemo(() => new Set(Object.values(groups).flat()), [groups])
   const ungroupedNames = groupableNames.filter(name => !groupedNames.has(name))
@@ -5747,6 +5815,9 @@ export function MarketSection(props: MarketSectionProps) {
             </span>
           </div>
         )}
+        {/* #875: rendered only when DSH's own recovery replaced the profile
+            patch — for every other profile this is null. */}
+        <HostRecoveryBanner t={t} bootId={bootId} />
         {tab === 'installed' && pendingBackup !== null && (
           <div className={css.banner}>
             <IconRefreshOutline14 size={14} className={css.bannerIcon} />
@@ -6049,6 +6120,12 @@ export function MarketSection(props: MarketSectionProps) {
                     ]}
                   />
                   <Input className={css.backupInput} icon={<IconLinkOutline14 size={14} />} type="url" value={webdavUrl} placeholder={t('webdavUrl')} onChange={e => setWebdavUrl(e.target.value)} />
+                  {/* The field had a placeholder and nothing else, so "is this a
+                      folder or a file?" was answered only by trying it — and a
+                      reporter who read it as a folder expected the market to
+                      name the file (#868). Name the shape, and say why the
+                      name has to stay put: restore looks for that same one. */}
+                  <p>{t('webdavPathHint')}</p>
                   <Input className={css.backupInput} autoComplete="username" value={webdavUser} placeholder={t('webdavUser')} onChange={e => setWebdavUser(e.target.value)} />
                   <Input className={css.backupInput} type="password" autoComplete="current-password" value={webdavPassword} placeholder={t('webdavPassword')} onChange={e => setWebdavPassword(e.target.value)} />
                   <div className={css.backupActions}>
@@ -6193,7 +6270,9 @@ export function MarketSection(props: MarketSectionProps) {
                             ? t('hostFilterLoading')
                               .replace('{0}', String(loadedHostPackages))
                               .replace('{1}', String(allHostPackages.length))
-                            : t('hostFilterActive').replace('{0}', hostVersion)}
+                            : t('hostFilterActive')
+                                .replace('{0}', hostVersion)
+                                .replace('{1}', String(hostHiddenCount))}
                         </div>
                       )}
                     </div>
@@ -7036,7 +7115,26 @@ export function MarketSection(props: MarketSectionProps) {
                                           ? null
                                           : status?.unreleasedCommit != null
                                             ? <span className={css.metaTag} title={t('unreleasedCommitsHint')}>{t('unreleasedCommits').replace('{0}', displayLatest(status.unreleasedCommit))}</span>
-                                            : <span className={css.metaTag} title={t('upToDate')}>{t('upToDate')}</span>}
+                                            : status?.newerPrerelease !== undefined
+                                              // "Up to date" is true against `latest` and false
+                                              // for the reader: their pin is ahead of it, which
+                                              // means they are on a line `latest` does not name
+                                              // (#867). Name that line's newest build instead,
+                                              // and leave the decision with them — installing it
+                                              // is one click, and the market still does not
+                                              // offer anyone's prerelease by itself.
+                                              ? (
+                                                  <>
+                                                    <span className={css.metaTag} title={t('newerPrereleaseHint')}>{t('newerPrereleaseAvailable').replace('{0}', status.newerPrerelease)}</span>
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      disabled={updatingName !== null || removingName !== null || busyUrl !== null}
+                                                      onClick={() => doUpdate(name, false, false, status.newerPrerelease)}
+                                                    >{t('install')}</Button>
+                                                  </>
+                                                )
+                                              : <span className={css.metaTag} title={t('upToDate')}>{t('upToDate')}</span>}
                                 {removingName === name && <span className={css.metaTag}>{t('uninstalling')}</span>}
                                 </span>
                                 </div>
@@ -7045,6 +7143,13 @@ export function MarketSection(props: MarketSectionProps) {
                           }}
                           />
                         )}
+                {dependencyOnlyNames.size > 0 && (
+                  // The list is complete as a list of PLUGINS; the count keeps it
+                  // from looking like packages went missing (#857).
+                  <p className={css.groupOrgHint}>
+                    {t('installedDependencyNote').replace('{0}', String(dependencyOnlyNames.size))}
+                  </p>
+                )}
                 </>
               )}
       </div>
@@ -7261,12 +7366,20 @@ export function MarketSection(props: MarketSectionProps) {
             open={cmdOpen}
             onToggle={() => setCmdOpen(o => !o)}
           >
-            <div className={css.confirmCmd}>
-              <div className={css.cmd}>{confirming.install}</div>
-              {typeof confirming.install === 'string' && confirming.install !== '' && (
-                <ConfirmCopyButton text={confirming.install} label={t('cmdCopy')} copiedLabel={t('cmdCopied')} />
-              )}
-            </div>
+            {(() => {
+              // #872: the catalog's command names the `web` profile, which is
+              // a different profile from the one this page is running in —
+              // and on a desktop profile the CLI refuses that name outright.
+              const shown = installCommandFor(confirming.install, profileName)
+              if (shown.unusable) return <div className={css.confirmCmd}><div className={css.cmd}>{t('cmdDesktopUnavailable')}</div></div>
+              if (shown.command === null) return null
+              return (
+                <div className={css.confirmCmd}>
+                  <div className={css.cmd}>{shown.command}</div>
+                  <ConfirmCopyButton text={shown.command} label={t('cmdCopy')} copiedLabel={t('cmdCopied')} />
+                </div>
+              )
+            })()}
           </ConfirmFold>
           </div>
           {(looksTerminal(confirming, lang) || confirming.deprecated === true) && (
@@ -7606,7 +7719,9 @@ export function MarketSection(props: MarketSectionProps) {
             )
             : updateNotes.kind === 'source' ? (
               <div className={css.spec}>
-                {t(updateNotes.reason === 'unavailable' ? 'notesLoadFail' : 'notesSource')}
+                {t(updateNotes.reason === 'unavailable'
+                  ? 'notesLoadFail'
+                  : updateNotes.reason === 'unreadable' ? 'notesSourceUnreadable' : 'notesSource')}
                 {typeof updateNotes.sourceUrl === 'string' && /^https?:\/\//i.test(updateNotes.sourceUrl)
                   ? <>{lang === 'zh' ? '' : ' '}<a className={css.notesSourceLink} href={updateNotes.sourceUrl} target="_blank" rel="noreferrer">{t('notesSourceLink')}</a></>
                   : updateNotes.reason !== 'unavailable' && <>{lang === 'zh' ? '' : ' '}{t('notesSourceNoLink')}</>}

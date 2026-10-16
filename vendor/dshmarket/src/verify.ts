@@ -27,14 +27,15 @@
  *   missing – not present in node_modules
  */
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, realpathSync, statSync } from 'node:fs'
+import { createRequire, isBuiltin } from 'node:module'
 import { Script } from 'node:vm'
 import { join } from 'node:path'
 import { listHotMounts, parseSimplePatch } from './hot.ts'
 import { userPatchPackageReferences } from './patch.ts'
 import { nameMatchesPackage } from './entry-identity.ts'
 import { bundlePatchInsertedIds, declaredBundlePatchFiles, hasDshManifest, hasLoadableEntry, profileDir, readInstalled } from './profile.ts'
-import { compareSemver, parsePatchFile, satisfiesRange } from './check.ts'
+import { compareSemver, composeLayers, parsePatchFile, satisfiesRange } from './check.ts'
 import { dshHostInfo } from './dsh-install.ts'
 
 export type ActivationState = 'live' | 'restart' | 'incompatible' | 'inert' | 'broken' | 'missing' | 'disabled'
@@ -247,11 +248,34 @@ const isDshPeer = (peer: string): boolean => peer === '@deepseek-ai/dsh' || peer
  * peers fail at once.
  */
 export function hostPeerGate(activeProfileDir: string, name: string, facts: HostRuntimeFacts): PeerGate | null {
+  return peerGateAt(join(activeProfileDir, 'node_modules', name), name, facts)
+}
+
+/**
+ * The unmet requirement, if any, and the remedy side it points at.
+ *
+ * Which side of the range the runtime sits on decides the remedy: below the
+ * floor, upgrading the host genuinely helps; above the cap (#757's own
+ * shape) no upgrade can satisfy it, and suggesting one points the wrong way
+ * (#758).
+ */
+function unmetOf(peer: string, range: string, runtimeVersion: string): PeerGate {
+  const floor = /[0-9]+\.[0-9]+\.[0-9]+[-+0-9A-Za-z.]*/.exec(range)
+  const hostTooOld = floor !== null && compareSemver(runtimeVersion, floor[0]) < 0
+  return { peer, range, runtimeVersion, hostTooOld }
+}
+
+/** Same prediction for a patch plugin resolved outside the profile's flat node_modules. */
+function peerGateAt(packageDir: string, name: string, facts: HostRuntimeFacts): PeerGate | null {
   if (facts.runtimeVersion === null) return null
-  let manifest: { version?: unknown; peerDependencies?: Record<string, unknown> }
+  let manifest: {
+    version?: unknown
+    engines?: Record<string, unknown>
+    peerDependencies?: Record<string, unknown>
+  }
   try {
     manifest = JSON.parse(
-      readFileSync(join(activeProfileDir, 'node_modules', name, 'package.json'), 'utf8'),
+      readFileSync(join(packageDir, 'package.json'), 'utf8'),
     )
   } catch {
     return null
@@ -260,19 +284,95 @@ export function hostPeerGate(activeProfileDir: string, name: string, facts: Host
   if (version !== '' && (facts.exemptions[`${name}@${version}`] ?? []).includes(facts.runtimeVersion)) {
     return null
   }
+  // An own `engines.dsh` range decides ALONE and peerDependencies are then
+  // ignored — the host's rule, read from unmetRequirements in
+  // @deepseek-ai/dsh-app-boot, and the reason a gate that only read peers
+  // was too lenient on 62 of 2796 (package, runtime) pairs measured over the
+  // live catalog: `dsh-file-explorer-kit` (engines.dsh ^0.1.1) and
+  // `dsh-workspace-kit` (^0.1.2-rc.1) declare NO dsh peer at all, so the
+  // family that refuses them was invisible here and the card promised a
+  // restart the host would not honour. A non-string range throws inside the
+  // host's own evaluator; that is not a verdict this can predict, so the
+  // old answer stands (#757).
+  const engines = manifest.engines?.dsh
+  if (engines !== undefined) {
+    if (typeof engines !== 'string') return null
+    const range = engines.trim()
+    // `workspace:` is substituted only for PEERS: the host counts it as an
+    // unmet range for engines, so an empty or invalid range stays unmet too.
+    const satisfied = range === '' ? false : satisfiesRange(facts.runtimeVersion, range, { includePrerelease: true })
+    return satisfied ? null : unmetOf('engines.dsh', range, facts.runtimeVersion)
+  }
   for (const [peer, requirement] of Object.entries(manifest.peerDependencies ?? {})) {
     if (!isDshPeer(peer) || typeof requirement !== 'string') continue
     const range = requirement.trim()
     const satisfied = range === '' ? false : satisfiesRange(facts.runtimeVersion, range, { includePrerelease: true })
-    if (satisfied === false) {
-      // Which side of the range the runtime sits on decides the remedy:
-      // below the floor, upgrading the host genuinely helps; above the cap
-      // (#757's own shape) no upgrade can satisfy it, and suggesting one
-      // points the wrong way (#758).
-      const floor = /[0-9]+\.[0-9]+\.[0-9]+[-+0-9A-Za-z.]*/.exec(range)
-      let hostTooOld = false
-      if (floor !== null) hostTooOld = compareSemver(facts.runtimeVersion, floor[0]) < 0
-      return { peer, range, runtimeVersion: facts.runtimeVersion, hostTooOld }
+    if (satisfied === false) return unmetOf(peer, range, facts.runtimeVersion)
+  }
+  return null
+}
+
+/**
+ * #867: only the bundle's own effective loader rows are evidence, never its
+ * ordinary dependency closure or arbitrary names in plugin configuration.
+ * Compose every declared file together so later disables take effect. An
+ * unreadable file or an expression-gated row gives no rejection evidence.
+ */
+function bundleRowPeerGate(
+  packageDir: string,
+  activeProfileDir: string,
+  facts: HostRuntimeFacts,
+): { name: string; gate: PeerGate } | null {
+  if (facts.runtimeVersion === null) return null
+  try {
+    const patches = declaredBundlePatchFiles(packageDir).map(parsePatchFile)
+    if (patches.some(rows => rows === null)) return null
+    const { resolvableRows } = composeLayers([{
+      label: 'bundle', kind: 'bundle', patches: patches.flatMap(rows => rows ?? []), parseError: null,
+    }])
+    const checked = new Set<string>()
+    for (const row of resolvableRows) {
+      if (row.activation !== 'required' || typeof row.name !== 'string') continue
+      // Bare npm names and subpath entries only. Relative files, builtins,
+      // aliases and expressions need runtime resolution; do not guess.
+      if (/^[.#/\\]|[:\\]/u.test(row.name) || isBuiltin(row.name)) continue
+      const parts = row.name.split('/')
+      const name = parts.slice(0, row.name.startsWith('@') ? 2 : 1).join('/')
+      if (!/^(?:@[\w.-]+\/)?[\w-][\w.-]*$/u.test(name) || checked.has(name)) continue
+      checked.add(name)
+      const directory = resolveBundleRowPackage(packageDir, activeProfileDir, name)
+      if (directory === null) continue
+      const gate = peerGateAt(directory, name, facts)
+      if (gate !== null) return { name, gate }
+    }
+  } catch { /* malformed or cyclic patch data — no reliable prediction */ }
+  return null
+}
+
+/**
+ * Probe Node's search paths, without resolving an entry or requiring a
+ * package.json export. The real bundle path reaches pnpm's adjacent and
+ * nested dependencies; the profile anchor also covers workspace hoisting.
+ * Stop at a present directory even if its manifest is missing: a broken
+ * nearer copy must not borrow an incompatible manifest from a fallback.
+ */
+function resolveBundleRowPackage(packageDir: string, activeProfileDir: string, name: string): string | null {
+  const bundleAnchor = join(realpathSync(packageDir), 'package.json')
+  const manifest = JSON.parse(readFileSync(bundleAnchor, 'utf8')) as {
+    name?: string; dependencies?: Record<string, unknown>; peerDependencies?: Record<string, unknown>
+  }
+  // The host publishes dependencies carried by selected bundles into its
+  // profile resolution. A stray nested copy not declared by this bundle is
+  // no evidence of what a profile row will import.
+  const carried = manifest.name === name || Object.hasOwn(manifest.dependencies ?? {}, name)
+    || Object.hasOwn(manifest.peerDependencies ?? {}, name)
+  const profileAnchor = join(activeProfileDir, 'package.json')
+  for (const anchor of carried ? [bundleAnchor, profileAnchor] : [profileAnchor]) {
+    for (const searchPath of createRequire(anchor).resolve.paths(name) ?? []) {
+      const candidate = join(searchPath, name)
+      try {
+        if (statSync(candidate).isDirectory()) return candidate
+      } catch { /* try the next Node search path */ }
     }
   }
   return null
@@ -467,13 +567,29 @@ export function verifyActivation(
     // range excludes the running runtime — predict that verdict here so
     // the plugin reads as incompatible instead of promising a restart
     // that cannot fix it.
-    const gate = hostPeerGate(activeProfileDir, name, hostFacts ?? defaultHostRuntimeFacts(activeProfileDir))
+    const facts = hostFacts ?? defaultHostRuntimeFacts(activeProfileDir)
+    const gate = hostPeerGate(activeProfileDir, name, facts)
     if (gate !== null) {
       const remedy = peerGateRemedy(gate)
       return {
         state: 'incompatible',
         reasons: [
           `新版本要求宿主 ${gate.range},当前运行 ${gate.runtimeVersion},重启也不会生效;${remedy.zh} / the new version needs host ${gate.range}, but this host runs ${gate.runtimeVersion} — a restart will not activate it; ${remedy.en}`,
+        ],
+        bundle: true,
+        hot: false,
+      }
+    }
+    const child = bundleRowPeerGate(dir, activeProfileDir, facts)
+    if (child !== null) {
+      const { gate, name: plugin } = child
+      const remedy = gate.hostTooOld
+        ? { zh: '升级 dsh，或更新此插件包以匹配当前 dsh', en: 'upgrade dsh, or update this bundle to match the current dsh' }
+        : { zh: '更新此插件包，或安装与当前 dsh 兼容的版本；升级 dsh 解决不了', en: 'update this bundle or install a version compatible with the current dsh — upgrading dsh will not help' }
+      return {
+        state: 'incompatible',
+        reasons: [
+          `它加载的插件 ${plugin} 要求 ${gate.peer} ${gate.range}，当前 dsh 为 ${gate.runtimeVersion}，重启也不会生效；${remedy.zh} / its plugin ${plugin} requires ${gate.peer} ${gate.range}, but dsh runs ${gate.runtimeVersion} — a restart will not activate it; ${remedy.en}`,
         ],
         bundle: true,
         hot: false,

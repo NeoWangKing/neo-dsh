@@ -9,7 +9,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
 import { JSON_SCHEMA, load } from 'js-yaml'
 import { resolveDshHome } from './home-paths.ts'
-import { githubRemoteIdentities, githubRepoIdentities, hostedRepoKey, isGitHostedSpec, repoOfTarget } from './sources.ts'
+import { githubRemoteIdentities, githubRepoIdentities, hostedRepoKey, isGenerationLink, isGitHostedSpec, repoOfTarget } from './sources.ts'
 
 /**
  * Whether a profile name follows DSH's own directory-name contract.
@@ -67,6 +67,52 @@ export function readInstalled(profile: string, explicitDir?: string): Record<str
   } catch {
     return {}
   }
+}
+
+/**
+ * Packages this profile's desktop host manages as generations (#874).
+ *
+ * DSH Desktop materialises such a plugin under
+ * `profiles/.generations/live/<name>+<version>+<hash>` and points the profile
+ * at it with a `link:` in `pnpm.overrides`, while `dependencies` keeps the
+ * plain version. Before IT runs pnpm, the host's own installer suspends that
+ * projection — the names leave `dependencies` / `overrides` for the duration
+ * of the run — and the profile's pnpm-lock.yaml therefore NEVER records them.
+ * That is by design, so a lockfile with no entry for the package is not
+ * evidence about its exact source, and reading it as if it were turned a
+ * completed rollback into "automatic rollback is unavailable" with advice the
+ * user cannot carry out (#874).
+ *
+ * Two declarations are accepted because either can stand alone: the
+ * generation link itself (in `dependencies` or in `pnpm.overrides`), and the
+ * host's own projection list (`dsh.desktop.generationProjection.plugins`).
+ */
+export function generationManagedNames(profile: string, explicitDir?: string): Set<string> {
+  const names = new Set<string>()
+  const collect = (specs: Record<string, unknown> | undefined): void => {
+    for (const [name, spec] of Object.entries(specs ?? {})) {
+      if (typeof spec === 'string' && isGenerationLink(spec)) names.add(name)
+    }
+  }
+  try {
+    const manifest = JSON.parse(readFileSync(join(profileDir(profile, explicitDir), 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, unknown>
+      peerDependencies?: Record<string, unknown>
+      pnpm?: { overrides?: Record<string, unknown> }
+      dsh?: { desktop?: { generationProjection?: { plugins?: unknown } } }
+    }
+    collect(manifest.dependencies)
+    collect(manifest.peerDependencies)
+    collect(manifest.pnpm?.overrides)
+    const plugins = manifest.dsh?.desktop?.generationProjection?.plugins
+    if (Array.isArray(plugins)) {
+      for (const entry of plugins) if (typeof entry === 'string') names.add(entry)
+    }
+  } catch {
+    // No readable manifest is no generation state: callers use this only to
+    // widen what a lockfile may prove, never to narrow it.
+  }
+  return names
 }
 
 /**
@@ -859,6 +905,34 @@ export function bundlePatchInsertedIds(dir: string): string[] {
 }
 
 /**
+ * Row ids a package's OWN patch layer ships switched OFF — its opt-in rows.
+ *
+ * A bundle may ship rows `disabled: true` on purpose, and say so in a comment
+ * right there: dsh-mnemon's four `mnemon-strategy-*` rows are "opt-in" and
+ * "stay off until selected". A user patch layer repeating that same
+ * `disabled: true` therefore changes nothing about the package — but counting
+ * it as "the user turned this off" put 「已停用 / 重启后保持关闭」 on a card
+ * whose plugin was demonstrably running (#876). Layer order is the whole
+ * reason: the bundle's own default is the floor, and the market has to ask
+ * what the user did ABOVE it.
+ *
+ * Reads both patch sources like the other readers here — the declared
+ * `dsh.bundle.patch` (one file, or an ordered LIST, #792) and the
+ * conventional root cordis.patch.yml a package may ship instead.
+ */
+export function bundleOptOutRowIds(dir: string): string[] {
+  const ids = new Set<string>()
+  const read = (file: string): void => {
+    try {
+      for (const id of parsePatchRows(readFileSync(file, 'utf8')).disabledIds) ids.add(id)
+    } catch { /* no such patch — nothing shipped off through it */ }
+  }
+  for (const file of declaredBundlePatchFiles(dir)) read(file)
+  read(join(dir, 'cordis.patch.yml'))
+  return [...ids]
+}
+
+/**
  * Rows of one patch file. Exported because a package may ship its patch at
  * the conventional path INSTEAD of declaring `dsh.bundle.patch`, and the
  * patch layer has to read that one by the same rules — a second hand-rolled
@@ -872,10 +946,11 @@ export function bundlePatchInsertedIds(dir: string): string[] {
  * the same as "deeper than it", because a row's `config:` carries its payload
  * (#841).
  */
-export function parsePatchRows(text: string): { names: string[]; ids: string[]; insertedIds: string[] } {
+export function parsePatchRows(text: string): { names: string[]; ids: string[]; insertedIds: string[]; disabledIds: string[] } {
   const names: string[] = []
   const ids: string[] = []
   const insertedIds: string[] = []
+  const disabledIds: string[] = []
   {
     // CRLF too, for consistency with the hot-mount parser, which a
     // Windows-authored patch genuinely broke. Here it changes no outcome
@@ -949,6 +1024,29 @@ export function parsePatchRows(text: string): { names: string[]; ids: string[]; 
       return false
     }
     /**
+     * Whether the row holding the `id:` at `from` ALSO declares
+     * `disabled: true` — an opt-in row, off unless the user turns it on.
+     *
+     * Same row span as rowDeclaresGroup, and for the same reason: the marker
+     * line and the row's own keys at the key column, never a nested block.
+     * `disabled` may be written before or after `id` (#876's bundle writes
+     * `id`, then `name`, then `disabled`), so this reads the whole row.
+     */
+    const rowDeclaresDisabled = (from: number): boolean => {
+      const start = rowStart(from)
+      if (start === -1) return false
+      const markerIndent = rows[start].indent
+      const col = keyCol(start)
+      for (let j = start; j < rows.length; j++) {
+        const row = rows[j]
+        if (j > start && row.indent <= markerIndent) break
+        if (j > start && (row.indent !== col || isDash(j))) continue
+        if (/^\s*-?\s*disabled:\s*true\s*$/u.test(row.line)) return true
+      }
+      return false
+    }
+
+    /**
      * Whether the key at `keyIndent` holds a block sequence. YAML lets that
      * sequence sit at the key's own column (`config:` then `- id:` without
      * further indent), so a `- ` there is the value, not a sibling.
@@ -994,6 +1092,10 @@ export function parsePatchRows(text: string): { names: string[]; ids: string[]; 
       const id = /^\s*-?\s*id:\s*['"]?([^'"\s]+)/.exec(line)
       if (id !== null) {
         if (!ids.includes(id[1])) ids.push(id[1])
+        // A row that ships switched off is not evidence of anything the USER
+        // decided (#876) — see bundleOptOutRowIds. Payload ids (#841) are not
+        // rows and never land here.
+        if (payloadIndent === null && rowDeclaresDisabled(i) && !disabledIds.includes(id[1])) disabledIds.push(id[1])
         // A top-level `- id:` row closes any open insert block: it is a
         // sibling of `- insert:`, not a member of it.
         if (insertIndent !== null && indent > insertIndent) {
@@ -1004,7 +1106,7 @@ export function parsePatchRows(text: string): { names: string[]; ids: string[]; 
       }
     }
   }
-  return { names, ids, insertedIds }
+  return { names, ids, insertedIds, disabledIds }
 }
 
 /**

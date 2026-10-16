@@ -5,10 +5,12 @@
  * 原子重命名,并做防抖;账本按 config.historyDays 保留最近 N 天。
  */
 
+import { FX_FIELDS, frozenAmounts, frozenFields, addFrozen, freezeLegacyAmounts, fxRatesOf } from './exchange-rates.js'
 import { readFileSync, renameSync, statSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { repairDailySessionTotals } from './ledger-totals.js'
-import { withLedgerLock, readLedger, writeLedger, applyAccount, mergeLedger, mergeRuntimeConfig } from './ledger-persistence.js'
+import { withLedgerLock, readLedger, writeLedger, applyAccount, mergeLedger, mergeRuntimeConfig, cleanUsageCursors } from './ledger-persistence.js'
+import { normalizePricingHistory, advancePricingHistory, bindPricingHistory, pricingConfigAt } from './billing-history.js'
 import { join } from 'node:path'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
@@ -19,10 +21,13 @@ import {
   DEFAULT_PRICE_TABLE_CNY,
   DEFAULT_PROVIDER_PRICE_TABLE,
   upgradeProviderPriceDefaults,
+  upgradeProviderPriceCatalog20261015,
+  upgradeStepfunPriceCatalog,
   costOf,
   normalizePrice,
   priceEntryFor,
   providerPriceEntryFor,
+  normalizeCustomPrice,
   usdFromCost,
   isWrapperProviderId,
   wrapperUpstreamProvider,
@@ -30,6 +35,7 @@ import {
 } from './pricing.js'
 import { CODING_PLAN_PROVIDER_IDS, normalizeMiniMaxBaseUrl } from './coding-plans.js'
 import { normalizeFactoryOrgId } from './factory-quota.js'
+import { normalizeOpenDesignWorkspace } from './opendesign.js'
 import { DEFAULT_PLAN_PROVIDER_CLASS, PLAN_PROVIDER_IDS, billingClassOf, enabledPlanSetOf, planProviderIdOf, convertRecentCallsToBuckets, isRoutedThirdPartyCall } from './plan-billing.js'
 
 const LEDGER_VERSION = 1
@@ -127,6 +133,10 @@ export function defaultConfig() {
     currency: 'CNY', // CNY | USD | EUR | custom
     symbol: '¥',
     decimals: 4,
+    exchangeRateAuto: true,
+    fxRates: { USD: 1, CNY: 7.2, EUR: 0.92 },
+    exchangeRateCheckedAt: 0,
+    exchangeRateDate: '',
     exchangeRate: 7.2, // 展示层:美元 → 币种汇率
     pricingCurrency: 'USD', // 官方价格币种(issue #47):USD(美元官方价) | CNY(人民币官方价,计费按汇率折算入账)
     peakEnabled: true, // 启用峰谷计价
@@ -141,6 +151,7 @@ export function defaultConfig() {
     peakAlertWebNotify: false, // 弹窗时额外发浏览器(系统)通知,需用户在地址栏授权
     showSessionId: false, // 会话列表中附显会话 ID(默认只显示标题,需要时开启)
     hideOfficialBalance: false, // 隐藏官方账户余额(issue #45):开启后侧边栏/会话页/设置页的官方余额 UI 整体不渲染
+    hideBudget: false, // Hide the sidebar budget card without disabling budget tracking.
     hideTodayCost: false, // 隐藏今日消耗金额(issue #46):开启后侧栏今日费用行/预算明细今日行/概览今日卡片不渲染
     hideSessionCostHeader: false,
     hideSessionCostDock: false,
@@ -184,6 +195,7 @@ export function defaultConfig() {
       detail: true, // 预算图框详细信息:今日费用与占预算% + 已用/额度行
     },
     codingPlans: {
+      opendesign: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '', workspaceId: '' },
       factory: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '', orgId: '', factoryPool: 'standard' },
       // 各家 coding plan 额度查询(默认关闭;开启后按 Key 发现链查询并在设置页展示)。
       anthropic: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '' },
@@ -388,6 +400,19 @@ export function splitLedgerApiCost(ledger) {
       const sessNext = Math.min(sessTotal, sessSumApi + sessResidual)
       if ((session.apiCost ?? -1) !== sessNext) { session.apiCost = sessNext; sessChanged = true }
       if (sessChanged) touched += 1
+    }
+  }
+  // Reclassification changes API attribution, while each currency keeps its recorded totals.
+  for (const day of Object.values(ledger.days ?? {})) for (const row of [day, ...(day.sessions ?? [])]) {
+    const buckets = Object.entries(row.byProviderModel ?? {})
+    for (const suffix of ['Cny', 'Eur']) {
+      let total = 0, api = 0
+      for (const [key, bucket] of buckets) {
+        if (!Number.isFinite(bucket['cost' + suffix])) continue
+        bucket['apiCost' + suffix] = keyClass(key) === 'api' ? bucket['cost' + suffix] : 0
+        total += bucket['cost' + suffix]; api += bucket['apiCost' + suffix]
+      }
+      if (Number.isFinite(row['cost' + suffix])) row['apiCost' + suffix] = Math.min(row['cost' + suffix], api + Math.max(0, row['cost' + suffix] - total))
     }
   }
   return touched
@@ -749,6 +774,7 @@ const VALIDATION_MESSAGES = {
     peakAlertWebNotify: 'peakAlertWebNotify 必须是布尔值',
     showSessionId: 'showSessionId 必须是布尔值',
     hideOfficialBalance: 'hideOfficialBalance 必须是布尔值',
+    hideBudget: 'hideBudget 必须是布尔值',
     hideTodayCost: 'hideTodayCost 必须是布尔值',
     showTotalWithPlan: 'showTotalWithPlan 必须是布尔值',
     includeSubagentCost: 'includeSubagentCost 必须是布尔值',
@@ -854,6 +880,7 @@ const VALIDATION_MESSAGES = {
     peakAlertWebNotify: 'peakAlertWebNotify must be a boolean',
     showSessionId: 'showSessionId must be a boolean',
     hideOfficialBalance: 'hideOfficialBalance must be a boolean',
+    hideBudget: 'hideBudget must be a boolean',
     hideTodayCost: 'hideTodayCost must be a boolean',
     showTotalWithPlan: 'showTotalWithPlan must be a boolean',
     includeSubagentCost: 'includeSubagentCost must be a boolean',
@@ -1045,6 +1072,7 @@ export function applyConfigPatch(current, rawPatch) {
   // prices.models 是可编辑列表:客户端提交完整列表时必须按替换语义处理，
   // 否则 mergeDeep 会把已删除的旧模型重新合并回来。
   if (patch.prices !== null && typeof patch.prices === 'object' && !Array.isArray(patch.prices)) {
+    if (Object.hasOwn(patch.prices, 'custom')) candidate.prices.custom = structuredClone(patch.prices.custom)
     // 默认价卡片也是完整记录，清空某档位时不能被深合并复活。
     const defaultPatch = patch.prices.default
     if (defaultPatch && ['cacheHit', 'cacheMiss', 'output'].every(key => Object.hasOwn(defaultPatch, key))) {
@@ -1083,6 +1111,11 @@ export function applyConfigPatch(current, rawPatch) {
     const minutes = Number(entry.refreshMinutes)
     entry.refreshMinutes = Number.isFinite(minutes) && minutes >= 1 && minutes <= 1440 ? minutes : 15
     entry.apiKey = typeof entry.apiKey === 'string' ? entry.apiKey : ''
+    if (id === 'opendesign') {
+      const workspace = normalizeOpenDesignWorkspace(entry.workspaceId)
+      if (workspace === null) errors.push(locale === 'zh' ? 'OpenDesign 工作区 ID 格式无效。' : 'Invalid OpenDesign workspace ID.')
+      else entry.workspaceId = workspace
+    }
     if (id === 'factory') {
       const org = normalizeFactoryOrgId(entry.orgId)
       if (org === null) errors.push(locale === 'zh' ? 'Factory 组织 ID 格式无效。' : 'Invalid Factory organization ID.')
@@ -1140,6 +1173,7 @@ export function applyConfigPatch(current, rawPatch) {
   if (typeof candidate.symbol !== 'string') errors.push(vmsg(locale, 'symbol'))
   const decimals = Number(candidate.decimals)
   if (!Number.isInteger(decimals) || decimals < 0 || decimals > 10) errors.push(vmsg(locale, 'decimals'))
+  if (typeof candidate.exchangeRateAuto !== 'boolean') errors.push('exchangeRateAuto must be boolean')
   const rate = Number(candidate.exchangeRate)
   if (!Number.isFinite(rate) || rate <= 0) errors.push(vmsg(locale, 'exchangeRate'))
   // 官方价格币种(issue #47):决定「同步官方价格」抓美元页还是人民币页。
@@ -1159,6 +1193,7 @@ export function applyConfigPatch(current, rawPatch) {
   if (candidate.showSessionId !== undefined && typeof candidate.showSessionId !== 'boolean') errors.push(vmsg(locale, 'showSessionId'))
   // UI 隐藏开关(issues #45/#46):布尔,可缺省(默认关);开启后对应区块整体不渲染。
   if (candidate.hideOfficialBalance !== undefined && typeof candidate.hideOfficialBalance !== 'boolean') errors.push(vmsg(locale, 'hideOfficialBalance'))
+  if (candidate.hideBudget !== undefined && typeof candidate.hideBudget !== 'boolean') errors.push(vmsg(locale, 'hideBudget'))
   if (candidate.hideTodayCost !== undefined && typeof candidate.hideTodayCost !== 'boolean') errors.push(vmsg(locale, 'hideTodayCost'))
   for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost']) {
     if (candidate[key] !== undefined && typeof candidate[key] !== 'boolean') errors.push(locale === 'en' ? `${key} must be a boolean` : `${key} 必须是布尔值`)
@@ -1418,6 +1453,14 @@ export function applyConfigPatch(current, rawPatch) {
     errors.push(vmsg(locale, 'prices'))
   } else {
     // 价表币种标记(issue #47):fetchPrices 写入,计费按此决定是否折算;缺省 = USD。
+    if (prices.custom !== undefined) {
+      if (!prices.custom || typeof prices.custom !== 'object' || Array.isArray(prices.custom)) errors.push(vmsg(locale, 'prices'))
+      else for (const [key, raw] of Object.entries(prices.custom)) {
+        const entry = normalizeCustomPrice(raw)
+        if (!key.includes(':') || key.length > 512 || entry === null) errors.push(vmsg(locale, 'modelPrice', { id: key }))
+        else prices.custom[key] = entry
+      }
+    }
     if (prices.currency !== undefined && prices.currency !== 'USD' && prices.currency !== 'CNY') {
       errors.push(vmsg(locale, 'pricesCurrency'))
     }
@@ -1466,6 +1509,9 @@ export function sanitizeConfig(raw) {
     base.prices = { ...base.prices, ...structuredClone(DEFAULT_PRICE_TABLE_CNY), currency: 'CNY' }
   }
   const out = mergeDeep(base, cfg)
+  if (cfg.prices?.custom !== undefined) out.prices.custom = Object.fromEntries(Object.entries(
+    cfg.prices.custom && typeof cfg.prices.custom === 'object' && !Array.isArray(cfg.prices.custom) ? cfg.prices.custom : {},
+  ).filter(([key, raw]) => key.includes(':') && key.length <= 512 && normalizeCustomPrice(raw) !== null).map(([key, raw]) => [key, normalizeCustomPrice(raw)]))
   // 第三方模型列表也遵循完整替换语义；重启不能复活取消挂载的模型，
   // 也不能把默认缓存折扣/长档混进用户手写价。新增目录由一次性迁移补齐。
   for (const [provider, table] of Object.entries(cfg.prices?.providers ?? {})) {
@@ -1514,6 +1560,7 @@ export function sanitizeConfig(raw) {
   out.historyDays = Math.max(7, Math.min(3650, Math.floor(Number(out.historyDays) || 180)))
   out.showSessionId = out.showSessionId === true
   out.hideOfficialBalance = out.hideOfficialBalance === true
+  out.hideBudget = out.hideBudget === true
   out.hideTodayCost = out.hideTodayCost === true
   for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost']) out[key] = out[key] === true
   out.sessionCostCompact = out.sessionCostCompact === true
@@ -1548,6 +1595,10 @@ export function sanitizeConfig(raw) {
   out.peakAlertWebNotify = out.peakAlertWebNotify === true
   // 安装前历史自动导入标记:有限正数保留,否则归零(下次启动重试)。
   out.legacyAutoImportedAt = isNum(Number(out.legacyAutoImportedAt)) && Number(out.legacyAutoImportedAt) > 0 ? Number(out.legacyAutoImportedAt) : 0
+  out.exchangeRateAuto = out.exchangeRateAuto !== false
+  out.fxRates = fxRatesOf(out)
+  out.exchangeRateCheckedAt = Number.isFinite(out.exchangeRateCheckedAt) && out.exchangeRateCheckedAt > 0 ? out.exchangeRateCheckedAt : 0
+  out.exchangeRateDate = /^\d{4}-\d{2}-\d{2}$/.test(out.exchangeRateDate ?? '') ? out.exchangeRateDate : ''
   if (!isNum(out.exchangeRate) || out.exchangeRate <= 0) out.exchangeRate = base.exchangeRate
   if (!Array.isArray(out.peakWindows)) out.peakWindows = base.peakWindows
   else out.peakWindows = out.peakWindows.filter(w => w !== null && typeof w === 'object' && isNum(Number(w.start)) && isNum(Number(w.end)))
@@ -1704,6 +1755,11 @@ export function sanitizeConfig(raw) {
         const origin = normalizeMiniMaxBaseUrl(entry.baseUrl)
         plans[id].baseUrl = origin ?? ''
         if (origin === null) plans[id].enabled = false // 无效磁盘配置不能悄悄向默认站点发送 Key。
+      }
+      if (id === 'opendesign') {
+        const workspace = normalizeOpenDesignWorkspace(entry.workspaceId)
+        plans[id].workspaceId = workspace ?? ''
+        if (workspace === null) plans[id].enabled = false
       }
       if (id === 'factory') {
         const org = normalizeFactoryOrgId(entry.orgId)
@@ -1959,6 +2015,8 @@ export function stripSecrets(cfg) {
  */
 const CONFIG_MIGRATIONS = [
   { id: 'provider-catalog-2026-10-03', apply: upgradeProviderPriceDefaults },
+  { id: 'provider-catalog-2026-10-15', apply: upgradeProviderPriceCatalog20261015 },
+  { id: 'stepfun-catalog-2026-10-16', apply: upgradeStepfunPriceCatalog },
   {
     id: 'v1.5.26-coding-plan-sidebar-display',
     // v1.5.26 前 coding plan 无显示位置 UI:MiniMax 启用即在侧边栏展示卡片,而 schema 恒把 display
@@ -1983,7 +2041,9 @@ export class Ledger {
    * @param extras - 可选持久化附加状态({ planSamples, planHourBuckets })。
    */
   constructor(config, days, path, migrations = [], extras = {}) {
+    this.pricingHistory = normalizePricingHistory(extras.pricingHistory, config)
     this.config = config
+    freezeLegacyAmounts(days, config)
     this.days = days
     this.path = path
     this.writeTimer = null
@@ -1993,6 +2053,7 @@ export class Ledger {
     // 余额差对账参考点及同期账本费用(ledgerCost),由 open() 载入、flush() 落盘。
     this.balanceRef = extras.balanceRef ?? null
     this.historyReset = extras.historyReset ?? null
+    this.usageCursors = cleanUsageCursors(extras.usageCursors)
     this.pendingAccounts = []
     this.pendingPlanHourRepairs = []
     this.migrations = Array.isArray(migrations) ? migrations.filter(m => typeof m === 'string') : []
@@ -2005,7 +2066,15 @@ export class Ledger {
     // 自动目录上次写入的价格指纹：重启后仍能识别用户手改价格，不下发到客户端。
     this.openrouterPriceHashes = Object.fromEntries(Object.entries(extras.openrouterPriceHashes ?? {})
       .filter(([key, value]) => !['__proto__', 'constructor', 'prototype'].includes(key) && typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)))
+    this.providerPriceHashes = Object.fromEntries(Object.entries(extras.providerPriceHashes ?? {})
+      .filter(([key, value]) => key.startsWith('opendesign:') && typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)))
     this.writeBase = this.snapshot()
+  }
+
+  get config() { return this._config }
+  set config(value) {
+    if (this.pricingHistory) advancePricingHistory(this.pricingHistory, value)
+    this._config = bindPricingHistory(value, this.pricingHistory)
   }
 
   /** 在 $DSH_HOME 下创建/加载账本。 */
@@ -2023,7 +2092,10 @@ export class Ledger {
     let planSamples = {}
     let planHourBuckets = {}
     let openrouterPriceHashes = {}
+    let providerPriceHashes = {}
     let historyReset = null
+    let usageCursors = {}
+    let pricingHistory
     try {
       const parsed = JSON.parse(readFileSync(path, 'utf8'))
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -2036,7 +2108,10 @@ export class Ledger {
           console.warn(`[dsh-cost-meter] 账本版本 ${String(parsed.version)} 不受支持,按空账本启动`)
         } else {
           historyReset = parsed.historyReset ?? null
+          usageCursors = cleanUsageCursors(parsed.usageCursors)
           const cfg = typeof parsed.config === 'object' && parsed.config !== null ? parsed.config : {}
+          // Freeze the installed table before a catalog migration changes it.
+          pricingHistory = normalizePricingHistory(parsed.pricingHistory, sanitizeConfig(cfg))
           // 一次性迁移:先于清洗对原始配置执行,已应用过的(账本 migrations 标记)跳过。
           migrations = Array.isArray(parsed.migrations) ? parsed.migrations.filter(m => typeof m === 'string') : []
           const applied = new Set(migrations)
@@ -2048,6 +2123,7 @@ export class Ledger {
           // 新版本新增的配置键用默认值补齐;非法值清洗回落,防止击穿 strict codec。
           config = sanitizeConfig(cfg)
           if (parsed.openrouterPriceHashes && typeof parsed.openrouterPriceHashes === 'object' && !Array.isArray(parsed.openrouterPriceHashes)) openrouterPriceHashes = parsed.openrouterPriceHashes
+          if (parsed.providerPriceHashes && typeof parsed.providerPriceHashes === 'object' && !Array.isArray(parsed.providerPriceHashes)) providerPriceHashes = parsed.providerPriceHashes
           if (parsed.days !== null && typeof parsed.days === 'object' && !Array.isArray(parsed.days)) {
             // 旧账本可能含 reasoning: null 等非法数值:清洗后再入内存,并触发回写覆盖。
             days = sanitizeDays(parsed.days)
@@ -2080,7 +2156,7 @@ export class Ledger {
         console.warn(`[dsh-cost-meter] 账本读取失败,按空账本启动: ${String(error?.message ?? error)}`)
       }
     }
-    const ledger = new Ledger(config, days, path, migrations, { planSamples, planHourBuckets, openrouterPriceHashes, balanceRef, historyReset })
+    const ledger = new Ledger(config, days, path, migrations, { planSamples, planHourBuckets, openrouterPriceHashes, providerPriceHashes, balanceRef, historyReset, usageCursors, pricingHistory })
     const repaired = repairDailySessionTotals(ledger.days)
     if (repaired.length) {
       if (repaired.includes(ledger.balanceRef?.date)) ledger.balanceRef = null
@@ -2096,24 +2172,25 @@ export class Ledger {
    * @param sessionId - 会话 id(可能缺失,例如无会话的辅助调用)。
    * @param atMs - 计费时刻(epoch ms)。
    */
-  account(tokens, modelId, sessionId, atMs, provider) {
+  account(tokens, modelId, sessionId, atMs, provider, meter) {
     if (this.closed) return
-    const resolved = providerPriceEntryFor(provider, modelId, this.config.prices, {
-      mode: this.config.priceMatch === 'exact' ? 'exact' : 'auto',
-      overrides: this.config.priceOverrides,
+    const pricing = pricingConfigAt(this.config, atMs, sessionId)
+    const resolved = providerPriceEntryFor(provider, modelId, pricing.prices, {
+      mode: pricing.priceMatch === 'exact' ? 'exact' : 'auto',
+      overrides: pricing.priceOverrides,
     })
     const entry = resolved.entry ?? { cacheHit: 0, cacheMiss: 0, output: 0 }
     const peak = {
-      enabled: ['deepseek-peak', 'utc-peak'].includes(resolved.billingMode) && this.config.peakEnabled === true,
-      effectiveAtMs: Date.parse(this.config.peakEffectiveAt),
-      windows: this.config.peakWindows,
-      holidays: this.config.peakHolidays,
+      enabled: ['deepseek-peak', 'utc-peak'].includes(resolved.billingMode) && pricing.peakEnabled === true,
+      effectiveAtMs: Date.parse(pricing.peakEffectiveAt),
+      windows: pricing.peakWindows,
+      holidays: pricing.peakHolidays,
     }
     // 官方价格币种为人民币(issue #47)时,DeepSeek 主表(峰谷计费,含 default
     // 兜底与跨厂商兑底命中)计出的成本为人民币,按展示汇率折算为美元入账;
     // 第三方 flat 恒为美元价,直接入账。
     const priced = resolved.priced ? costOf(tokens, entry, atMs, peak) : 0
-    const cost = usdFromCost(priced, resolved.currency, this.config.exchangeRate)
+    const cost = usdFromCost(priced, resolved.currency, fxRatesOf(pricing).CNY)
     // Plan/API 双轨分类(issue #64):plan 类调用金额只记等值(cost),apiCost 记真金白银部分;
     // Plan 类调用同时进入 provider×小时聚合桶(供 5 小时滚动窗本地量聚合)。
     const planBilling = this.config.planBilling
@@ -2135,13 +2212,23 @@ export class Ledger {
     const planId = cls === 'plan' ? (planProviderIdOf(provider, planBilling, modelId)
       ?? (isRoutedThirdPartyCall(provider, modelId, this.config.prices) ? 'go' : null)) : null
     const call = {
+      ...(meter ? { meter } : {}),
       date: localDayKey(atMs), sessionId, atMs, recordedAt: Date.now(), planId,
       providerKey: `${typeof provider === 'string' && provider.length > 0 ? provider : 'deepseek'}:${String(modelId ?? 'default')}`,
-      values: { ...buckets, calls: 1, cost, apiCost },
+      values: { ...buckets, calls: 1, cost, apiCost, ...frozenAmounts(cost, apiCost, pricing) },
     }
-    applyAccount(this, call)
+    if (!applyAccount(this, call)) return false
     this.pendingAccounts.push(call)
     this.prune()
+    this.scheduleWrite()
+    return true
+  }
+
+  /** Advance the same atomic receipt for an attempt with no reported usage. */
+  advanceUsageCursor(meter) {
+    const call = { meter, skip: true, recordedAt: Date.now() }
+    if (!applyAccount(this, call)) return
+    this.pendingAccounts.push(call)
     this.scheduleWrite()
   }
 
@@ -2153,6 +2240,7 @@ export class Ledger {
   }
 
   scheduleWrite() {
+    advancePricingHistory(this.pricingHistory, this.config)
     this.pendingWrite = true
     if (this.writeTimer !== null) return
     this.writeTimer = setTimeout(() => {
@@ -2168,6 +2256,9 @@ export class Ledger {
       balanceRef: this.balanceRef ?? null, migrations: this.migrations,
       planSamples: this.planSamples ?? {}, planHourBuckets: this.planHourBuckets ?? {},
       openrouterPriceHashes: this.openrouterPriceHashes ?? {}, historyReset: this.historyReset ?? null,
+      ...(Object.keys(this.usageCursors).length ? { usageCursors: this.usageCursors } : {}),
+      ...(Object.keys(this.providerPriceHashes).length ? { providerPriceHashes: this.providerPriceHashes } : {}),
+      pricingHistory: this.pricingHistory,
     })
   }
 
@@ -2185,6 +2276,7 @@ export class Ledger {
   readDiskSnapshot() {
     const raw = readLedger(this.path)
     if (raw === null) return null
+    const pricingHistory = normalizePricingHistory(raw.pricingHistory, sanitizeConfig(raw.config))
     for (const migration of CONFIG_MIGRATIONS) {
       if (!(raw.migrations ?? []).includes(migration.id)) migration.apply(raw.config ?? {})
     }
@@ -2194,12 +2286,18 @@ export class Ledger {
       migrations: raw.migrations ?? [], planSamples: raw.planSamples ?? {},
       planHourBuckets: raw.planHourBuckets ?? convertRecentCallsToBuckets(raw.planRecentCalls ?? []),
       openrouterPriceHashes: raw.openrouterPriceHashes ?? {}, historyReset: raw.historyReset ?? null,
+      usageCursors: cleanUsageCursors(raw.usageCursors),
+      providerPriceHashes: raw.providerPriceHashes ?? {},
+      pricingHistory,
     }
   }
 
   adoptSnapshot(merged) {
+    this.pricingHistory = normalizePricingHistory(merged.pricingHistory, merged.config)
     this.config = sanitizeConfig(mergeRuntimeConfig(this.writeBase.config, this.config, merged.config))
     for (const key of ['days', 'balanceRef', 'migrations', 'planSamples', 'planHourBuckets', 'openrouterPriceHashes', 'historyReset']) this[key] = merged[key]
+    this.usageCursors = cleanUsageCursors(merged.usageCursors)
+    this.providerPriceHashes = merged.providerPriceHashes ?? {}
   }
 
   /** Observe another host's atomic write without writing a read-only snapshot back. */
@@ -2267,11 +2365,13 @@ export class Ledger {
       total.cacheWrite += day.cacheWrite ?? 0
       total.reasoning += day.reasoning ?? 0
       total.calls += day.calls ?? 0
+      addFrozen(total, day)
       total.cost += day.cost ?? 0
       total.apiCost = (total.apiCost ?? 0) + (day.apiCost ?? day.cost ?? 0)
       for (const [key, value] of Object.entries(day.byProviderModel ?? {})) {
         const current = total.byProviderModel[key] ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, calls: 0, cost: 0, apiCost: 0 }
         total.byProviderModel[key] = {
+          ...addFrozen({ ...frozenFields(current) }, value),
           input: current.input + (value.input ?? 0), output: current.output + (value.output ?? 0),
           cacheRead: current.cacheRead + (value.cacheRead ?? 0), cacheWrite: current.cacheWrite + (value.cacheWrite ?? 0),
           reasoning: current.reasoning + (value.reasoning ?? 0),
@@ -2301,11 +2401,13 @@ export class Ledger {
       total.cacheWrite += day.cacheWrite ?? 0
       total.reasoning += day.reasoning ?? 0
       total.calls += day.calls ?? 0
+      addFrozen(total, day)
       total.cost += day.cost ?? 0
       total.apiCost = (total.apiCost ?? 0) + (day.apiCost ?? day.cost ?? 0)
       for (const [key, value] of Object.entries(day.byProviderModel ?? {})) {
         const current = total.byProviderModel[key] ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, calls: 0, cost: 0, apiCost: 0 }
         total.byProviderModel[key] = {
+          ...addFrozen({ ...frozenFields(current) }, value),
           input: current.input + (value.input ?? 0), output: current.output + (value.output ?? 0),
           cacheRead: current.cacheRead + (value.cacheRead ?? 0), cacheWrite: current.cacheWrite + (value.cacheWrite ?? 0),
           reasoning: current.reasoning + (value.reasoning ?? 0),
@@ -2347,6 +2449,7 @@ export class Ledger {
       ? []
       : day.sessions.slice().sort((a, b) => b.cost - a.cost).map(s => ({ ...s }))
     return {
+      ...frozenFields(day),
       date: String(day.date),
       input: day.input ?? 0,
       output: day.output ?? 0,

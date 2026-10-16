@@ -1,4 +1,7 @@
-import { VERIFIED_PROVIDER_PRICES } from './provider-prices.js'
+import { priceMultiplierSettings, multipliedTier, cnyPrice, validPriceMultipliers } from './price-multiplier.js'
+import { VERIFIED_PROVIDER_PRICES, PROVIDER_PRICES_2026_10_03 } from './provider-prices.js'
+import { OPENDESIGN_DEFAULT_PRICES } from './opendesign-prices.js'
+import { OPENDESIGN_PROVIDER_IDS } from './opendesign.js'
 
 /**
  * DeepSeek 官方定价模型:价格表、官方文档解析、计费数学。
@@ -331,6 +334,7 @@ const LEGACY_PROVIDER_PRICE_TABLE = {
 // 参考价当成直接 API 价。同名直接 API 条目只在有官方依据时更新。
 export const LEGACY_GO_MODEL_IDS = Object.freeze(Object.keys(LEGACY_PROVIDER_PRICE_TABLE['opencode-go'].models))
 export const DEFAULT_PROVIDER_PRICE_TABLE = { ...LEGACY_PROVIDER_PRICE_TABLE }
+DEFAULT_PROVIDER_PRICE_TABLE.opendesign = { models: OPENDESIGN_DEFAULT_PRICES }
 for (const [provider, table] of Object.entries(VERIFIED_PROVIDER_PRICES)) {
   const previous = LEGACY_PROVIDER_PRICE_TABLE[provider]?.models ?? {}
   DEFAULT_PROVIDER_PRICE_TABLE[provider] = { models: {
@@ -340,7 +344,7 @@ for (const [provider, table] of Object.entries(VERIFIED_PROVIDER_PRICES)) {
 
 /** One-time upgrade: mount genuinely new IDs and refresh only unchanged legacy defaults.
  * Missing old IDs are intentional unmounts; custom/unpriced rows and recorded spend stay untouched. */
-export function upgradeProviderPriceDefaults(config) {
+export function upgradeProviderPriceDefaults(config, previousCatalog = LEGACY_PROVIDER_PRICE_TABLE) {
   if (!config || typeof config !== 'object') return
   config.prices ??= {}
   if (typeof config.prices !== 'object' || Array.isArray(config.prices)) return
@@ -349,7 +353,7 @@ export function upgradeProviderPriceDefaults(config) {
   const providers = config.prices.providers
   for (const [provider, table] of Object.entries(DEFAULT_PROVIDER_PRICE_TABLE)) {
     if (['__proto__', 'constructor', 'prototype'].includes(provider)) continue
-    const legacy = LEGACY_PROVIDER_PRICE_TABLE[provider]?.models ?? {}
+    const legacy = previousCatalog[provider]?.models ?? {}
     const stored = Object.hasOwn(providers, provider) ? providers[provider]?.models : null
     if (!stored || typeof stored !== 'object' || Array.isArray(stored)) {
       if (!Object.hasOwn(providers, provider)) providers[provider] = structuredClone(table)
@@ -368,6 +372,19 @@ export function upgradeProviderPriceDefaults(config) {
       if (previous && current && JSON.stringify(previous) === JSON.stringify(current)) stored[id] = structuredClone(raw)
     }
   }
+}
+
+/** Refresh the October 3 catalog without restoring removed models or overriding custom prices. */
+export function upgradeProviderPriceCatalog20261015(config) {
+  const previous = Object.fromEntries(Object.keys(DEFAULT_PROVIDER_PRICE_TABLE).map(provider => [provider, { models: {
+    ...(provider === 'opencode-zen' || provider === 'opencode-go' ? {} : LEGACY_PROVIDER_PRICE_TABLE[provider]?.models),
+    ...PROVIDER_PRICES_2026_10_03[provider]?.models,
+  } }]))
+  upgradeProviderPriceDefaults(config, previous)
+}
+
+export function upgradeStepfunPriceCatalog(config) {
+  upgradeProviderPriceDefaults(config, Object.fromEntries(Object.entries(DEFAULT_PROVIDER_PRICE_TABLE).filter(([provider]) => provider !== 'stepfun')))
 }
 
 /** OpenRouter 模型目录接口(公开,无需认证;返回 USD/token 字符串)。
@@ -762,7 +779,8 @@ export function normalizePrice(value) {
     }
     entry.rateHistory.sort((a, b) => Date.parse(a.before) - Date.parse(b.before))
   }
-  return entry
+  Object.assign(entry, priceMultiplierSettings(value))
+  return validPriceMultipliers(entry) ? entry : null
 }
 
 /** 全部价格为 0 的记录视为空记录。 */
@@ -825,9 +843,9 @@ export function matchModelId(modelId, candidates, exactId = modelId) {
   }
 }
 
-const SCOPED_PRICE_PROVIDERS = new Set(['openrouter', 'opencode-zen', 'opencode-go', 'zen', 'opencode'])
+const SCOPED_PRICE_PROVIDERS = new Set(['openrouter', 'opencode-zen', 'opencode-go', 'opencode-go-plus', 'zen', 'opencode', ...OPENDESIGN_PROVIDER_IDS])
 const MODEL_VENDOR_PREFIXES = {
-  openai: /^(?:gpt|o\d|codex)/i, anthropic: /^claude/i, google: /^gemini/i,
+  openai: /^(?:gpt|o\d|codex)/i, anthropic: /^claude/i, google: /^gemini/i, stepfun: /^step-/i,
   deepseek: /^deepseek/i, moonshot: /^kimi/i, 'z-ai': /^glm/i, xai: /^grok/i,
   alibaba: /^qwen/i, minimax: /^minimax/i, tencent: /^(?:hunyuan|hy\d)/i,
   xiaomi: /^mimo/i, upstage: /^solar/i, nvidia: /^nemotron/i, mistral: /^mistral/i,
@@ -875,6 +893,10 @@ function providerPriceEntryForNormalized(normalized, modelId, prices, options) {
   let targetProvider = normalized
   const overrideKey = (normalized === '' ? 'deepseek' : normalized) + ':' + modelId
   const override = overrides[overrideKey]
+  if (override === '__custom__') {
+    const entry = normalizeCustomPrice(prices?.custom?.[overrideKey])
+    return { entry, billingMode: 'flat', priced: entry !== null, currency: entry?.currency ?? 'USD' }
+  }
   // 「本地模型(零消耗)」哨兵(v1.6.11,issue #76 后续):覆盖目标 __local__ 表示
   // 把该 provider:model 显式标记为本地来源——token 照记、费用恒 0;设置页
   // 「已命中模型」与「未命中模型」列表的下拉框均提供该选项。
@@ -897,7 +919,7 @@ function providerPriceEntryForNormalized(normalized, modelId, prices, options) {
     }
   }
   // 保留历史宿主 Zen/Go 别名；用户在原渠道手写的条目优先。
-  if (['zen', 'opencode'].includes(targetProvider)) {
+  if (['zen', 'opencode', 'opencode-go-plus'].includes(targetProvider)) {
     const own = priceModelHit(targetModel, prices?.providers?.[targetProvider]?.models ?? {}, 'opencode-go', mode, prices)
     if (own === null) targetProvider = 'opencode-go'
     else targetModel = own
@@ -905,6 +927,8 @@ function providerPriceEntryForNormalized(normalized, modelId, prices, options) {
   // 本地推理来源零价守卫(issue #76 附带):置于覆盖解析之后——显式 priceOverrides
   // 把本地模型改指任意(云端)目标时自然放行,未覆盖时一律未定价,自动匹配
   // (含下方 DeepSeek 主表与跨厂商兜底的模糊命中)不再误套云端价。
+  if (OPENDESIGN_PROVIDER_IDS.includes(targetProvider) && targetProvider !== 'opendesign'
+    && priceModelHit(targetModel, prices?.providers?.[targetProvider]?.models ?? {}, targetProvider, mode, prices) === null) targetProvider = 'opendesign'
   if (isLocalOriginProviderOrModel(targetProvider, targetModel)) {
     return { entry: null, billingMode: 'flat', priced: false }
   }
@@ -1079,6 +1103,7 @@ export function providerPriceEntryFor(provider, modelId, prices, options) {
   const rawProvider = typeof provider === 'string' ? provider.trim().toLowerCase() : ''
   const normalized = rawProvider.startsWith('llm-') ? rawProvider.slice(4) : rawProvider
   const primary = providerPriceEntryForNormalized(normalized, modelId, prices, options)
+  if (primary.currency) return primary
   if (primary.priced) return selectPriceCurrency(primary, prices)
   // issue #56:v1.5.42 及之前设置页下拉框把 DeepSeek 目标模型存成裸名(缺
   // 'deepseek:' 前缀),被按「同渠道换名」解析——映射键的渠道与 DeepSeek 不同时
@@ -1093,11 +1118,21 @@ export function providerPriceEntryFor(provider, modelId, prices, options) {
 }
 
 function selectPriceCurrency(result, prices) {
+  if (result.currency) return result
   if (!result.priced) return { ...result, currency: 'USD' }
   if (prices?.currency === 'CNY' && result.entry?.cny) {
-    return { ...result, entry: { ...result.entry.cny }, currency: 'CNY' }
+    return { ...result, entry: cnyPrice(result.entry), currency: 'CNY' }
   }
   return { ...result, currency: result.billingMode === 'deepseek-peak' && prices?.currency === 'CNY' ? 'CNY' : 'USD' }
+}
+
+/** A channel/model quote has its own currency and never enters catalog matching. */
+export function normalizeCustomPrice(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !['USD', 'CNY'].includes(raw.currency)) return null
+  if (!['cacheMiss', 'cacheHit', 'output'].every(key => typeof raw[key] === 'number' && Number.isFinite(raw[key]) && raw[key] >= 0)) return null
+  if (['cacheWrite', 'reasoning'].some(key => raw[key] !== undefined && (typeof raw[key] !== 'number' || !Number.isFinite(raw[key]) || raw[key] < 0))) return null
+  const entry = { ...completeTier(raw), ...priceMultiplierSettings(raw), currency: raw.currency, billingMode: 'flat' }
+  return validPriceMultipliers(entry) ? entry : null
 }
 
 /**
@@ -1187,21 +1222,18 @@ export function peakPhaseAt(atMs, windows, holidays = DEFAULT_PEAK_HOLIDAYS) {
  */
 export function tierFor(entry, atMs, peak) {
   const base = priceAt(entry, atMs) ?? { cacheHit: 0, cacheMiss: 0, output: 0 }
-  const asTier = price => ({ cacheHit: price.cacheHit, cacheMiss: price.cacheMiss, output: price.output,
-    ...(price.reasoning === undefined ? {} : { reasoning: price.reasoning }),
-    ...(price.cacheWrite === undefined ? {} : { cacheWrite: price.cacheWrite }),
-    ...(price.longContext === undefined ? {} : { longContext: price.longContext }) })
+  const asTier = (price, path = 'base') => multipliedTier(price, base, path)
   // Go 的公开参考价格按 UTC 工作日计峰谷，不能套直接 API 的北京假期表。
   if (base.billingMode === 'utc-peak') {
     if (peak?.enabled !== true || !Number.isFinite(atMs)) return asTier(base)
     const date = new Date(atMs), day = date.getUTCDay(), hour = date.getUTCHours()
     const high = day > 0 && day < 6 && ((hour >= 1 && hour < 4) || (hour >= 6 && hour < 10))
-    return asTier((high ? base.peak : base.offPeak) ?? base)
+    return asTier((high ? base.peak : base.offPeak) ?? base, (high ? base.peak : base.offPeak) ? (high ? 'peak' : 'offPeak') : 'base')
   }
   // 峰谷时代之前(2026-08-16 16:00 UTC 前):按当时的基础价计费(历史正确性)。
   if (Number.isFinite(atMs) && atMs < Date.parse(LEGACY_BASE_BOUNDARY)) {
     const lb = base.legacyBase
-    return lb === undefined ? asTier(base) : asTier(lb)
+    return lb === undefined ? asTier(base) : asTier(lb, 'legacyBase')
   }
   if (peak?.enabled !== true) return asTier(base)
   // 非有限(如 Date.parse('') 的 NaN)一律视同「未知生效时刻」,与 isPeakHour 的
@@ -1210,11 +1242,11 @@ export function tierFor(entry, atMs, peak) {
   const effectiveAtMs = typeof peak.effectiveAtMs === 'number' && Number.isFinite(peak.effectiveAtMs) ? peak.effectiveAtMs : undefined
   if (isPeakHour(atMs, effectiveAtMs, peak.windows, peak.holidays)) {
     const p = base.peak
-    return p === undefined ? asTier(base) : asTier(p)
+    return p === undefined ? asTier(base) : asTier(p, 'peak')
   }
   if (effectiveAtMs !== undefined && atMs >= effectiveAtMs) {
     const off = base.offPeak
-    return off === undefined ? asTier(base) : asTier(off)
+    return off === undefined ? asTier(base) : asTier(off, 'offPeak')
   }
   return asTier(base)
 }
