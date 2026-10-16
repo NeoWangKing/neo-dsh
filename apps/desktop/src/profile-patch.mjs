@@ -64,3 +64,26 @@ export function reconcileBundles(current, previous, existing) {
   const add = current.filter((name) => !kept.includes(name))
   return { remove, add }
 }
+
+/**
+ * Which of the names we might withdraw are actually allowed to leave.
+ *
+ * `reconcileBundles` answers "what did we record that we no longer ship" — a statement about
+ * bookkeeping, not about intent. Treating the two as one thing cost a user their whole community
+ * plugin batch: this app ships most plugins as *dependencies* rather than as
+ * `dsh.profile.bundles` entries, so to the reconcile they looked exactly like plugins it had
+ * stopped shipping. It copied them in from the shipped `dependencies` and, in the same launch,
+ * decided they were no longer ours and deleted them.
+ *
+ * Withdrawal is therefore explicit twice over: a name leaves only when this build does not ship
+ * it *at all* (`shipped` is the union of what we bundle and what we depend on), and only when it
+ * is on the `allowed` list — the plugins we have deliberately decided to stop shipping.
+ *
+ * @param {string[]} recorded - names the record says we put in this home before.
+ * @param {string[]} shipped - every plugin name this build ships, bundled or depended on.
+ * @param {string[]} allowed - names we have deliberately withdrawn.
+ * @returns {string[]} the names that may be removed.
+ */
+export function withdrawable(recorded, shipped, allowed) {
+  return recorded.filter((name) => !shipped.includes(name) && allowed.includes(name))
+}

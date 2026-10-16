@@ -77,8 +77,17 @@ An update replaces **our code**. It must never decide what the user owns.
   newest ten kept — see `snapshotProfile` in `main.mjs`). A repair that cannot be undone is
   not a repair.
 - Retirement is limited to bundles this app is **known** to have stopped shipping
-  (`RETIRED_BY_US`). A `file:vendor/<name>` pointer plus a marker is not proof of ownership:
-  a marketplace install looks identical, and that mistake once emptied a user's plugin list.
+  (`RETIRED_BY_US`), and that limit is enforced on the *record* path too (`withdrawable` in
+  `profile-patch.mjs`): a name leaves only if it is on that list **and** absent from everything
+  this build ships. A `file:vendor/<name>` pointer plus a marker is not proof of ownership: a
+  marketplace install looks identical, and that mistake once emptied a user's plugin list.
+- The set that decides retirement is the set the app materialises and owns — the shipped
+  `dsh.profile.bundles` **plus** the shipped `dependencies` (`profilePresetPackages()`), which is
+  `names` in `syncBundledPlugins`. Driving `reconcileBundles` from `bundles` alone made every
+  plugin we ship as a dependency look withdrawn: 0.2.4 copied the community batch into the home
+  and retired it in the same launch, leaving the manifest declaring dependencies whose directories
+  no longer existed. `.neo-dsh-bundles.json` records that union for the same reason — the next
+  launch reads it back as "what we put there", so anything missing from it looks like the user's.
 - Third-party plugin managers that rewrite the profile are not shipped. `dshmarket` did that
   on every launch, which is why it is gone; the harness's own `plugin-manager` rows are the
   plugin management now.

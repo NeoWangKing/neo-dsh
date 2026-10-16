@@ -48,7 +48,7 @@ import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan,
   resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
-import { missingPatchEntryIds, reconcileBundles } from './profile-patch.mjs'
+import { missingPatchEntryIds, reconcileBundles, withdrawable } from './profile-patch.mjs'
 import { confirmPatchBoot, countBoot, pendingPatch, STATE_DIRNAME } from './patch-apply.mjs'
 import { checkAndApplyPatch } from './patch-fetch.mjs'
 
@@ -365,16 +365,22 @@ function syncBundledPlugins(profileName = 'web') {
   } catch {
     // no record yet (or an unreadable one): nothing to retire
   }
-  const { remove: recorded, add: missing } = reconcileBundles(bundles, previous, section.bundles)
+  // `names` — not `bundles` — is what this app both materialises and owns: the shipped
+  // `dsh.profile.bundles` *plus* the shipped dependencies (`profilePresetPackages`, which is how
+  // most plugins ship). Passing only `bundles` made every dependency we ship look like one we had
+  // stopped shipping — the files were copied into the home above, and this same launch retired
+  // them. That is how an update emptied the community plugin batch out of a live profile.
+  const { remove: recorded, add: missing } = reconcileBundles(names, previous, section.bundles)
   // Only bundles this app is *known* to have stopped shipping may be taken out, and only when
   // the record says we put them there. A `file:vendor/<name>` pointer plus a marker is not
   // proof: a plugin the user installed through the marketplace looks exactly the same, and
   // removing those cost them their whole plugin setup once. Anything else stays.
   const RETIRED_BY_US = ['dsh-smart-approval', 'dshmarket']
   const legacy = section.bundles.filter((name) => typeof name === 'string'
-    && !bundles.includes(name)
+    && !names.includes(name)
     && RETIRED_BY_US.includes(name))
-  const retired = [...new Set([...recorded, ...legacy])]
+  // …and on top of the record, a name has to be on that list to leave at all.
+  const retired = withdrawable([...new Set([...recorded, ...legacy])], names, RETIRED_BY_US)
   for (const name of retired) {
     section.bundles = section.bundles.filter((row) => row !== name)
     // Drop the dependency only when it is the `file:vendor/…` pointer we wrote ourselves.
@@ -386,7 +392,9 @@ function syncBundledPlugins(profileName = 'web') {
     log(`plugin sync: retired ${name} — this build no longer ships it`)
   }
   try {
-    writeFileSync(listMarker, `${JSON.stringify({ version, bundles }, null, 2)}\n`)
+    // The record has to name everything we own, not just the bundles: the next launch reads it
+    // back as `previous`, and anything missing from it will look like a user's own install.
+    writeFileSync(listMarker, `${JSON.stringify({ version, bundles: names }, null, 2)}\n`)
   } catch (error) {
     log(`plugin sync: could not record the bundled list (${error.message})`)
   }
