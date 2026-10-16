@@ -29,11 +29,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          set -euo pipefail
-          corepack enable
-          pnpm install --frozen-lockfile
-          pnpm run resources
+      # Same setup as build.yml, and for the same reason: the repository root has no
+      # dependencies, so `pnpm install --frozen-lockfile` there fails — the real lockfile is
+      # apps/desktop/pnpm-lock.yaml and it is the only one git carries (the root one is
+      # gitignored). This workflow's first run died exactly there, at ten seconds, before it
+      # packaged anything.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/desktop/pnpm-lock.yaml
+      - name: Install the app
+        run: pnpm --dir apps/desktop install --frozen-lockfile
+      # `resources` is patch-harness + build-resources; a patch payload taken from the raw tree
+      # would ship without the vendored patches applied.
+      - name: Assemble shipped resources (and apply the vendored patches)
+        run: pnpm run resources
       - name: 组装 payload 并更新清单
         env:
           PATCH_ID: ${{ inputs.patchId }}
