@@ -3,7 +3,7 @@
  * selection and a streaming download.
  *
  * Deliberately free of Electron and of the shell's own state, so it can be
- * unit-tested and driven from a plain-node script (`scripts/update-check.mjs`).
+ * unit-tested and driven from a plain-node script (`apps/desktop/scripts/update-check.mjs`).
  * The packaged app is the only place that can perform the actual install, but
  * everything up to and including "the bytes are on disk" is verifiable here.
  *
@@ -86,9 +86,49 @@ export class GithubHttpError extends Error {
   }
 }
 
-/** Last ETag seen for the latest-release document, and the body it stands for. */
+/** Last ETag seen for the release list, and the release it resolved to. */
 let latestEtag = ''
 let latestRelease = null
+
+/**
+ * A tag we are willing to call a version: `v0.2.4`, `0.2.4`, `0.2.4-rc.1`.
+ * Anything else — `patch`, a date, a bookmark — is not a release this updater installs.
+ */
+const VERSION_TAG = /^v?\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?$/
+
+/** Raised when the repository has releases but none of them is a version. */
+export class NoVersionReleaseError extends Error {
+  constructor(message = '这个仓库还没有版本发布（只有补丁或预发布）') {
+    super(message)
+    this.name = 'NoVersionReleaseError'
+  }
+}
+
+/**
+ * The newest version release out of a release list, or `null` when there is none.
+ *
+ * Drafts and prereleases are skipped — the same ones `releases/latest` would have skipped — and
+ * so is any tag that is not a version, which is what stops the hot-patch release from shadowing
+ * a real one. The comparison is numeric (`isNewer`), so v0.2.10 beats v0.2.9 and the result does
+ * not depend on the order GitHub returns.
+ * @param releases - release objects from the API.
+ */
+export function pickNewestVersionRelease(releases) {
+  const candidates = (Array.isArray(releases) ? releases : []).filter(
+    (release) =>
+      release !== null &&
+      typeof release === 'object' &&
+      release.draft !== true &&
+      release.prerelease !== true &&
+      typeof release.tag_name === 'string' &&
+      VERSION_TAG.test(release.tag_name),
+  )
+  let newest = null
+  for (const release of candidates) {
+    if (newest === null || isNewer(release.tag_name, newest.tag_name)) newest = release
+  }
+  return newest
+}
 
 /**
  * Turn a fetch failure into something a person can act on.
@@ -100,6 +140,9 @@ let latestRelease = null
  * @returns a message that names the underlying cause when there is one.
  */
 export function describeNetworkError(error) {
+  // Not every failure is a network one. "The repository has no version release" is a statement
+  // about the repository, and prefixing it with "cannot reach GitHub" would be a lie.
+  if (error instanceof NoVersionReleaseError) return error.message
   // A rate limit is not a network problem: the unauthenticated API allows 60
   // requests an hour, and the answer says when it resets.
   if (error instanceof GithubHttpError && (error.status === 403 || error.status === 429)) {
@@ -116,7 +159,16 @@ export function describeNetworkError(error) {
 }
 
 /**
- * Ask GitHub for this project's newest release.
+ * Ask GitHub for this project's newest version release.
+ *
+ * Deliberately **not** `releases/latest`. GitHub defines that as the most recently *published*
+ * release that is neither a draft nor a prerelease — a statement about publishing order, not
+ * about versions. The hot-patch channel keeps a release tagged `patch` whose assets are replaced
+ * in place; the moment it was created it became "latest", so the updater read the tag `patch`,
+ * found it was not a version, and reported the app up to date while v0.2.4 sat one entry below
+ * it. The list is filtered to version tags and the highest one wins, which is what "newest
+ * release" has to mean for an updater. That also keeps the two channels independent: patches go
+ * on shipping quietly, and a version release is always visible.
  *
  * Retries a couple of times: on a laptop network a single DNS hiccup or dropped
  * SYN was enough to leave the settings row in an error state until the next
@@ -124,11 +176,11 @@ export function describeNetworkError(error) {
  * the row spinning either.
  * @param fetchImpl - fetch implementation (injectable for tests).
  * @param options - `attempts`, `timeoutMs`, `sleep` (injectable for tests).
- * @returns the release JSON.
+ * @returns the release JSON of the newest version release.
  */
 export async function fetchLatestRelease(fetchImpl = fetch, options = {}) {
   const { attempts = 3, timeoutMs = 15000, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = options
-  const url = `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`
+  const url = `https://api.github.com/repos/${UPDATE_REPO}/releases?per_page=100`
   let lastError
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
@@ -143,13 +195,18 @@ export async function fetchLatestRelease(fetchImpl = fetch, options = {}) {
       if (response.status === 304 && latestRelease !== null) return latestRelease
       if (!response.ok) throw new GithubHttpError(response.status, response.statusText, response.headers)
       latestEtag = response.headers?.get?.('etag') ?? ''
-      latestRelease = await response.json()
+      const newest = pickNewestVersionRelease(await response.json())
+      if (newest === null) throw new NoVersionReleaseError()
+      latestRelease = newest
       return latestRelease
     } catch (error) {
       lastError = error
-      // Retry only what can get better: a 4xx (rate limit, bad request, missing
-      // release) will answer the same, and for a rate limit retrying is worse.
-      const retryable = !(error instanceof GithubHttpError) || error.status >= 500
+      // Retry only what can get better: a transport failure or a 5xx may pass on a second
+      // attempt, while a 4xx (rate limit, bad request) and a repository with no version release
+      // will answer exactly the same — and for a rate limit retrying is worse.
+      const retryable =
+        !(error instanceof NoVersionReleaseError) &&
+        (!(error instanceof GithubHttpError) || error.status >= 500)
       if (retryable && attempt < attempts) await sleep(attempt * 750)
       else break
     }

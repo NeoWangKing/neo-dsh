@@ -22,6 +22,7 @@ see "The 0.2 harness migration" below before touching those versions).
 | `docs/development*.md` | the human-facing development notes, **English and Chinese kept in step**. |
 | `docs/roadmap.md` | the user's own backlog (Chinese only, by design): planned work with the implementation traps already noted. Read it before proposing features; add to it when the user asks for something "later". |
 | `.github/workflows/build.yml` | CI: builds linux-x64 / macos-arm64 / windows-x64 and attaches artifacts to the release. |
+| `.github/workflows/patch.yml` | CI: publishes a **hot patch** (`patch.json` + `payload-<id>.tar.gz`) onto the fixed release tagged `patch`. Marked prerelease so it never takes the "latest release" slot. |
 
 ## Non-negotiables (learned the hard way)
 
@@ -81,6 +82,27 @@ An update replaces **our code**. It must never decide what the user owns.
 - Third-party plugin managers that rewrite the profile are not shipped. `dshmarket` did that
   on every launch, which is why it is gone; the harness's own `plugin-manager` rows are the
   plugin management now.
+
+## How the app decides there is an update
+
+Two channels, and they must stay independent:
+
+- **Version releases** (`v0.2.4`, built by `build.yml`) are the base. The app must always be able
+  to see the newest one — that is what "跟上大版本" means.
+- **Hot patches** (`patch.yml`, on the release tagged `patch`) carry small fixes. `patch-fetch.mjs`
+  polls one fixed address, `releases/download/patch/patch.json`, so a patch never has to be a
+  version.
+
+`update-logic.mjs` therefore does **not** ask GitHub for `releases/latest`. GitHub defines that as
+the most recently *published* release that is neither a draft nor a prerelease — a statement about
+publishing order, not about versions. The moment the `patch` release was created it became
+"latest": the updater read the tag `patch`, found it was not a version, and told the user the app
+was up to date while v0.2.4 sat one entry below it. Instead it lists
+`releases?per_page=100`, drops drafts, prereleases and any tag that is not `v<semver>`, and takes
+the highest version. Two guards follow from that: the tag pattern keeps a non-version release from
+ever shadowing a version, and `patch.yml` marks its release prerelease so the GitHub page agrees.
+
+If you add a third channel that publishes a release, it must not look like a version tag.
 
 ## How a release is made
 

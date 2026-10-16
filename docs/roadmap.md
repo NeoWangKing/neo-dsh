@@ -183,3 +183,26 @@ unscoped 与 scoped，所以以后再加插件不必动它。vendor 总量从约
 harness 官方出了「自动授权审查」（`@deepseek-ai/dsh-experimental-auto-review`，设置页开关，每次工具调用前由模型判断），
 和自带的 `plugins/smart-approval/` 是同一个思路且由上游维护 —— 留两份只会对同一个问题给两个答案。
 已删除插件、默认权限档回到 `workspace-write`、连带移除它带出来的字形补丁（`smart-approval-glyph`）。
+
+## 2026-10-16：两条通道——版本发布与热补丁
+
+用户的设计意图：**小修小补走热补丁**（`patch.yml` → tag `patch` 的固定地址，客户端启动时静默应用），
+**但大版本必须始终能被发现并跟上**。这两件事互相独立，不能有一条通道盖住另一条。
+
+踩到的坑：出更新检查用的是 GitHub 的 `releases/latest`，而它按**发布时间**定义「最新」
+（最近发布的、非 draft、非 prerelease 的那个）—— 与版本号无关。于是那个 tag 叫 `patch` 的
+热补丁 release 一建出来就成了 "latest"：应用读到 tag `patch`、判断它不是版本、直接报
+「已是最新版本」，而 `v0.2.4` 就排在它下面一行。`v0.2.3`/`v0.2.4` 其实都发成功了。
+
+现在的做法（`apps/desktop/src/update-logic.mjs`）：
+
+- 不再问 `/releases/latest`，改拉 `releases?per_page=100` 列表；
+- 丢掉 draft、prerelease，以及**任何不是 `v<semver>` 的 tag**；
+- 在剩下的里面取**版本号最高**的那个（数值比较，所以 `v0.2.10 > v0.2.9`，且与返回顺序无关）；
+- 再加一层：`patch.yml` 建 release 时带 `--prerelease`，并每次 `gh release edit patch --prerelease`
+  幂等纠正（把已经建好的那个也带上），这样 GitHub 页面上的 "latest" 也和事实一致。
+
+回归用例已进 `apps/desktop/test/update-logic.test.mjs`：列表里挂着 `patch` 时忽略它并选中 `v0.2.4`、
+按数值而非字符串比较、prerelease 与 draft 被跳过、以及「请求的是列表而不是 `/releases/latest`」。
+
+**以后再加通道的约束**：任何新发布的 release 都**不能长得像版本 tag**，否则会（在旧逻辑下）顶替掉版本。

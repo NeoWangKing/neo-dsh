@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
-import { describeNetworkError, fetchLatestRelease, GithubHttpError, isNewer, pickAsset, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
+import { describeNetworkError, fetchLatestRelease, GithubHttpError, isNewer, NoVersionReleaseError, pickAsset, pickNewestVersionRelease, downloadRelease, UPDATE_REPO } from '../src/update-logic.mjs'
 
 let failures = 0
 function check(name, actual, expected) {
@@ -50,12 +50,80 @@ check('发行版里没有匹配资源 → undefined', pickAsset([{ name: 'notes.
 check('资源列表缺失 → undefined', pickAsset(undefined, { platform: 'linux', arch: 'x64' }), undefined)
 check('仓库指向本项目', UPDATE_REPO, 'NeoWangKing/neo-dsh')
 
+// ---- release lookup: version releases only --------------------------------
+//
+// The regression this file exists for now: the hot-patch channel keeps a release tagged `patch`
+// whose assets are replaced in place. Being published last, it became what `releases/latest`
+// returned — so the app read the tag `patch`, found it was not a version, and reported itself up
+// to date while v0.2.4 sat one entry below it. The two channels have to stay independent:
+// patches ship quietly, and a version release is always visible.
+const publishedAfterTheVersion = [
+  { tag_name: 'patch', draft: false, prerelease: false, assets: [{ name: 'patch.json' }] },
+  { tag_name: 'v0.2.4', draft: false, prerelease: false, assets: [{ name: 'neo-dsh-0.2.4-mac-arm64.dmg' }] },
+  { tag_name: 'v0.2.3', draft: false, prerelease: false, assets: [{ name: 'neo-dsh-0.2.3-mac-arm64.dmg' }] },
+]
+check(
+  '非版本 release（tag=patch）被忽略，最高版本胜出',
+  pickNewestVersionRelease(publishedAfterTheVersion)?.tag_name,
+  'v0.2.4',
+)
+check(
+  '发布顺序颠倒也不影响：列表里挂着 patch，仍选中 v0.2.4 的资源',
+  pickAsset(pickNewestVersionRelease(publishedAfterTheVersion).assets, { platform: 'darwin', arch: 'arm64' })?.name,
+  'neo-dsh-0.2.4-mac-arm64.dmg',
+)
+check(
+  '低于当前版本时不提示（0.2.4 对 0.2.4）',
+  isNewer(pickNewestVersionRelease(publishedAfterTheVersion).tag_name, '0.2.4'),
+  false,
+)
+check(
+  '最高版本按数值比较，不按字符串（v0.2.10 > v0.2.9）',
+  pickNewestVersionRelease([{ tag_name: 'v0.2.9' }, { tag_name: 'v0.2.10' }])?.tag_name,
+  'v0.2.10',
+)
+check(
+  'prerelease 被跳过（同 tag 的正式版胜出）',
+  pickNewestVersionRelease([
+    { tag_name: 'v0.3.0-rc.1', prerelease: true },
+    { tag_name: 'v0.2.4' },
+  ])?.tag_name,
+  'v0.2.4',
+)
+check(
+  'draft 被跳过',
+  pickNewestVersionRelease([{ tag_name: 'v0.3.0', draft: true }, { tag_name: 'v0.2.4' }])?.tag_name,
+  'v0.2.4',
+)
+check('只有补丁 release → null', pickNewestVersionRelease([{ tag_name: 'patch' }]), null)
+check('不是数组 → null', pickNewestVersionRelease(undefined), null)
+check('空列表 → null', pickNewestVersionRelease([]), null)
+check(
+  '仓库没有版本发布时报的是可读的话，而不是"连不上 GitHub"',
+  [describeNetworkError(new NoVersionReleaseError()).includes('版本'), describeNetworkError(new NoVersionReleaseError()).includes('无法连接')],
+  [true, false],
+)
+
 // ---- release lookup: retry + readable failure ----------------------------
+let askedUrl = ''
+await fetchLatestRelease(
+  async (url) => {
+    askedUrl = String(url)
+    return { ok: true, headers: { get: () => null }, json: async () => [{ tag_name: 'v1.0.0' }] }
+  },
+  { sleep: async () => {} },
+)
+check(
+  '查询的是 release 列表，而不是 /releases/latest',
+  [askedUrl.includes('/releases?'), askedUrl.includes('/releases/latest')],
+  [true, false],
+)
+
 let calls = 0
 const flakyFetch = async () => {
   calls += 1
   if (calls < 3) throw Object.assign(new Error('fetch failed'), { cause: { code: 'ECONNRESET' } })
-  return { ok: true, json: async () => ({ tag_name: 'v9.9.9' }) }
+  return { ok: true, headers: { get: () => null }, json: async () => [{ tag_name: 'v9.9.9' }] }
 }
 const release = await fetchLatestRelease(flakyFetch, { sleep: async () => {} })
 check('瞬时失败会重试，第三次成功', [release.tag_name, calls], ['v9.9.9', 3])
@@ -83,11 +151,11 @@ let seq = 0
 const etagFetch = async (_url, options) => {
   seq += 1
   if (options?.headers?.['if-none-match'] === 'W/"abc"') return { status: 304, ok: false, headers: { get: () => null } }
-  return { status: 200, ok: true, headers: { get: (k) => (k === 'etag' ? 'W/"abc"' : null) }, json: async () => ({ tag_name: `v-${seq}` }) }
+  return { status: 200, ok: true, headers: { get: (k) => (k === 'etag' ? 'W/"abc"' : null) }, json: async () => [{ tag_name: `v1.0.${seq}` }] }
 }
 const first = await fetchLatestRelease(etagFetch, { sleep: async () => {} })
 const second = await fetchLatestRelease(etagFetch, { sleep: async () => {} })
-check('304 条件请求复用上次结果（不计入配额）', [first.tag_name, second.tag_name, seq], ['v-1', 'v-1', 2])
+check('304 条件请求复用上次结果（不计入配额）', [first.tag_name, second.tag_name, seq], ['v1.0.1', 'v1.0.1', 2])
 
 // ---- download ------------------------------------------------------------
 const payload = new Uint8Array(4096).fill(7)
@@ -158,14 +226,15 @@ rmSync(join(tmpdir(), 'neo-dsh-update'), { recursive: true, force: true })
 // ---- 注入的 fetch 必须被真的用上 ----
 // 应用把 Electron 的 net.fetch（Chromium 栈：走系统代理与系统信任库）注进来，
 // 而不是 Node 的全局 fetch；这里锁住"注入会被用"，免得哪天被改回默认值。
+// 同时锁住请求的是 release **列表**：/releases/latest 会被热补丁那类 release 顶替。
 {
   const seen = []
   const fake = async (url, init) => {
     seen.push({ url, ua: init?.headers?.['user-agent'] })
-    return { ok: true, status: 200, json: async () => ({ tag_name: 'v9.9.9', assets: [] }) }
+    return { ok: true, status: 200, headers: { get: () => null }, json: async () => [{ tag_name: 'v9.9.9', assets: [] }] }
   }
   const release = await fetchLatestRelease(fake, { repo: UPDATE_REPO })
-  check('注入的 fetch 收到了 GitHub releases API 地址', seen[0]?.url, `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`)
+  check('注入的 fetch 收到了 GitHub releases API 地址（列表，不是 latest）', seen[0]?.url, `https://api.github.com/repos/${UPDATE_REPO}/releases?per_page=100`)
   check('注入的 fetch 收到了 updater 的 UA', seen[0]?.ua, 'neo-dsh-updater')
   check('返回值原样透出', release.tag_name, 'v9.9.9')
 }

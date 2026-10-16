@@ -71,6 +71,9 @@ jobs:
           }
           json.dump(manifest, open("build/patch.json", "w"), ensure_ascii=False, indent=2)
           PY
-          gh release view patch >/dev/null 2>&1 || gh release create patch --target main --title "热补丁（hot patches）" --notes "承载热补丁：资产每次原地替换，客户端只认这个固定地址。"
+          gh release view patch >/dev/null 2>&1 || gh release create patch --prerelease --target main --title "热补丁（hot patches）" --notes "承载热补丁：资产每次原地替换，客户端只认这个固定地址。不进「latest release」——那个位置留给版本发布，否则更新检查会读到 tag=patch 而以为已是最新。"
+          # 幂等：老的那个 release 当初不是预发布，这里把它纠正过来（--prerelease 只是标记，
+          # 不影响客户端按固定 tag 地址取资产）。顺手保证它不占着 GitHub 的 "latest release"。
+          gh release edit patch --prerelease
           gh release upload patch build/patch.json "build/payload-$PATCH_ID.tar.gz" --clobber
           echo "已发布 $PATCH_ID（sha256 $SHA）"
