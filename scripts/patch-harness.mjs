@@ -57,88 +57,6 @@ function assertParses(file, text) {
  * The client bundle names its JSX runtime after the import it came from. Reading the
  * binding out of the file keeps this patch working if the bundler renames the alias.
  */
-function jsxRuntimeName(file) {
-  const match = file.match(/([A-Za-z_$][\w$]*)\s*=\s*require\(\s*(["'])react\/jsx-runtime\2\s*\)/)
-  if (match === null) {
-    console.error('patch-harness: the client bundle has no "react/jsx-runtime" binding to splice against')
-    process.exit(1)
-  }
-  return match[1]
-}
-
-/** The shield every permission glyph is drawn from, copied so this entry cannot break. */
-const shieldPath =
-  'M8.20554 0.899994L14.7901 3.36857V7.01026C14.7901 12 11.0466 14.2103 8.20554 15.3C5.36446 14.2103 1.62012 12 1.62012 7.01026V3.36857L8.20554 0.899994Z'
-
-/**
- * The glyph is a shield holding two content lines, with a four-pointed star over its lower
- * right corner — the same shape language as 工作区内修改, whose pen covers that corner.
- *
- * The star is a solid shape that reaches past the shield's outline, so the outline cannot
- * simply be drawn under it: a circular mask cuts the stroke away inside the star's corner,
- * the way the workspace glyph's own path leaves that corner out. The mask id is shared by
- * every instance, which is harmless because each instance paints the same thing.
- */
-const notchId = 'smart-approval-notch'
-const notchCx = '11.85'
-const notchCy = '11.45'
-const notchRadius = '3'
-/** Content lines, in the upper half, kept clear of the star's top point. */
-const contentLines = ['M10.6 4.65V5.75H4.8V4.65H10.6Z', 'M9.2 6.45V7.55H4.8V6.45H9.2Z']
-/** Star: radius 3.5 about the notch centre, waist at 0.235 of the radius. */
-const starPath =
-  'M11.85 7.95Q13.01 10.29 15.35 11.45Q13.01 12.61 11.85 14.95Q10.69 12.61 8.35 11.45Q10.69 10.29 11.85 7.95Z'
-
-/** One `permissionGlyphs` entry: mask, notched shield outline, content lines, corner star. */
-function smartApprovalGlyph(file) {
-  const jsx = jsxRuntimeName(file)
-  const lines = contentLines
-    .map((d) => `\t\t\t\t\t(0, ${jsx}.jsx)("path", { d: "${d}", fill: "currentColor" }),\n`)
-    .join('')
-  return `\t\t\t["smart-approval", (0, ${jsx}.jsxs)("svg", {
-\t\t\t\twidth: "16",
-\t\t\t\theight: "16",
-\t\t\t\tviewBox: "0 0 16 16",
-\t\t\t\tfill: "none",
-\t\t\t\t"aria-hidden": true,
-\t\t\t\tchildren: [
-\t\t\t\t\t(0, ${jsx}.jsxs)("mask", {
-\t\t\t\t\t\tid: "${notchId}",
-\t\t\t\t\t\tmaskUnits: "userSpaceOnUse",
-\t\t\t\t\t\tx: "0",
-\t\t\t\t\t\ty: "0",
-\t\t\t\t\t\twidth: "16",
-\t\t\t\t\t\theight: "16",
-\t\t\t\t\t\tchildren: [
-\t\t\t\t\t\t\t(0, ${jsx}.jsx)("rect", {
-\t\t\t\t\t\t\t\twidth: "16",
-\t\t\t\t\t\t\t\theight: "16",
-\t\t\t\t\t\t\t\tfill: "#fff"
-\t\t\t\t\t\t\t}),
-\t\t\t\t\t\t\t(0, ${jsx}.jsx)("circle", {
-\t\t\t\t\t\t\t\tcx: "${notchCx}",
-\t\t\t\t\t\t\t\tcy: "${notchCy}",
-\t\t\t\t\t\t\t\tr: "${notchRadius}",
-\t\t\t\t\t\t\t\tfill: "#000"
-\t\t\t\t\t\t\t})
-\t\t\t\t\t\t]
-\t\t\t\t\t}),
-\t\t\t\t\t(0, ${jsx}.jsx)("path", {
-\t\t\t\t\t\td: "${shieldPath}",
-\t\t\t\t\t\tstroke: "currentColor",
-\t\t\t\t\t\tstrokeWidth: "1.31831",
-\t\t\t\t\t\tstrokeLinejoin: "round",
-\t\t\t\t\t\tmask: "url(#${notchId})"
-\t\t\t\t\t}),
-${lines}\t\t\t\t\t(0, ${jsx}.jsx)("path", {
-\t\t\t\t\t\td: "${starPath}",
-\t\t\t\t\t\tfill: "currentColor"
-\t\t\t\t\t})
-\t\t\t\t]
-\t\t\t})],
-`
-}
-
 /**
  * `dsh-host-open-in-app` takes a Linux icon only from the desktop entry whose id its
  * table names, and it names none for these two rows — so they can never show an icon,
@@ -181,20 +99,6 @@ const openInAppPatches = [
  * the standalone `dsh-client-ui-permission-presets` package; the entry spliced in is
  * unchanged, so only the target below follows the move.
  */
-const clientPatches = [
-  {
-    id: 'smart-approval-glyph',
-    why: 'the glyph table has no entry for the smart-approval preset, so its chip shows no icon',
-    find: /(\t*const permissionGlyphs = new Map\(\[\n)/,
-    // An earlier copy of this entry (the star alone) is dropped first, so revising the
-    // design replaces it instead of leaving a second entry for the same key behind.
-    remove: /\t*\["smart-approval", \(0, \w+\.jsxs\)\("svg",[\s\S]*?\n\t*\}\)\],\n/g,
-    replace: (match, file) => match + smartApprovalGlyph(file),
-    applied: new RegExp(notchId),
-    parse: true,
-  },
-]
-
 /**
  * `dsh-terminal-bash` refuses a sandbox-mode change while a persistent terminal is alive,
  * because a PTY keeps the confinement it was spawned with. Our agent preset gives the model
@@ -262,12 +166,6 @@ const targets = [
     package: 'dsh-host-open-in-app',
     files: ['lib/index.js', 'lib/types/catalog.js'],    linuxOnly: true,
     patches: openInAppPatches,
-  },
-  {
-    package: 'dsh-client-ui-permission-presets',
-    files: ['lib/client.js'],
-    linuxOnly: false,
-    patches: clientPatches,
   },
   {
     package: 'dsh-terminal-bash',

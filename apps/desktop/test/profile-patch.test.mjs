@@ -30,7 +30,7 @@ const SHIPPED = [
   '        sandbox: read-only',
   '        approval: ask',
   '        name: 仅可查看',
-  '    defaultPreset: smart-approval',
+  '    defaultPreset: workspace-write',
   '',
 ].join('\n')
 

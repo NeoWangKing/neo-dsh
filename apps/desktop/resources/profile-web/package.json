@@ -6,7 +6,6 @@
     "dsh-desktop-settings": "file:vendor/dsh-desktop-settings",
     "dsh-liangshen-preset": "file:vendor/dsh-liangshen-preset",
     "dsh-ops": "file:vendor/dsh-ops",
-    "dsh-smart-approval": "file:vendor/dsh-smart-approval",
     "dshmarket": "file:vendor/dshmarket",
     "dsh-whale-widget": "file:vendor/dsh-whale-widget",
     "dsh-mnemon": "file:vendor/dsh-mnemon",
@@ -23,8 +22,7 @@
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
         "dsh-activity-line",
-        "dsh-desktop-settings",
-        "dsh-smart-approval"
+        "dsh-desktop-settings"
       ],
       "patchReload": "startup"
     }

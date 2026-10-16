@@ -36,7 +36,6 @@ const RES = join(APP, 'resources')
 const PLUGINS = [
   { dir: join(REPO, 'plugins', 'activity-line'), name: 'dsh-activity-line' },
   { dir: join(REPO, 'plugins', 'desktop-settings'), name: 'dsh-desktop-settings' },
-  { dir: join(REPO, 'plugins', 'smart-approval'), name: 'dsh-smart-approval' },
 ]
 const YAML = createRequire(join(APP, 'package.json'))('yaml')
 const PRESET = join(REPO, 'presets', 'liangshen')

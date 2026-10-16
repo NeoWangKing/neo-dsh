@@ -11,17 +11,12 @@
         approval: ask
         name: 工作区内修改
         description: 可以改工作区内的文件；需要越界时会问你。
-      smart-approval:
-        sandbox: workspace-write
-        approval: ask
-        name: 智能批准
-        description: 只读命令、项目内的依赖安装与拉取自动放行；提权、删除、动系统、越出工作区仍然会问你。
       danger-full-access:
         sandbox: danger-full-access
         approval: never
         name: 完全权限
         description: 不再限制文件改动，也不再询问。
-    defaultPreset: smart-approval
+    defaultPreset: workspace-write
 
 # 官方把三个 flash 合并成了一个模型（deepseek-flash / deepseek-v4-flash /
 # deepseek-v4-flash-vision-exp 现在指向同一个东西），所以目录里只留一个

@@ -108,14 +108,14 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
 ## What the product ships (quick map)
 
 - **Permission presets** (`resources/profile-web/cordis.patch.yml`, row `permission`):
-  `read-only`, `workspace-write`, `smart-approval` (default), `danger-full-access`.
-  `smart-approval` is the middle: `sandbox: workspace-write` + `approval: ask`, with the
-  per-call reasoning in `plugins/smart-approval/` — allowlist (reads, project scripts,
-  dependency fetches, in-workspace writes) → allow; blacklist (privilege escalation,
-  irreversible deletion, system changes, leaving the workspace, pipes into interpreters) →
-  ask; everything else → the session's own model answers ALLOW/ASK. The guard also **stands
-  down** when the session's policy is `never`: an `ask` there is refused before any answerer,
-  so asking would silently override the preset the user chose.
+  `read-only`, `workspace-write` (**default**), `danger-full-access`. A fourth preset,
+  `smart-approval`, used to ship from `plugins/smart-approval/` — it answered the middle
+  ground (allowlist → allow, blacklist → ask, otherwise the session's own model judges) and
+  stood down whenever the policy was `never`. It is **gone as of this change**: the harness
+  now ships its own 「自动授权审查」 (`@deepseek-ai/dsh-experimental-auto-review`, a switch on
+  the settings page: the model decides before every tool call), which is the same idea with
+  upstream's maintenance, so keeping ours would only give two overlapping answers for one
+  question. The default therefore goes back to plain `workspace-write`.
 - **Model catalog** (row `llm-deepseek`): one `DeepSeek-Flash` (text + images, 1M context)
   and `DeepSeek-V4-Pro`. `models` replaces the whole catalog, so both entries are written
   out; a session pinned to an id no longer listed still runs, it is just absent from the
@@ -182,9 +182,10 @@ A local `pnpm run dist:linux` is fine for a smoke test before tagging: run
   and so the working tree has it while a clone does not. Anything that asserts its existence
   passes locally and fails the release build. (`build-resources.mjs` now compares the copy against
   the source instead, and `vendor-npm-plugin.sh` no longer creates the empty directory.)
-- **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, the 智能批准
-  composer glyph, and the sandbox-mode check in `dsh-terminal-bash` that closes a session's
-  persistent shells before a preset switch (the harness refuses the change while a PTY is
+- **Vendored patches** (`pnpm run patches:check`): open-in-app Linux icon ids, and the
+  sandbox-mode check in `dsh-terminal-bash` that closes a session's persistent shells before
+  a preset switch. A third one — the 智能批准 composer glyph in
+  `dsh-client-ui-permission-presets` — went away with `smart-approval` itself (the harness refuses the change while a PTY is
   alive, which used to block switching presets mid-conversation).
 
 ## The 0.2 harness migration (what actually bit)
@@ -197,9 +198,10 @@ then read the resolved versions out of that `package-lock.json` — never "lates
 four places:
 
 - **Vendored patch targets move.** 0.2 moved the permission glyph table out of
-  `dsh-client-ui-conversation` into `dsh-client-ui-permission-presets`; the open-in-app and
-  terminal anchors happened to survive. A moved target is a silent miss otherwise, so
-  `pnpm run patches:check` runs after `pnpm run resources` in CI.
+  `dsh-client-ui-conversation` into `dsh-client-ui-permission-presets` (that patch has since
+  been dropped along with `smart-approval`); the open-in-app and terminal anchors happened to
+  survive. A moved target is a silent miss otherwise, so `pnpm run patches:check` runs after
+  `pnpm run resources` in CI.
 - **Agent presets are profile entries now.** `@deepseek-ai/dsh-agent-preset-registry` takes
   only `{default, selectedDefault}`; there is no directory discovery, no `roots`, and
   `.agent-presets/` is dead. A preset is a `@deepseek-ai/dsh-agent-preset` entry whose

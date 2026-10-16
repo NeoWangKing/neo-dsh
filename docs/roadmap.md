@@ -177,3 +177,9 @@ unscoped 与 scoped，所以以后再加插件不必动它。vendor 总量从约
   `presets/*`，以及 `vendor/*` 里那两类（自建的平台载荷、上游 npm 包连依赖一起 vendor）。
   这是**既有**的不完整，不是这次改动引入的；要不要补，等用户发话。
 
+
+## 2026-10-16：智能批准下线
+
+harness 官方出了「自动授权审查」（`@deepseek-ai/dsh-experimental-auto-review`，设置页开关，每次工具调用前由模型判断），
+和自带的 `plugins/smart-approval/` 是同一个思路且由上游维护 —— 留两份只会对同一个问题给两个答案。
+已删除插件、默认权限档回到 `workspace-write`、连带移除它带出来的字形补丁（`smart-approval-glyph`）。

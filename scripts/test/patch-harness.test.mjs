@@ -47,21 +47,6 @@ function bundleWith(entries) {
   ].join('\n')
 }
 
-const freshEntry = '\t\t\t["read-only", null],'
-const legacyEntry = [
-  '\t\t\t["smart-approval", (0, react_jsx_runtime.jsxs)("svg", {',
-  '\t\t\t\twidth: "16",',
-  '\t\t\t\theight: "16",',
-  '\t\t\t\tviewBox: "0 0 16 16",',
-  '\t\t\t\tfill: "none",',
-  '\t\t\t\t"aria-hidden": true,',
-  '\t\t\t\tchildren: [(0, react_jsx_runtime.jsx)("path", {',
-  '\t\t\t\t\td: "M9.4 6.8Q10.46 8.94 12.6 10Q10.46 11.06 9.4 13.2Q8.34 11.06 6.2 10Q8.34 8.94 9.4 6.8Z",',
-  '\t\t\t\t\tfill: "currentColor"',
-  '\t\t\t\t})]',
-  '\t\t\t})],',
-].join('\n')
-
 const dirs = []
 /** A stand-in for the `dsh-terminal-bash` bundle: just the mode-change check and its anchor. */
 const TERMINAL_BUNDLE = [
@@ -110,39 +95,9 @@ function run(...args) {
 const count = (text, needle) => text.split(needle).length - 1
 
 // ---- 全新的一棵树：插入一条，再跑一次不能变成两条 ----
-const fresh = tree([freshEntry])
-check('未打补丁时 --check 失败', run('--check', '--package-dir', fresh.dir).code !== 0, true)
-const first = run('--package-dir', fresh.dir)
-check('首次打补丁成功', first.code, 0)
-let text = readFileSync(fresh.file, 'utf8')
-check('插入了一条 smart-approval 条目', count(text, '["smart-approval",'), 1)
-check('条目带上了内容横线与角星', [text.includes('M10.6 4.65V5.75H4.8V4.65H10.6Z'), text.includes('M11.85 7.95Q13.01'), text.includes('smart-approval-notch')], [true, true, true])
-check('打完补丁 --check 通过', run('--check', '--package-dir', fresh.dir).code, 0)
-run('--package-dir', fresh.dir)
-check('再跑一次仍是同一条（幂等）', count(readFileSync(fresh.file, 'utf8'), '["smart-approval",'), 1)
-
-// ---- 旧版本留下的条目：要替换掉，不能变成两条 ----
-const legacy = tree([freshEntry, legacyEntry])
-const upgrade = run('--package-dir', legacy.dir)
-check('旧条目能被升级', upgrade.code, 0)
-text = readFileSync(legacy.file, 'utf8')
-check('升级后只剩一条', count(text, '["smart-approval",'), 1)
-check('旧的星形路径被清掉', text.includes('M9.4 6.8Q10.46'), false)
-check('读到的是新图形', text.includes('M11.85 7.95Q13.01'), true)
-
-// ---- 锚点消失：要大声失败，而不是悄悄跳过 ----
-const broken = tree([freshEntry])
-writeFileSync(broken.file, readFileSync(broken.file, 'utf8').replace('const permissionGlyphs = new Map([', 'const permissionGlyphsRenamed = new Map(['))
-const missing = run('--package-dir', broken.dir)
-check('锚点不见了会失败', missing.code !== 0, true)
-check('并且说出是哪个补丁', missing.out.includes('smart-approval-glyph'), true)
-
-// ---- 指向只含一个包的目录：不该抱怨另一个包没装 ----
-const partial = run('--check', '--package-dir', join(fresh.dir, '@deepseek-ai'))
-check('只含一个包的目录不再报缺包', partial.code, 0)
 
 // ---- 持久终端挡住档位切换：要把"拒绝"改成"先关掉再切" ----
-const term = tree([freshEntry], { terminal: true })
+const term = tree([], { terminal: true })
 check('未打补丁时 --check 失败（终端闸门）', run('--check', '--package-dir', term.dir).code !== 0, true)
 const termRun = run('--package-dir', term.dir)
 check('终端补丁能应用', termRun.code, 0)
