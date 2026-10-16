@@ -185,6 +185,12 @@
         color: var(--dsw-alias-label-secondary, rgba(0, 0, 0, 0.6));
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
+      /* The band may be a non-wrapping flex row, and may wrap each entry in its own element,
+         so a full-width basis on our line is not enough — the container has to be allowed to
+         wrap. Both parent and grandparent are matched, and :has(> …) keeps it scoped to the
+         container that actually holds this line. */
+      *:has(> #dsh-activity-line) { flex-wrap: wrap; }
+      *:has(> * > #dsh-activity-line) { flex-wrap: wrap; }
       #dsh-activity-line .dsh-activity-icon { flex: none; }
       #dsh-activity-line .dsh-activity-text { overflow: hidden; text-overflow: ellipsis; }
       #dsh-activity-line .dsh-activity-elapsed {
