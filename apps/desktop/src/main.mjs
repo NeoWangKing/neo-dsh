@@ -48,7 +48,7 @@ import {
   defaultHome, defaultUserDataDir, legacyHome, moveHome, relocationPlan,
   resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
-import { missingPatchEntryIds } from './profile-patch.mjs'
+import { missingPatchEntryIds, reconcileBundles } from './profile-patch.mjs'
 
 const require = createRequire(import.meta.url)
 
@@ -246,11 +246,46 @@ function syncBundledPlugins(profileName = 'web') {
   const section = profile?.dsh?.profile
   if (section === undefined || !Array.isArray(section.bundles)) return added
   profile.dependencies = profile.dependencies ?? {}
-  const missing = bundles.filter((name) => !section.bundles.includes(name))
+  // An update carries its plugins: whatever this app installed into the home before and the
+  // shipped list no longer contains is taken back out, and the shipped list is mounted. Only
+  // names this app recorded itself are ever removed, so a user-installed bundle is untouched.
+  const listMarker = join(liveDir, '.neo-dsh-bundles.json')
+  let previous = []
+  try {
+    const record = JSON.parse(readFileSync(listMarker, 'utf8'))
+    if (Array.isArray(record?.bundles)) previous = record.bundles.filter((name) => typeof name === 'string')
+  } catch {
+    // no record yet (or an unreadable one): nothing to retire
+  }
+  const { remove: recorded, add: missing } = reconcileBundles(bundles, previous, section.bundles)
+  // Homes that predate the record still have to follow an update. Ownership is provable
+  // without it: a bundle is ours when the live profile points at `file:vendor/<name>` *and*
+  // that copy carries the marker this app writes when it lays a plugin down. A plugin the
+  // user installed through the marketplace has neither, so it is never touched.
+  const legacy = section.bundles.filter((name) => typeof name === 'string'
+    && !bundles.includes(name)
+    && profile.dependencies[name] === `file:vendor/${name}`
+    && existsSync(join(liveDir, 'vendor', name, marker)))
+  const retired = [...new Set([...recorded, ...legacy])]
+  for (const name of retired) {
+    section.bundles = section.bundles.filter((row) => row !== name)
+    // Drop the dependency only when it is the `file:vendor/…` pointer we wrote ourselves.
+    if (profile.dependencies[name] === `file:vendor/${name}`) delete profile.dependencies[name]
+    for (const dir of ['vendor', 'node_modules']) {
+      const target = join(liveDir, dir, name)
+      if (existsSync(join(target, marker))) rmSync(target, { recursive: true, force: true })
+    }
+    log(`plugin sync: retired ${name} — this build no longer ships it`)
+  }
+  try {
+    writeFileSync(listMarker, `${JSON.stringify({ version, bundles }, null, 2)}\n`)
+  } catch (error) {
+    log(`plugin sync: could not record the bundled list (${error.message})`)
+  }
   // A preset package is never mounted as a bundle: the preset entry mounts the modules
   // it names, and a bundle would try to load the package root instead.
   const undeclared = presets.filter((name) => profile.dependencies[name] === undefined)
-  if (missing.length === 0 && undeclared.length === 0) return added
+  if (missing.length === 0 && undeclared.length === 0 && retired.length === 0) return added
   section.bundles.push(...missing)
   for (const name of [...missing, ...undeclared]) {
     if (profile.dependencies[name] === undefined) profile.dependencies[name] = `file:vendor/${name}`

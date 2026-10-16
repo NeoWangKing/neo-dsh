@@ -4,7 +4,7 @@
  *
  *   node apps/desktop/test/profile-patch.test.mjs
  */
-import { missingPatchEntryIds, patchEntryIds } from '../src/profile-patch.mjs'
+import { reconcileBundles,  missingPatchEntryIds, patchEntryIds } from '../src/profile-patch.mjs'
 
 let failures = 0
 function check(name, actual, expected) {
@@ -61,3 +61,12 @@ check('用户改过这条（同 id）→ 视为已有，不覆盖他的改动', 
 
 console.log(failures === 0 ? '\nall profile-patch checks passed' : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
+
+// An update carries its plugins: shipped bundles are mounted, and bundles *this app* put in
+// the home before that the build no longer ships are taken back out. A bundle the user
+// installed themselves is never in the record, so it can never be removed.
+eq(reconcileBundles(['a', 'b'], ['a', 'b'], ['a', 'b']), { remove: [], add: [] }, '一致时不动')
+eq(reconcileBundles(['a'], ['a', 'b'], ['a', 'b']), { remove: ['b'], add: [] }, '不再随包 → 收回我们自己装过的那个')
+eq(reconcileBundles(['a', 'c'], ['a'], ['a']), { remove: [], add: ['c'] }, '新随包的插件会被挂上')
+eq(reconcileBundles(['a'], [], ['a', 'user-thing']), { remove: [], add: [] }, '用户自己装的插件永不被删')
+eq(reconcileBundles(['a'], ['a', 'b'], ['a']), { remove: [], add: [] }, '已经不在 live 里的不重复处理')

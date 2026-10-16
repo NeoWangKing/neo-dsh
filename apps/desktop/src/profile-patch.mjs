@@ -42,3 +42,25 @@ export function missingPatchEntryIds(shipped, live) {
   const present = new Set(patchEntryIds(live))
   return patchEntryIds(shipped).filter((id) => !present.has(id))
 }
+
+/**
+ * Which shipped bundles the live profile has to gain and lose, so an update carries its
+ * plugins with it.
+ *
+ * The plugin manager materialises `dsh.profile.bundles` into the user's own profile, and a
+ * patch can only ever *add* a row — so without this, a plugin we drop in a release would
+ * keep loading in every existing home forever. `previous` is the list this app installed
+ * last time (it records one), which is what makes the removal safe: we only take back what
+ * we put there, never a bundle the user installed themselves.
+ *
+ * @param {string[]} current - the bundles this build ships.
+ * @param {string[]} previous - the bundles this app installed into this home last time.
+ * @param {string[]} existing - the live profile's current bundle list.
+ * @returns {{remove: string[], add: string[]}} names to drop and names to mount.
+ */
+export function reconcileBundles(current, previous, existing) {
+  const remove = previous.filter((name) => !current.includes(name) && existing.includes(name))
+  const kept = existing.filter((name) => !remove.includes(name))
+  const add = current.filter((name) => !kept.includes(name))
+  return { remove, add }
+}
