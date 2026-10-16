@@ -50,6 +50,7 @@ import {
 } from './desktop-home.mjs'
 import { missingPatchEntryIds, reconcileBundles } from './profile-patch.mjs'
 import { confirmPatchBoot, countBoot, STATE_DIRNAME } from './patch-apply.mjs'
+import { checkAndApplyPatch } from './patch-fetch.mjs'
 
 const require = createRequire(import.meta.url)
 
@@ -211,6 +212,24 @@ function syncBundledPlugins(profileName = 'web') {
   const names = [...new Set([...bundles, ...presets])]
   if (names.length === 0) return []
 
+  // A hot patch is fetched, verified and written before anything reads it: the launch that
+  // applies one still runs the old files, the *next* launch runs the patch, and if that one
+  // never quits cleanly the boot counter rolls it back.
+  void (async () => {
+    try {
+      const patchRoot = dirname(process.resourcesPath)
+      const outcome = await checkAndApplyPatch({
+        root: patchRoot,
+        stateDir: join(patchRoot, STATE_DIRNAME),
+        appVersion: app.getVersion(),
+        log: (message) => log(`patch: ${message}`),
+      })
+      if (outcome !== null) log(`patch: ${outcome.patchId} will run from the next launch`)
+    } catch (error) {
+      log(`patch: check failed (${error.message})`)
+    }
+  })()
+
   // A hot patch counts boots: one launch that never reaches the ready signal is rolled back.
   try {
     const installRoot = dirname(process.resourcesPath)
@@ -229,10 +248,22 @@ function syncBundledPlugins(profileName = 'web') {
     }
   })
   const version = app.getVersion()
+  // A hot patch that touched a vendored plugin leaves this behind, because the app skips the
+  // copy while its own version is unchanged — a patched plugin would otherwise never load.
+  const forcedByPatch = (() => {
+    try {
+      const flag = join(dirname(process.resourcesPath), STATE_DIRNAME, 'force-bundled')
+      if (!existsSync(flag)) return false
+      rmSync(flag, { force: true })
+      return true
+    } catch {
+      return false
+    }
+  })()
   // `DSH_DESKTOP_FORCE_BUNDLED=1` re-copies them even when the version is unchanged:
   // editing a bundled plugin in a source checkout keeps the version, and the dev
   // window has to show the edit (the dev-window script sets this).
-  const forced = process.env.DSH_DESKTOP_FORCE_BUNDLED === '1'
+  const forced = forcedByPatch || process.env.DSH_DESKTOP_FORCE_BUNDLED === '1'
   const marker = '.neo-dsh-bundled.json'
   const added = []
   for (const name of names) {
