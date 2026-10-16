@@ -54,9 +54,14 @@ see "The 0.2 harness migration" below before touching those versions).
 ```sh
 pnpm test                      # seconds; every suite must pass
 bash scripts/dev-window.sh     # the user looks at :3199 (throwaway home, isolated Electron profile)
-#   …user confirms…
 git add -A && git commit       # conventional commits: feat(scope): … / fix(scope): … / docs(scope): …
 ```
+
+**Commit freely; packaging is the one step that waits.** A change is not finished until it is
+committed and pushed, so do that on your own. Tagging, building artifacts, publishing a release
+and installing over the running app are the user's call alone — never tag or package without an
+explicit order ("发" / "打包" / "发版"). The dev window is how a change gets looked at, not a gate
+on committing it.
 
 Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 `patch-harness`, `docs`, `release`.
