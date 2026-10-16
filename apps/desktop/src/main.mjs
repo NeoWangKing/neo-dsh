@@ -329,14 +329,14 @@ function syncBundledPlugins(profileName = 'web') {
     // no record yet (or an unreadable one): nothing to retire
   }
   const { remove: recorded, add: missing } = reconcileBundles(bundles, previous, section.bundles)
-  // Homes that predate the record still have to follow an update. Ownership is provable
-  // without it: a bundle is ours when the live profile points at `file:vendor/<name>` *and*
-  // that copy carries the marker this app writes when it lays a plugin down. A plugin the
-  // user installed through the marketplace has neither, so it is never touched.
+  // Only bundles this app is *known* to have stopped shipping may be taken out, and only when
+  // the record says we put them there. A `file:vendor/<name>` pointer plus a marker is not
+  // proof: a plugin the user installed through the marketplace looks exactly the same, and
+  // removing those cost them their whole plugin setup once. Anything else stays.
+  const RETIRED_BY_US = ['dsh-smart-approval']
   const legacy = section.bundles.filter((name) => typeof name === 'string'
     && !bundles.includes(name)
-    && profile.dependencies[name] === `file:vendor/${name}`
-    && existsSync(join(liveDir, 'vendor', name, marker)))
+    && RETIRED_BY_US.includes(name))
   const retired = [...new Set([...recorded, ...legacy])]
   for (const name of retired) {
     section.bundles = section.bundles.filter((row) => row !== name)
