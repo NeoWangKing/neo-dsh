@@ -172,7 +172,7 @@
     el.id = STYLE_ID;
     el.textContent = `
       #dsh-activity-line {
-        display: flex; align-items: center; gap: 6px;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
         /* Own row at the bottom of the composer band: the band is a wrapping flex
            container the shipped stats line shares, so a full-width basis both breaks
            the line and keeps the stats row above it. "order" makes the position hold
