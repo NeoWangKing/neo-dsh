@@ -71,6 +71,14 @@ Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 **The CI builds the artifacts. Do not build them locally.**
 
 ```sh
+# 0. REFRESH FIRST — the user's standing rule: a release carries the newest harness and the
+#    newest vendored payloads *as of the moment it is packaged*, not whatever was pinned when
+#    the work started. Run `node scripts/deps-latest.mjs` (exits 1 listing everything behind),
+#    bump `apps/desktop/package.json` (+ `pnpm --dir apps/desktop install`) and every
+#    `vendor/*/package.json` it names, and re-run until it prints "every pin is current ✓".
+#    `@deepseek-ai/*` moves as one lockstep set — the newest published `@deepseek-ai/dsh`,
+#    prereleases included — so a single stale pin is a real miss, not a nit.
+#
 # 1. bump both versions  (the app version tracks the harness generation: the
 #    0.2.0-rc.2 harness shipped as app 0.2.0, after 0.1.17 pinned it)
 #    package.json + apps/desktop/package.json : 0.1.17 → 0.2.0
