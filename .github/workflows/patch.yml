@@ -1,0 +1,76 @@
+# Publish a hot patch: one run, one small payload, no new version.
+#
+# The app polls a fixed address (releases/download/patch/patch.json) and applies the payload
+# on launch, so publishing means replacing that release's two assets. The payload file name
+# carries the patch id because GitHub serves release assets through a CDN cache: reusing one
+# name has already delivered a stale payload once (the sha256 gate refused it, which is
+# exactly why the gate exists).
+name: patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      patchId:
+        description: '补丁号，形如 0.2.4-p8'
+        required: true
+      appliesTo:
+        description: '适用版本，逗号分隔'
+        required: true
+        default: '0.2.4'
+      paths:
+        description: '要打包的仓库路径，逗号分隔（支持 plugins/activity-line/*、apps/desktop/src/*、resources/profile-web/*）'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set -euo pipefail
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run resources
+      - name: 组装 payload 并更新清单
+        env:
+          PATCH_ID: ${{ inputs.patchId }}
+          APPLIES_TO: ${{ inputs.appliesTo }}
+          PATHS: ${{ inputs.paths }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/payload
+          IFS=',' read -ra LIST <<< "$PATHS"
+          for src in "${LIST[@]}"; do
+            src="$(echo "$src" | xargs)"
+            case "$src" in
+              resources/profile-web/*) dest="$src" ;;
+              plugins/activity-line/*)  dest="resources/profile-web/vendor/dsh-activity-line/${src#plugins/activity-line/}" ;;
+              apps/desktop/src/*)       dest="resources/app/src/${src#apps/desktop/src/}" ;;
+              *) echo "跳过（不在允许范围）: $src"; continue ;;
+            esac
+            mkdir -p "build/payload/$(dirname "$dest")"
+            cp -r "$src" "build/payload/$dest"
+          done
+          [ "$(find build/payload -type f | wc -l)" -gt 0 ] || { echo "payload 是空的，拒绝发布"; exit 1; }
+          tar -czf "build/payload-$PATCH_ID.tar.gz" -C build/payload .
+          SHA="$(sha256sum "build/payload-$PATCH_ID.tar.gz" | cut -d' ' -f1)"
+          export PATCH_ID APPLIES_TO SHA
+          python3 - <<'PY'
+          import json, os
+          manifest = {
+              "patchId": os.environ["PATCH_ID"],
+              "appliesTo": [v.strip() for v in os.environ["APPLIES_TO"].split(",") if v.strip()],
+              "payloadUrl": "https://github.com/%s/releases/download/patch/payload-%s.tar.gz"
+                            % (os.environ["GITHUB_REPOSITORY"], os.environ["PATCH_ID"]),
+              "sha256": os.environ["SHA"],
+              "requiresRestart": True,
+          }
+          json.dump(manifest, open("build/patch.json", "w"), ensure_ascii=False, indent=2)
+          PY
+          gh release view patch >/dev/null 2>&1 || gh release create patch --target main --title "热补丁（hot patches）" --notes "承载热补丁：资产每次原地替换，客户端只认这个固定地址。"
+          gh release upload patch build/patch.json "build/payload-$PATCH_ID.tar.gz" --clobber
+          echo "已发布 $PATCH_ID（sha256 $SHA）"

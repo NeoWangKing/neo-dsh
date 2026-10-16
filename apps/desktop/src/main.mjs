@@ -23,7 +23,7 @@
  */
 
 import { execFileSync, spawn } from 'node:child_process'
-import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { appendFileSync, chmodSync, cpSync, createWriteStream, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join } from 'node:path'
 import { createRequire } from 'node:module'
@@ -203,9 +203,46 @@ function materialisedVersion(target, marker) {
  * a broken profile manifest means the host cannot boot at all.
  * @returns the plugin names that were materialised, for the log.
  */
+/**
+ * Keep a copy of the profile state before anything in this launch may write to it.
+ *
+ * This exists because a bug in our own bundle reconciliation once emptied a user's plugin
+ * list, and the only copy of the previous state was a stray backup file. Nothing that
+ * replaces or repairs a profile is allowed to be irreversible again: the files that carry
+ * "what the user has" — the bundle list, the config rows, the per-plugin preferences — are
+ * copied into `patch-state/profile-snapshots/<timestamp>/` first, and the newest ten are kept.
+ *
+ * @param {string} liveDir - the profile directory.
+ * @param {string} stateDir - where snapshots live.
+ * @returns {string|null} the snapshot directory, or null when there was nothing to copy.
+ */
+function snapshotProfile(liveDir, stateDir) {
+  const names = ['package.json', 'cordis.yml', 'cordis.patch.yml', 'settings.yaml', '.plugin-manager']
+  const present = names.filter((name) => existsSync(join(liveDir, name)))
+  if (present.length === 0) return null
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const dir = join(stateDir, 'profile-snapshots', stamp)
+  try {
+    mkdirSync(dir, { recursive: true })
+    for (const name of present) cpSync(join(liveDir, name), join(dir, name), { recursive: true })
+    const root = join(stateDir, 'profile-snapshots')
+    const keep = readdirSync(root).sort().slice(-10)
+    for (const entry of readdirSync(root)) {
+      if (!keep.includes(entry)) rmSync(join(root, entry), { recursive: true, force: true })
+    }
+    log(`profile snapshot: ${dir} (${present.join(', ')})`)
+    return dir
+  } catch (error) {
+    log(`profile snapshot skipped: ${error.message}`)
+    return null
+  }
+}
+
 function syncBundledPlugins(profileName = 'web') {
   const liveDir = join(DSH_HOME, 'profiles', profileName)
   const liveManifest = join(liveDir, 'package.json')
+  // Before this launch may touch the profile, keep a copy of what the user has.
+  snapshotProfile(liveDir, join(dirname(process.resourcesPath), STATE_DIRNAME))
   if (!existsSync(liveManifest)) return []
   const bundles = bundledPlugins()
   const presets = profilePresetPackages()

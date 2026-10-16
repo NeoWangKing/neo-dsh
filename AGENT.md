@@ -66,6 +66,22 @@ on committing it.
 Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 `patch-harness`, `docs`, `release`.
 
+## What an update may and may not touch
+
+An update replaces **our code**. It must never decide what the user owns.
+
+- **Never** change which plugins the user has installed or enabled, and never change their
+  settings. `dsh.profile.bundles` in the live profile is the user's list, not ours.
+- Anything that writes a profile **snapshots it first** (`patch-state/profile-snapshots/`,
+  newest ten kept — see `snapshotProfile` in `main.mjs`). A repair that cannot be undone is
+  not a repair.
+- Retirement is limited to bundles this app is **known** to have stopped shipping
+  (`RETIRED_BY_US`). A `file:vendor/<name>` pointer plus a marker is not proof of ownership:
+  a marketplace install looks identical, and that mistake once emptied a user's plugin list.
+- Third-party plugin managers that rewrite the profile are not shipped. `dshmarket` did that
+  on every launch, which is why it is gone; the harness's own `plugin-manager` rows are the
+  plugin management now.
+
 ## How a release is made
 
 **The CI builds the artifacts. Do not build them locally.**
