@@ -67,7 +67,10 @@ export async function checkAndApplyPatch({ root, stateDir, appVersion, fetchImpl
     return null
   }
 
-  if (alreadyApplied === manifest.patchId) {
+  // Written but not yet run counts as applied too: re-writing the same bytes would only
+  // re-trigger the prompt.
+  const pendingNow = pendingPatch(stateDir)
+  if (alreadyApplied === manifest.patchId || pendingNow?.patchId === manifest.patchId) {
     log(`patch ${manifest.patchId} is already applied`)
     return null
   }

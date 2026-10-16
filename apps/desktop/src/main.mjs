@@ -245,7 +245,25 @@ function syncBundledPlugins(profileName = 'web') {
         appVersion: app.getVersion(),
         log: (message) => log(`patch: ${message}`),
       })
-      if (outcome !== null) log(`patch: ${outcome.patchId} will run from the next launch`)
+      if (outcome !== null) {
+        log(`patch: ${outcome.patchId} is on disk; a restart makes it live`)
+        // Offer the one restart the user should have to perform. Non-blocking: an ignored
+        // dialog costs nothing, and the patch runs on the next launch either way.
+        const { dialog } = await import('electron')
+        const { response } = await dialog.showMessageBox({
+          type: 'info',
+          title: '有新的更新',
+          message: `补丁 ${outcome.patchId} 已下载并校验完成`,
+          detail: '重启后生效。重启会中断正在运行的任务；选择「稍后」则会在你下次启动时生效。',
+          buttons: ['立即重启', '稍后'],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        if (response === 0) {
+          app.relaunch()
+          app.quit()
+        }
+      }
     } catch (error) {
       log(`patch: check failed (${error.message})`)
     }
