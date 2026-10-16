@@ -49,6 +49,7 @@ import {
   resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
 import { missingPatchEntryIds, reconcileBundles } from './profile-patch.mjs'
+import { confirmPatchBoot, countBoot, STATE_DIRNAME } from './patch-apply.mjs'
 
 const require = createRequire(import.meta.url)
 
@@ -210,6 +211,23 @@ function syncBundledPlugins(profileName = 'web') {
   const names = [...new Set([...bundles, ...presets])]
   if (names.length === 0) return []
 
+  // A hot patch counts boots: one launch that never reaches the ready signal is rolled back.
+  try {
+    const installRoot = dirname(process.resourcesPath)
+    const boot = countBoot({ root: installRoot, stateDir: join(installRoot, STATE_DIRNAME) })
+    if (boot.rolledBack !== null) log(`patch: rolled back ${boot.rolledBack} — the previous launch never confirmed`)
+  } catch (error) {
+    log(`patch: boot count skipped (${error.message})`)
+  }
+  // A clean quit is the confirmation a patch waits for: the app started, ran and shut down
+  // normally. A crash never reaches this, so the next launch rolls the patch back.
+  app.on('will-quit', () => {
+    try {
+      confirmPatchBoot(join(dirname(process.resourcesPath), STATE_DIRNAME))
+    } catch {
+      // nothing to confirm (or nothing writable): the pending marker stays, which is the safe side
+    }
+  })
   const version = app.getVersion()
   // `DSH_DESKTOP_FORCE_BUNDLED=1` re-copies them even when the version is unchanged:
   // editing a bundled plugin in a source checkout keeps the version, and the dev
