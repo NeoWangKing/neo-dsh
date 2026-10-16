@@ -49,7 +49,7 @@ import {
   resolveHome, syncHome, writeDataHome,
 } from './desktop-home.mjs'
 import { missingPatchEntryIds, reconcileBundles } from './profile-patch.mjs'
-import { confirmPatchBoot, countBoot, STATE_DIRNAME } from './patch-apply.mjs'
+import { confirmPatchBoot, countBoot, pendingPatch, STATE_DIRNAME } from './patch-apply.mjs'
 import { checkAndApplyPatch } from './patch-fetch.mjs'
 
 const require = createRequire(import.meta.url)
@@ -212,6 +212,27 @@ function syncBundledPlugins(profileName = 'web') {
   const names = [...new Set([...bundles, ...presets])]
   if (names.length === 0) return []
 
+  // A hot patch counts boots: one launch that never reaches the ready signal is rolled back.
+  try {
+    const installRoot = dirname(process.resourcesPath)
+    const boot = countBoot({ root: installRoot, stateDir: join(installRoot, STATE_DIRNAME) })
+    if (boot.rolledBack !== null) log(`patch: rolled back ${boot.rolledBack} — the previous launch never confirmed`)
+  } catch (error) {
+    log(`patch: boot count skipped (${error.message})`)
+  }
+  // A clean quit is the confirmation a patch waits for: the app started, ran and shut down
+  // normally. A crash never reaches this, so the next launch rolls the patch back.
+  app.on('will-quit', () => {
+    try {
+      // Only a patch this launch actually loaded may be confirmed: the boot counter is what
+      // separates "written a moment ago" from "ran and the app is quitting normally".
+      const state = join(dirname(process.resourcesPath), STATE_DIRNAME)
+      const pending = pendingPatch(state)
+      if (pending !== null && Number(pending.boots) >= 1) confirmPatchBoot(state)
+    } catch {
+      // nothing to confirm (or nothing writable): the pending marker stays, which is the safe side
+    }
+  })
   // A hot patch is fetched, verified and written before anything reads it: the launch that
   // applies one still runs the old files, the *next* launch runs the patch, and if that one
   // never quits cleanly the boot counter rolls it back.
@@ -230,23 +251,6 @@ function syncBundledPlugins(profileName = 'web') {
     }
   })()
 
-  // A hot patch counts boots: one launch that never reaches the ready signal is rolled back.
-  try {
-    const installRoot = dirname(process.resourcesPath)
-    const boot = countBoot({ root: installRoot, stateDir: join(installRoot, STATE_DIRNAME) })
-    if (boot.rolledBack !== null) log(`patch: rolled back ${boot.rolledBack} — the previous launch never confirmed`)
-  } catch (error) {
-    log(`patch: boot count skipped (${error.message})`)
-  }
-  // A clean quit is the confirmation a patch waits for: the app started, ran and shut down
-  // normally. A crash never reaches this, so the next launch rolls the patch back.
-  app.on('will-quit', () => {
-    try {
-      confirmPatchBoot(join(dirname(process.resourcesPath), STATE_DIRNAME))
-    } catch {
-      // nothing to confirm (or nothing writable): the pending marker stays, which is the safe side
-    }
-  })
   const version = app.getVersion()
   // A hot patch that touched a vendored plugin leaves this behind, because the app skips the
   // copy while its own version is unchanged — a patched plugin would otherwise never load.
