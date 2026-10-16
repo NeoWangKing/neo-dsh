@@ -333,7 +333,7 @@ function syncBundledPlugins(profileName = 'web') {
   // the record says we put them there. A `file:vendor/<name>` pointer plus a marker is not
   // proof: a plugin the user installed through the marketplace looks exactly the same, and
   // removing those cost them their whole plugin setup once. Anything else stays.
-  const RETIRED_BY_US = ['dsh-smart-approval']
+  const RETIRED_BY_US = ['dsh-smart-approval', 'dshmarket']
   const legacy = section.bundles.filter((name) => typeof name === 'string'
     && !bundles.includes(name)
     && RETIRED_BY_US.includes(name))

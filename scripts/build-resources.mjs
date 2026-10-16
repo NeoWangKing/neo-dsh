@@ -67,7 +67,6 @@ const PRESET = join(REPO, 'presets', 'liangshen')
 const OPTIONAL_PLUGINS = [
   { dir: join(REPO, 'vendor', 'dsh-ops-linux'), name: 'dsh-ops', platforms: ['linux'] },
   { dir: join(REPO, 'vendor', 'dsh-ops-macos'), name: 'dsh-ops', platforms: ['darwin'] },
-  { dir: join(REPO, 'vendor', 'dshmarket'), name: 'dshmarket', keepNodeModules: true },
   // Community plugins the desktop now carries by default, one payload each on every platform.
   // They are ordinary npm packages, so they are vendored with their dependencies inside them —
   // that is what `keepNodeModules` is for, and why `.gitignore` re-includes

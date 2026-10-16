@@ -6,7 +6,6 @@
     "dsh-desktop-settings": "file:vendor/dsh-desktop-settings",
     "dsh-liangshen-preset": "file:vendor/dsh-liangshen-preset",
     "dsh-ops": "file:vendor/dsh-ops",
-    "dshmarket": "file:vendor/dshmarket",
     "dsh-whale-widget": "file:vendor/dsh-whale-widget",
     "dsh-mnemon": "file:vendor/dsh-mnemon",
     "dsh-context": "file:vendor/dsh-context",
