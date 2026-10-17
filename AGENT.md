@@ -141,6 +141,16 @@ If you add a third channel that publishes a release, it must not look like a ver
 #    line newer than `latest` is reported as a note and never taken automatically: moving the
 #    whole app onto an alpha is the operator's call, not a preflight's.
 #
+# 5. CLOSE THE PATCH CHANNEL — every new version ships at zero patches.
+#    A hot patch exists to fix a *released* version; the same fix must be in the repo, so the
+#    next build contains it by construction. Then the channel has to be closed, or a user on
+#    the new version gets offered a fix they already have:
+#        gh release delete-asset patch patch.json -y     # 404 for everyone after this
+#    Two rules follow, and appliesTo is not a place to be generous:
+#      · a patch's appliesTo names only the versions that still need it — never a version that
+#        already contains the fix;
+#      · the fix lands in the repo in the same change as the patch (commit first, then publish).
+#
 # 1. bump both versions  (the app version tracks the harness generation: the
 #    0.2.0-rc.2 harness shipped as app 0.2.0, after 0.1.17 pinned it)
 #    package.json + apps/desktop/package.json : 0.1.17 → 0.2.0
