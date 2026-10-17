@@ -67,6 +67,19 @@ on committing it.
 Commit scopes in use: `smart-approval`, `permission`, `models`, `icon`, `shell`,
 `patch-harness`, `docs`, `release`.
 
+## Environment fixes the installer applies
+
+An install may fix the *machine*, not just the tree: `scripts/install-release.sh` ends with
+`ensure_monospace_nerd_font`, which points fontconfig's generic `monospace` at
+`JetBrainsMono Nerd Font Mono` when that face is installed and the family does not already
+resolve to it (idempotent, backed up, skipped when the face is absent).
+
+Why: the built-in terminal and every other program asking for `monospace` rendered Nerd
+icons as empty boxes because fontconfig resolved the generic family to Noto Sans Mono, which
+has no Nerd glyphs. Two rounds were spent editing the terminal's CSS variable and its xterm
+`fontFamily` default before `fc-match monospace` showed the real cause — **for a glyph problem,
+ask fontconfig first**.
+
 ## What an update may and may not touch
 
 An update replaces **our code**. It must never decide what the user owns.

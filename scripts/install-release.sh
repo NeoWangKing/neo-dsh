@@ -294,3 +294,46 @@ if [ -d "$BAK" ]; then
 fi
 echo "启动：  '$PREFIX/neo-dsh'      （或你平时用的桌面图标）"
 echo "提示：  数据、会话、设置都在各自的数据目录里，这次替换没碰它们。"
+
+# The built-in terminal (and every other program that asks for "monospace") renders Nerd
+# icons as empty boxes while fontconfig resolves that generic family to a face without the
+# glyphs — on this machine it was Noto Sans Mono. Point the generic family at the strict
+# single-width Nerd variant once, at install time, so the fix survives every update.
+# Idempotent, skipped when the face is missing or the family already resolves to it.
+ensure_monospace_nerd_font() {
+  local conf="$HOME/.config/fontconfig/fonts.conf"
+  local face="JetBrainsMono Nerd Font Mono"
+  command -v fc-match >/dev/null 2>&1 || return 0
+  if fc-list 2>/dev/null | grep -qF "$face"; then :; else
+    echo "fontconfig: $face 未安装，跳过 monospace 别名"
+    return 0
+  fi
+  if fc-match monospace 2>/dev/null | grep -qF "$face"; then
+    echo "fontconfig: monospace 已指向 $face ✓"
+    return 0
+  fi
+  mkdir -p "$(dirname "$conf")"
+  [ -f "$conf" ] && cp -a "$conf" "$conf.bak-neo-dsh-$(date +%Y%m%d-%H%M%S)"
+  [ -f "$conf" ] || printf '%s\n' '<?xml version="1.0"?>' '<!DOCTYPE fontconfig SYSTEM "fonts.dtd">' '<fontconfig>' '</fontconfig>' > "$conf"
+  python3 - "$conf" "$face" <<'PYFONT'
+import sys
+conf, face = sys.argv[1], sys.argv[2]
+s = open(conf).read()
+if face in s:
+    print("fontconfig: 别名已存在 ✓")
+    raise SystemExit(0)
+block = ('  <match target="pattern">\n'
+         '    <test qual="any" name="family"><string>monospace</string></test>\n'
+         '    <edit name="family" mode="assign" binding="strong">\n'
+         f'      <string>{face}</string>\n'
+         '    </edit>\n'
+         '  </match>\n')
+s = s.replace('</fontconfig>', block + '</fontconfig>', 1)
+open(conf, 'w').write(s)
+print(f"fontconfig: monospace → {face}（已写入 {conf}）")
+PYFONT
+  fc-cache -f >/dev/null 2>&1 || true
+  fc-match monospace 2>/dev/null | sed 's/^/fontconfig: 现在 monospace → /'
+}
+
+ensure_monospace_nerd_font
