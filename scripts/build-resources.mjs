@@ -169,8 +169,6 @@ const presetPatch = [
   '# exist, so the entry is added with a root-level `insert` list.',
   // 0.1.5 named the default preset in settings (`agent-presets.default`); 0.2 owns it in
   // the registry row, so the same choice travels here instead.
-  '- id: agent-preset-registry',
-  '  config:',
   '- insert:',
   '    - id: preset-liangshen',
   "      name: '@deepseek-ai/dsh-agent-preset'",
