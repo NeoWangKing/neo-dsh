@@ -171,7 +171,6 @@ const presetPatch = [
   // the registry row, so the same choice travels here instead.
   '- id: agent-preset-registry',
   '  config:',
-  '    default: liangshen',
   '- insert:',
   '    - id: preset-liangshen',
   "      name: '@deepseek-ai/dsh-agent-preset'",
