@@ -990,6 +990,10 @@ function createWindow() {
     title: 'Neo DSH',
     icon: join(projectRoot, 'assets', 'icon.png'),
     show: false,
+    // The boot screen ("HARNESS / Loading plugins…") paints only the top of the window while
+    // the host is still starting, and an unset backgroundColor is white — hence the white
+    // band under it for a moment. Match the app's dark surface instead.
+    backgroundColor: '#0f1214',
     // Linux is frameless by default — niri and friends move borderless windows and
     // the UI draws its own chrome — but Settings can ask for the native title bar.
     // macOS and Windows always get the native frame: frameless there means no
