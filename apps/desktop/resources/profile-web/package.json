@@ -13,7 +13,8 @@
     "cc-safety-net": "file:vendor/cc-safety-net",
     "@liustack/modsearch": "file:vendor/@liustack/modsearch",
     "@nanmicoder/dsh-agent-teams": "file:vendor/@nanmicoder/dsh-agent-teams",
-    "@michengai/dsh-skills-manager": "file:vendor/@michengai/dsh-skills-manager"
+    "@michengai/dsh-skills-manager": "file:vendor/@michengai/dsh-skills-manager",
+    "dsh-image-generation": "file:vendor/dsh-image-generation"
   },
   "dsh": {
     "profile": {
@@ -21,7 +22,8 @@
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
         "dsh-activity-line",
-        "dsh-desktop-settings"
+        "dsh-desktop-settings",
+        "dsh-image-generation"
       ],
       "patchReload": "startup"
     }
