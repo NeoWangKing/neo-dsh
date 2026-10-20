@@ -141,6 +141,13 @@ If you add a third channel that publishes a release, it must not look like a ver
 #    line newer than `latest` is reported as a note and never taken automatically: moving the
 #    whole app onto an alpha is the operator's call, not a preflight's.
 #
+# 4b. BOOT GATE — a window that renders is not a product that works.
+#     Before tagging, capture the host's boot log and require it clean:
+#        node scripts/check-boot.mjs <logfile>      # "✓ every plugin activated" or exit 1
+#     0.2.6 shipped with "4 entries did not activate" (the chat UI plus three memory plugins)
+#     while the desktop smoke test still printed SMOKE OK — it only asserted that the window had
+#     a root child. A smoke test that cannot fail on a broken product is decoration.
+#
 # 5. CLOSE THE PATCH CHANNEL — every new version ships at zero patches.
 #    A hot patch exists to fix a *released* version; the same fix must be in the repo, so the
 #    next build contains it by construction. Then the channel has to be closed, or a user on
