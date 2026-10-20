@@ -177,6 +177,90 @@
       :root:root {
         --ds-font-family-code: "JetBrainsMono Nerd Font Mono", "JetBrains Mono", ui-monospace, monospace;
       }
+
+      /* ── Nord 主题（默认启用）───────────────────────────────────────────────
+         只重映射 --dsw-static-* 色板；--dsw-alias-* 全都引用这一层，会跟着变。
+         色值取自 Nord 官方调色板：Polar Night / Snow Storm / Frost / Aurora。
+         不认识的 token 不动，保证不会把某个状态色映射成透明或消失。 */
+      :root:root {
+        --dsw-static-neutral-00: #2E3440;
+        --dsw-static-neutral-bluish-00: #2E3440;
+        --dsw-static-neutral-50: #3B4252;
+        --dsw-static-neutral-bluish-50: #3B4252;
+        --dsw-static-neutral-bluish-60: #3B4252;
+        --dsw-static-neutral-bluish-75: #3B4252;
+        --dsw-static-neutral-100: #434C5E;
+        --dsw-static-neutral-bluish-100: #434C5E;
+        --dsw-static-neutral-150: #434C5E;
+        --dsw-static-neutral-bluish-150: #434C5E;
+        --dsw-static-neutral-200: #4C566A;
+        --dsw-static-neutral-bluish-200: #4C566A;
+        --dsw-static-neutral-250: #4C566A;
+        --dsw-static-neutral-300: #4C566A;
+        --dsw-static-neutral-bluish-300: #5E6779;
+        --dsw-static-neutral-400: #5E6779;
+        --dsw-static-neutral-bluish-400: #5E6779;
+        --dsw-static-neutral-500: #5E6779;
+        --dsw-static-neutral-bluish-500: #6E7A8F;
+        --dsw-static-neutral-550: #6E7A8F;
+        --dsw-static-neutral-600: #6E7A8F;
+        --dsw-static-neutral-bluish-600: #8A94A6;
+        --dsw-static-neutral-700: #8A94A6;
+        --dsw-static-neutral-bluish-700: #8A94A6;
+        --dsw-static-neutral-bluish-750: #8A94A6;
+        --dsw-static-neutral-800: #D8DEE9;
+        --dsw-static-neutral-bluish-800: #D8DEE9;
+        --dsw-static-neutral-850: #D8DEE9;
+        --dsw-static-neutral-bluish-850: #D8DEE9;
+        --dsw-static-neutral-bluish-875: #E5E9F0;
+        --dsw-static-neutral-900: #E5E9F0;
+        --dsw-static-neutral-bluish-900: #E5E9F0;
+        --dsw-static-neutral-bluish-950: #E5E9F0;
+        --dsw-static-neutral-1000: #ECEFF4;
+        --dsw-static-neutral-bluish-1000: #ECEFF4;
+        --dsw-static-blue-950: #3B4C63;
+        --dsw-static-blue-900: #3B4C63;
+        --dsw-static-blue-800: #4C566A;
+        --dsw-static-blue-600: #5E81AC;
+        --dsw-static-blue-500: #5E81AC;
+        --dsw-static-blue-50p: #5E81AC;
+        --dsw-static-blue-450: #81A1C1;
+        --dsw-static-blue-400: #81A1C1;
+        --dsw-static-blue-300: #88C0D0;
+        --dsw-static-blue-100: #88C0D0;
+        --dsw-static-blue-75: #8FBCBB;
+        --dsw-static-blue-50: #8FBCBB;
+        --dsw-static-deepseek-900: #3B4C63;
+        --dsw-static-deepseek-800: #5E81AC;
+        --dsw-static-deepseek-600: #5E81AC;
+        --dsw-static-deepseek-500: #88C0D0;
+        --dsw-static-deepseek-700-delete: #88C0D0;
+        --dsw-static-deepseek-450: #88C0D0;
+        --dsw-static-deepseek-400: #88C0D0;
+        --dsw-static-deepseek-300: #88C0D0;
+        --dsw-static-deepseek-200: #88C0D0;
+        --dsw-static-deepseek-100: #8FBCBB;
+        --dsw-static-deepseek-50: #8FBCBB;
+        --dsw-static-red-900: #8C4A52;
+        --dsw-static-red-600: #A0525B;
+        --dsw-static-red-600-a08: rgb(160 82 91 / 8%);
+        --dsw-static-red-500: #BF616A;
+        --dsw-static-red-400: #BF616A;
+        --dsw-static-red-400-a12: rgb(191 97 106 / 12%);
+        --dsw-static-red-100: #D08770;
+        --dsw-static-red-50: #D08770;
+        --dsw-static-green-900: #6B8557;
+        --dsw-static-green-500: #A3BE8C;
+        --dsw-static-green-500-a08: rgb(163 190 140 / 8%);
+        --dsw-static-green-500-a12: rgb(163 190 140 / 12%);
+        --dsw-static-green-400: #A3BE8C;
+        --dsw-static-green-100: #B9D0A3;
+        --dsw-static-amber-900: #A88E4E;
+        --dsw-static-amber-600: #D0B169;
+        --dsw-static-amber-500: #EBCB8B;
+        --dsw-static-amber-400: #EBCB8B;
+        --dsw-static-amber-100: #F3DDA8;
+      }
       #dsh-activity-line {
         display: flex; align-items: center; justify-content: center; gap: 6px;
         /* Own row at the bottom of the composer band: the band is a wrapping flex
