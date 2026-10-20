@@ -121,7 +121,12 @@ for (const [tag, version] of Object.entries(tags ?? {})) {
 const harnessRows = await mapLimit(pins, async ([name, version]) => {
   if (version === target) return null
   const published = await versionsOf(name)
-  const latest = published === null ? '?' : newest(published)
+  if (published === null) return `  ${name}  pinned ${version}  →  unreadable`
+  // Family members that live on their own version line (cordis* at 1.x/4.x) are compared
+  // against their own npm `latest`, never against the numerically greatest version — that
+  // ranked an -alpha above a stable release and made the preflight cry wolf.
+  const tags = await distTagsOf(name)
+  const latest = typeof tags?.latest === 'string' ? tags.latest : newest(published)
   return latest === version ? null : `  ${name}  pinned ${version}  →  newest ${latest}`
 })
 

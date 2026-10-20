@@ -72,13 +72,6 @@ function assertParses(file, text) {
  */
 const openInAppPatches = [
   {
-    id: 'filemanager-icon',
-    why: 'the file-manager row has no desktop id, so its icon is never looked up',
-    find: /linux:\s*spec\(\s*desktopCli\(\s*(["'])xdg-open\1\s*\)\s*\)/,
-    replace: 'linux: desktopSpec("org.gnome.Nautilus", desktopCli("xdg-open"))',
-    applied: /linux:\s*desktopSpec\(\s*(["'])org\.gnome\.Nautilus\1/,
-  },
-  {
     id: 'androidstudio-icon',
     why: 'Android Studio has no desktop id, so its icon is never looked up',
     find: /linux:\s*spec\(\s*cli\(\s*(["'])studio\1\s*\)\s*,\s*file\(\[/,
