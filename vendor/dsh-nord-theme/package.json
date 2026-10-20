@@ -1,0 +1,19 @@
+{
+  "name": "dsh-nord-theme",
+  "version": "1.0.0",
+  "description": "Nord colour theme for DeepSeek Harness",
+  "type": "commonjs",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "theme",
+    "nord"
+  ]
+}

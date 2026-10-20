@@ -34,6 +34,7 @@ const REPO = dirname(dirname(fileURLToPath(import.meta.url)))
 const APP = join(REPO, 'apps', 'desktop')
 const RES = join(APP, 'resources')
 const PLUGINS = [
+  { dir: join(REPO, 'vendor', 'dsh-nord-theme'), name: 'dsh-nord-theme' },
   { dir: join(REPO, 'vendor', 'dsh-image-generation'), name: 'dsh-image-generation' },
   { dir: join(REPO, 'plugins', 'activity-line'), name: 'dsh-activity-line' },
   { dir: join(REPO, 'plugins', 'desktop-settings'), name: 'dsh-desktop-settings' },

@@ -174,10 +174,7 @@
       /* The built-in terminal and code blocks read --ds-font-family-code; the shipped
          value lists only plain monospace faces, so Nerd icons fall back to a missing glyph.
          A doubled :root outranks the shipped declaration without !important. */
-      :root:root {
-        --ds-font-family-code: "JetBrainsMono Nerd Font Mono", "JetBrains Mono", ui-monospace, monospace;
-      }
-
+      
       /* ── Nord 主题（默认启用）───────────────────────────────────────────────
          只重映射 --dsw-static-* 色板；--dsw-alias-* 全都引用这一层，会跟着变。
          色值取自 Nord 官方调色板：Polar Night / Snow Storm / Frost / Aurora。
