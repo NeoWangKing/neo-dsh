@@ -42,12 +42,15 @@ never records a path for it and silently leaves it out of
 `resources/app/node_modules`. v0.2.8 shipped 57 packages short — including
 `@deepseek-ai/dsh-app-boot`, which the host imports before anything else — and
 every platform refused to start. `apps/desktop/scripts/after-pack.cjs` runs as
-the `afterPack` hook: it asks pnpm for the production dependency names, resolves
-each with Node from `apps/desktop` (the same resolution the host uses), copies
-what the collector missed, and then runs the packaged host's `--version`. A
-package it cannot restore, or a host that cannot start, fails the build. It uses
-`packager.getResourcesDir()`, so macOS's `Contents/Resources` layout is handled
-too, and `apps/desktop/test/after-pack.test.mjs` pins its behaviour.
+the `afterPack` hook: it takes pnpm's production dependency list (falling back to
+walking the installed tree when pnpm cannot be spawned), locates each package by
+directory — `require.resolve("<pkg>/package.json")` throws for packages whose
+`exports` map hides that file, koffi and @vscode/ripgrep among them — copies what
+the collector missed, and then runs the packaged host's `--version`. A package
+it cannot restore, or a host that cannot start, fails the build. pnpm is a
+`.cmd` shim on Windows, so it is spawned through `cmd.exe`;
+`packager.getResourcesDir()` handles macOS's `Contents/Resources` layout; and
+`apps/desktop/test/after-pack.test.mjs` pins the behaviour.
 
 **The plugin ships as `vendor/`, not `node_modules/`.** electron-builder filters
 `node_modules` out of `extraResources` (it assumes the dependency walk already
