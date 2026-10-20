@@ -110,6 +110,9 @@ export interface MemorySourceManifest {
     actions?: MemorySourceActionManifest[];
     management?: MemoryManagementDescriptor;
 }
+/** Background work a Host runs for the turns of a Strategy that declares it. */
+export declare const MEMORY_STRATEGY_WORKFLOWS: readonly ["idle-review", "runtime-capacity"];
+export type MemoryStrategyWorkflow = typeof MEMORY_STRATEGY_WORKFLOWS[number];
 export interface MemoryStrategyManifest {
     apiVersion: typeof COMPOSABLE_MEMORY_API_VERSION;
     kind: 'strategy';
@@ -123,6 +126,12 @@ export interface MemoryStrategyManifest {
     maxActions: number;
     /** Exclusive contribution slots this Strategy accepts; standard slots follow Core's value contracts. */
     extensionSlots?: string[];
+    /**
+     * Background work the Host runs for the turns this Strategy composes: `idle-review` reviews an idle
+     * conversation, `runtime-capacity` archives older Runtime entries before a write would overflow it.
+     * A Host ignores workflows it does not know.
+     */
+    workflows?: MemoryStrategyWorkflow[];
 }
 /** Extension target for every selected Strategy that declares the extension's standard slot. */
 export declare const ANY_MEMORY_STRATEGY: "*";

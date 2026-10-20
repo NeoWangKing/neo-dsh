@@ -1,55 +1,55 @@
-import{a,s,Me,nt,T,bt,rt,c,n,ot,P,S,me,vt,m,Ie,x,st,l,o,w,i,ae,r,g,he,W,wt,Ct,p,ye,be,Et,M,X,ce,C,kt,I,h,Ae,B,u,O,Q,at,ct,F,E,D,xe,ve,$e,le,d,e,Ue,Oe,je,Se,lt,ut,ue,De,de,Ge,ee,z,He,we,V,dt,q,te,ne,pe,pt,ft,k,A,We,mt,ze,R,Ve,Ne,qe,y,t,re,Ce,b,U,v,N,Rt,Ke,Je,f,K}from"./chunks/index-1wy9mq4k.js";import{Qe}from"./chunks/index-r74aqh5d.js";import{Ye,ke}from"./chunks/index-f25vk507.js";import{et}from"./chunks/index-ev8p6hs6.js";import"./chunks/index-feqnsxd2.js";import{ie,J,tt,G,H}from"./chunks/index-hcky80cs.js";var lf=["-h","--help"];function mn(_,L){let j=Object.entries(_.booleans??{}),Y=Object.entries(_.values??{}),Z=Object.entries(_.lists??{}),oe=Object.fromEntries(j.map(([Le])=>[Le,!1])),se={},fe=Object.fromEntries(Z.map(([Le])=>[Le,[]])),ge=[],Pe=[],Ee=!1,Re=-1;for(let[Le,_e]of L.entries()){if(Le<=Re)continue;if(_e==="--"){ge.push(...L.slice(Le+1));break}if(lf.includes(_e)){Ee=!0;continue}let Te=j.find(([,Ze])=>Ze.includes(_e));if(Te){oe[Te[0]]=!0;continue}let Be=Y.find(([,Ze])=>Ze.includes(_e));if(Be){let Ze=L[Le+1];if(Ze===void 0||Ze.startsWith("-")){Pe.push(`${_e} requires a value`);continue}se[Be[0]]=Ze,Re=Le+1;continue}let Fe=Z.find(([,Ze])=>Ze.includes(_e));if(Fe){let Ze=L.slice(Le+1),tn=Ze.findIndex((an)=>an.startsWith("-")),on=Ze.slice(0,tn===-1?Ze.length:tn);if(on.length===0){Pe.push(`${_e} requires at least one value`);continue}fe[Fe[0]]=[...fe[Fe[0]]??[],...on],Re=Le+on.length;continue}if(_e.startsWith("-")){Pe.push(`Unknown option for ${_.label}: ${_e}`);continue}if(_.positionals==="tail"){ge.push(...L.slice(Le));break}ge.push(_e)}if(_.positionals!=="list"&&_.positionals!=="tail")Pe.push(...ge.map((Le)=>`Unexpected argument for ${_.label}: ${Le}`));return{flags:oe,values:se,lists:fe,positionals:ge,help:Ee,errors:Pe}}function $n(_){for(let L of _)console.error(L);return _.length>0}import{readdirSync as gf,statSync as Ws,unlinkSync as yf}from"node:fs";import{basename as zs,dirname as hf,isAbsolute as vf,join as bf,relative as wf,resolve as kf,sep as Cf}from"node:path";var Vs=(_)=>{let L=Date.now()-new Date(_).getTime();if(!Number.isFinite(L))return"";let j=Math.floor(L/60000),Y=Math.floor(j/60),Z=Math.floor(Y/24);if(Z>0)return`${Z}d ago`;if(Y>0)return`${Y}h ago`;if(j>0)return`${j}m ago`;return"just now"},Go=(_)=>{let L=(_??"").trim().split(/\s+/).filter((Z)=>Z&&!/^[A-Za-z_][A-Za-z0-9_]*=/.test(Z)),j=L[0]?.split("/").pop();if(!j)return null;let Y=L[1];return Y&&/^[a-z][a-z0-9-]*$/.test(Y)?`${j} ${Y}`:j};function Ks(_){let L=(Z)=>`${Z.sessionId}
-${Go(Z.segment||Z.command)}`,j=_.filter((Z)=>Z.decision!=="allow"),Y=j.filter((Z)=>Z.sessionId).reduce((Z,oe)=>Z.set(L(oe),(Z.get(L(oe))??0)+1),new Map);return new Set(j.filter((Z)=>Z.failureStage||(Y.get(L(Z))??0)>=2))}import{existsSync as cf,readdirSync as df,readFileSync as uf}from"node:fs";import{join as pf}from"node:path";function Yn(_,L){try{return df(_,{withFileTypes:!0,encoding:"utf8"}).flatMap((j)=>{let Y=pf(_,j.name);if(j.isDirectory())return Yn(Y,L);if(j.name.endsWith(".jsonl"))return[Y];return[]})}catch{if(L&&cf(_))L.count++;return[]}}var ff=["segment","reason","sessionId","decision","agent","ruleId","failureStage"];function mf(_){if(!_||typeof _!=="object"||Array.isArray(_))return!1;let L=_;if(typeof L.ts!=="string"||typeof L.command!=="string")return!1;return ff.every((j)=>L[j]===void 0||typeof L[j]==="string")}function Dt(_,L){try{return uf(_,"utf-8").split(`
-`).filter(Boolean).flatMap((j)=>{try{let Y=JSON.parse(j);if(!mf(Y)){if(L)L.count++;return[]}return[Y]}catch{if(L)L.count++;return[]}})}catch{if(L)L.count++;return[]}}function gn(_){return Array.from(_,(L)=>{let j=L.charCodeAt(0);if(j<=31||j>=127&&j<=159)return`\\x${j.toString(16).padStart(2,"0")}`;return L}).join("")}function xf(_,L){let j=ie(_),Y=mn({label:"logs",booleans:{all:["--all"],suspect:["--suspect"],json:["--json"],pruneLegacy:["--prune-legacy"],dryRun:["--dry-run"]},values:{id:["--id"],limit:["--limit"],since:["--since"],agent:["--agent"],rule:["--rule"],session:["--session"],project:["--project"]}},L);if($n(Y.errors))return null;if(Y.values.id!==void 0&&!/^[a-f0-9]{16}$/.test(Y.values.id))return console.error("--id must be 16 hexadecimal characters"),null;let Z=Y.values.limit===void 0?20:Js(Y.values.limit);if(Z===null)return console.error("--limit must be a positive number"),null;let oe=Y.values.since===void 0?Math.min(30,j):Js(Y.values.since);if(oe===null||oe>j)return console.error(`--since must be a positive number of days no greater than ${j}`),null;let se={limit:Z,limitExplicit:Y.values.limit!==void 0,since:oe,sinceExplicit:Y.values.since!==void 0,all:Y.flags.all,json:Y.flags.json,suspect:Y.flags.suspect,pruneLegacy:Y.flags.pruneLegacy,dryRun:Y.flags.dryRun,id:Y.values.id,agent:Y.values.agent,rule:Y.values.rule,session:Y.values.session,project:Y.values.project===void 0?void 0:kf(Y.values.project)};if(se.id&&(se.agent!==void 0||se.rule!==void 0||se.session!==void 0||se.project!==void 0||se.suspect||se.sinceExplicit||se.limitExplicit))return console.error("--id cannot be combined with --agent, --rule, --session, --project, --suspect, --since, or --limit"),null;if(se.pruneLegacy&&(se.id!==void 0||se.agent!==void 0||se.rule!==void 0||se.session!==void 0||se.project!==void 0||se.suspect||se.all||se.sinceExplicit||se.limitExplicit))return console.error("--prune-legacy cannot be combined with --id, --agent, --rule, --session, --project, --suspect, --all, --since, or --limit"),null;if(se.dryRun&&!se.pruneLegacy)return console.error("--dry-run requires --prune-legacy"),null;return se}async function Ys(_,L,j={}){let Y=xf(_,L);if(!Y)return 1;let Z=j.logsDir??G(_);if(Y.pruneLegacy)return Sf(Z,Y.json,Y.dryRun);if(!Z)return console.log(Y.json?"[]":Y.id?`No retained audit log entry found for id ${gn(Y.id)}.`:"No audit log entries found."),0;J(_,Z);let oe={count:0},se=Yn(Z,oe).flatMap((Re)=>Dt(Re,oe).map((Le)=>({entry:Le,file:Re})));if(oe.count>0)console.error(`warning: ${oe.count} audit log ${oe.count===1?"source":"sources"} could not be read; these results are incomplete`);if(Y.id)return _f(se,Y,j.timeZone);let fe=Date.now()-Y.since*24*60*60*1000,ge=se.filter((Re)=>Tf(Re,Y,Z,fe)),Pe=Y.suspect?Ks(ge.map((Re)=>Re.entry)):null,Ee=(Pe?ge.filter((Re)=>Pe.has(Re.entry)):ge).sort((Re,Le)=>Date.parse(Le.entry.ts)-Date.parse(Re.entry.ts)).slice(0,Y.limit);if(Y.json)return console.log(JSON.stringify(Ee.map((Re)=>Re.entry),null,2)),0;if(Ee.length===0)return console.log("No audit log entries found."),0;for(let Re of Ee)console.log(Of(Re.entry,j.timeZone));return 0}function Sf(_,L,j){let Y=_?Ef(_).map((fe)=>bf(_,fe)):[];if(j)return Pf(Y,L);let Z=[],oe=0,se=0;for(let fe of Y){let ge=Ws(fe,{throwIfNoEntry:!1})?.size??0,Pe=Rf(fe);if(Pe){Z.push(`${zs(fe)}: ${Pe}`);continue}oe++,se+=ge}if(L)return console.log(JSON.stringify({removedFiles:oe,removedBytes:se,failedFiles:Z.length})),Z.length===0?0:1;console.log(oe===0&&Z.length===0?"No legacy audit log files found.":`Removed ${oe} legacy audit log ${oe===1?"file":"files"} (${Zs(se)}).`);for(let fe of Z)console.error(`Could not remove ${gn(fe)}`);if(console.log("Nested v2 audit logs were not changed."),oe>0)console.log("This deletion cannot be undone.");return Z.length===0?0:1}function Pf(_,L){let j=_.reduce((Y,Z)=>Y+(Ws(Z,{throwIfNoEntry:!1})?.size??0),0);if(L)return console.log(JSON.stringify({dryRun:!0,files:_.length,bytes:j})),0;if(console.log(_.length===0?"No legacy audit log files found.":`Would remove ${_.length} legacy audit log ${_.length===1?"file":"files"} (${Zs(j)}).`),console.log("Nested v2 audit logs are not included."),_.length>0)console.log("Run the same command without --dry-run to delete them.");return 0}function Ef(_){try{return gf(_,{withFileTypes:!0}).filter((L)=>L.isFile()&&L.name.endsWith(".jsonl")).map((L)=>L.name)}catch{return[]}}function Rf(_){try{return yf(_),null}catch(L){return L instanceof Error?L.message:String(L)}}function Zs(_){let L=["B","KiB","MiB","GiB"],j=Math.min(Math.floor(Math.log2(Math.max(_,1))/10),L.length-1);return`${Math.round(_/1024**j*10)/10} ${L[j]}`}function _f(_,L,j){let Y=_.filter((oe)=>oe.entry.id===L.id);if(Y.length>1)return console.error(`Multiple audit log entries found for id ${gn(L.id??"")}.`),1;if(L.json)return console.log(JSON.stringify(Y.map((oe)=>oe.entry),null,2)),0;let Z=Y[0];if(!Z)return console.log(`No retained audit log entry found for id ${gn(L.id??"")}.`),0;return console.log($f(Z.entry,j)),0}function Tf(_,L,j,Y){if(!L.all&&_.entry.decision==="allow")return!1;if(Date.parse(_.entry.ts)<Y)return!1;if(L.agent!==void 0&&_.entry.agent!==L.agent)return!1;if(L.rule!==void 0&&_.entry.ruleId!==L.rule)return!1;if(L.session!==void 0&&!If(_,j,L.session))return!1;if(L.project!==void 0&&!Af(_.entry.cwd,L.project))return!1;return!0}function If(_,L,j){if(_.entry.sessionId===j)return!0;return hf(_.file)===L&&zs(_.file,".jsonl")===j}function Af(_,L){if(!_)return!1;let j=wf(L,_);return j!==".."&&!j.startsWith(`..${Cf}`)&&!vf(j)}function Of(_,L){let j=gn(_.id??"-"),Y=gn(_.decision??"deny"),Z=_.cwd?`  [${gn(_.cwd)}]`:"",oe=_.segment||_.command,se=oe===_.command?"":"↳ ",fe=oe.length>50?`${oe.slice(0,50)}…`:oe;return`${j.padEnd(16)}  ${gn(Xs(_.ts,L))}  ${Y.padEnd(5)}  ${gn(_.agent??"-").padEnd(15)}  ${gn(_.ruleId??"-").padEnd(20)}  ${se}${gn(fe)}${Z}`}function $f(_,L){let j=(Z)=>gn(Z===void 0||Z===null||Z===""?"-":Z),Y=_.shape?`${_.agent??"-"} (shape: ${_.shape})`:_.agent??"-";return[`id:        ${j(_.id)}`,`ts:        ${j(Xs(_.ts,L))}`,`decision:  ${j(_.decision)}`,`agent:     ${j(Y)}`,`level:     ${j(_.level)}`,`tool:      ${j(_.toolName)}`,`rule:      ${j(_.ruleId)}`,`intent:    ${j(_.intent)}`,`stage:     ${j(_.failureStage)}`,`error:     ${j(_.errorCode)}`,`session:   ${j(_.sessionId)}`,`cwd:       ${j(_.cwd)}`,`version:   ${j(_.v)}`,`truncated: ${j(_.truncated===!0?"yes":void 0)}`,`reason:    ${j(_.reason)}`,`command:   ${j(_.command)}`,`segment:   ${j(_.segment)}`].join(`
-`)}function Xs(_,L){let j=new Date(_);if(Number.isNaN(j.getTime()))return _;return new Intl.DateTimeFormat("sv-SE",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:L}).format(j)}function Js(_){let L=Number(_);return Number.isFinite(L)&&L>0?L:null}var Qs={name:"doctor",aliases:["--doctor"],description:"Run diagnostic checks to verify installation and configuration",usage:"doctor [options]",options:[{flags:"--json",description:"Output diagnostics as JSON"},{flags:"--skip-update-check",description:"Skip npm registry version check"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net doctor","cc-safety-net doctor --json","cc-safety-net doctor --skip-update-check"]};var ea={name:"explain",description:"Show step-by-step analysis trace of how a command would be analyzed",usage:"explain [options] <command>",argument:"<command>",options:[{flags:"--json",description:"Output analysis as JSON"},{flags:"--cwd",argument:"<path>",description:"Use custom working directory"},{flags:"-h, --help",description:"Show this help"}],examples:['cc-safety-net explain "git reset --hard"','cc-safety-net explain --json "rm -rf /"','cc-safety-net explain --cwd /tmp "git status"']};var na={name:"gui",description:"Open the local policy editor GUI",usage:"gui [options]",options:[{flags:"--no-open",description:"Print the URL without opening a browser"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net gui","cc-safety-net gui --no-open"]};var Bo=["npx","--offline","--no-install","@deepseek-ai/dsh","--version"],ta=["cursor-agent","--version"],ra=[{id:"antigravity-cli",displayName:"Antigravity CLI",runtime:{flags:["-ac","--agy-cli"],description:"Run as Antigravity CLI PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--agy-cli",artifactKind:"hook config",probeCommand:["agy","--version"]}},{id:"claude-code",displayName:"Claude Code",runtime:{displayName:"Coding CLI",flags:["-cc","--coding-cli"],legacyFlags:["--claude-code"],description:"Run as Coding CLI PreToolUse hook",legacyTopLevelFlags:["-cc","--claude-code"]},install:{flag:"--claude-code",artifactKind:"plugin",probeCommand:["claude","--version"]}},{id:"codex",displayName:"Codex",runtime:{flags:["-cx","--codex"],description:"Run as a Codex PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--codex",artifactKind:"plugin",probeCommand:["codex","--version"]}},{id:"copilot-cli",displayName:"GitHub Copilot CLI",runtime:{flags:["-cp","--copilot-cli"],description:"Run as GitHub Copilot CLI PreToolUse hook",legacyTopLevelFlags:["-cp","--copilot-cli"]},install:{flag:"--copilot-cli",artifactKind:"plugin",probeCommand:["copilot","--binary-version"]}},{id:"gemini-cli",displayName:"Gemini CLI",runtime:{flags:["-gc","--gemini-cli"],description:"Run as Gemini CLI BeforeTool hook",legacyTopLevelFlags:["-gc","--gemini-cli"]},install:{flag:"--gemini-cli",artifactKind:"extension",probeCommand:["gemini","--version"]}},{id:"grok-build",displayName:"Grok Build",runtime:{flags:["-gb","--grok-build"],description:"Run as Grok Build PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--grok-build",artifactKind:"hook config",probeCommand:["grok","--version"]}},{id:"hermes-agent",displayName:"Hermes Agent",runtime:{flags:["-ha","--hermes-agent"],description:"Run as Hermes Agent pre_tool_call hook",legacyTopLevelFlags:[]},install:{flag:"--hermes-agent",artifactKind:"plugin",probeCommand:["hermes","--version"]}},{id:"kimi-code",displayName:"Kimi Code",runtime:{flags:["-kc","--kimi-code"],description:"Run as Kimi Code PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--kimi-code",artifactKind:"hook config",probeCommand:["kimi","--version"]}},{id:"openclaw",displayName:"OpenClaw",install:{flag:"--openclaw",artifactKind:"plugin",probeCommand:["openclaw","--version"]}},{id:"opencode",displayName:"OpenCode",install:{flag:"--opencode",artifactKind:"plugin",probeCommand:["opencode","--version"]}},{id:"pi",displayName:"Pi",install:{flag:"--pi",artifactKind:"package",probeCommand:["pi","--version"]}},{id:"cursor",displayName:"Cursor",runtime:{flags:["-cu","--cursor"],description:"Run as Cursor preToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--cursor",artifactKind:"hook config",probeCommand:["cursor","--version"]}},{id:"deepseek-harness",displayName:"DeepSeek Harness",install:{flag:"--deepseek-harness",artifactKind:"package",probeCommand:Bo}},{id:"devin",displayName:"Devin CLI",runtime:{flags:["-dv","--devin"],description:"Run as Devin CLI PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--devin",artifactKind:"hook config",probeCommand:["devin","--version"]}},{id:"droid",displayName:"Factory Droid",runtime:{flags:["-fd","--droid"],description:"Run as Factory Droid PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--droid",artifactKind:"hook config",probeCommand:["droid","--version"]}},{id:"amp",displayName:"Amp Code",install:{flag:"--amp",artifactKind:"plugin",probeCommand:["amp","--version"]}}],qo=ra.slice().sort((_,L)=>_.displayName.localeCompare(L.displayName,"en")),Rr=qo.map((_)=>_.id).sort((_,L)=>Number(L==="claude-code")-Number(_==="claude-code")),Qt=qo.filter((_)=>("runtime"in _)).map((_)=>({id:_.id,displayName:"displayName"in _.runtime?_.runtime.displayName:_.displayName,flags:_.runtime.flags,legacyFlags:"legacyFlags"in _.runtime?_.runtime.legacyFlags:[],description:_.runtime.description,legacyTopLevelFlags:_.runtime.legacyTopLevelFlags})),En=qo.map((_)=>({id:_.id,..._.install})),Df=Object.fromEntries(ra.map((_)=>[_.id,_.displayName]));function cn(_){return Df[_]}var Nf=Qt.map((_)=>({flags:_.flags.join(", "),description:_.description})),Lf=Qt.flatMap((_)=>_.flags.map((L)=>`cc-safety-net hook ${L}`)),oa={name:"hook",description:"Run as an agent CLI hook (reads JSON from stdin)",usage:"hook INTEGRATION_FLAG",options:[...Nf,{flags:"-h, --help",description:"Show this help"}],examples:Lf};var ia={name:"install",description:"Install CC Safety Net into a coding agent CLI",usage:"install [TARGET_FLAG]",options:[...En.map((_)=>({flags:_.flag,description:`Install ${cn(_.id)} ${_.artifactKind}`})),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net install",...En.map((_)=>`cc-safety-net install ${_.flag}`)]},sa={name:"uninstall",description:"Uninstall CC Safety Net from a coding agent CLI",usage:"uninstall [TARGET_FLAG]",options:[...En.map((_)=>({flags:_.flag,description:`Uninstall ${cn(_.id)} ${_.artifactKind}`})),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net uninstall",...En.map((_)=>`cc-safety-net uninstall ${_.flag}`)]},aa={name:"update",description:"Update every installed CC Safety Net integration to the latest version",usage:"update",options:[{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net update"]};var la={name:"logs",description:"Browse audit log entries recorded by hooks",usage:"logs [options]",options:[{flags:"--id",argument:"<id>",description:"Show one entry from retained history by its 16-character id (not guaranteed once it is older than the configured retention)"},{flags:"--limit",argument:"<n>",description:"Maximum entries to print",default:"20"},{flags:"--since",argument:"<days>",description:"Only include entries newer than this many days (max: the configured audit retention, 1-365)",default:"30"},{flags:"--agent",argument:"<name>",description:"Filter by agent name"},{flags:"--rule",argument:"<ruleId>",description:"Filter by rule id"},{flags:"--session",argument:"<id>",description:"Filter by session id"},{flags:"--project",argument:"<path>",description:"Filter by project path"},{flags:"--suspect",description:"Only denials that look like false positives"},{flags:"--all",description:"Include allow entries"},{flags:"--prune-legacy",description:"Permanently delete all legacy root-level logs; nested logs are untouched"},{flags:"--dry-run",description:"With --prune-legacy, report what would be deleted and delete nothing"},{flags:"--json",description:"Output entries as JSON"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net logs --id 3fa9c2d1a70e8b42","cc-safety-net logs --agent claude-code","cc-safety-net logs --project . --since 7","cc-safety-net logs --suspect --since 7","cc-safety-net logs --json","cc-safety-net logs --prune-legacy --dry-run","cc-safety-net logs --prune-legacy"]};var _r={name:"policy",description:"Check and apply project or user policy proposals",usage:"policy <subcommand>",subcommands:[{usage:"check <file>",description:"Validate a policy proposal and print its diff"},{usage:"apply <file>",description:"Apply a proposal after confirming in a terminal"}],options:[{flags:"-g, --global",description:"Use the user-scope policy instead of the project one"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net policy check proposal.json","cc-safety-net policy apply proposal.json","cc-safety-net policy apply proposal.json --global"]};var Vo=[{flags:"--ref",argument:"<ref>",description:"Use a branch, tag, or commit"},{flags:"--only",argument:"<rulebook...>",description:"Add only these repository rulebooks"},{flags:"-g, --global",description:"Use user-scope rule config"},{flags:"-h, --help",description:"Show this help"}],Ko=["cc-safety-net rule add project-rules","cc-safety-net rule add acme/safety-rules","cc-safety-net rule add acme/safety-rules --only aws gcloud","cc-safety-net rule add acme/safety-rules --ref v2 --only aws","cc-safety-net rule add --only terraform aws"],Nt={name:"rule",description:"Manage CC Safety Net rule config and rulebook sources",usage:"rule <subcommand>",subcommands:[{usage:"init [--example]",description:"Create inert rule config"},{usage:"add [source] [--ref <ref>] [--only <rulebook...>]",description:"Add rulebook sources and sync"},{usage:"remove <source>",description:"Remove a rulebook source and sync"},{usage:"update [source]",description:"Re-fetch and vendor remote rulebooks"},{usage:"sync",description:"Deprecated: migrate lock and cache leftovers"},{usage:"list",description:"List active rulebooks"},{usage:"wrapper add <command>",description:"Trust a transparent command wrapper"},{usage:"wrapper remove <command>",description:"Remove a transparent command wrapper"},{usage:"wrapper list",description:"List transparent command wrappers"},{usage:"tool add <name...> [--cwd-arg <name>] [--project]",description:"Analyze community shell tools (user scope by default)"},{usage:"tool remove <name...> [--project]",description:"Stop analyzing declared tools"},{usage:"tool list",description:"List declared command tools in both scopes"},{usage:"migrate [--cleanup]",description:"Migrate legacy inline rules"},{usage:"doc",description:"Print the rulebook authoring guide"},{usage:"verify",description:"Validate rule config files"}],options:[{flags:"-g, --global",description:"Use user-scope rule config"},{flags:"--cleanup",description:"Delete legacy files after rule migrate verifies them"},{flags:"--delete-source",description:"Delete clean local source directory on remove"},{flags:"--example",description:"Create an inactive example rulebook with rule init"},{flags:"--project",description:"Use project-scope rule config with rule tool"},{flags:"--cwd-arg",argument:"<name>",description:"Name the working-directory argument with rule tool add"},...Vo.slice(0,2),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net rule init","cc-safety-net rule init --example","cc-safety-net rule wrapper add rtk","cc-safety-net rule tool add ops_bash","cc-safety-net rule tool add ops_run_background --cwd-arg cwd --project",...Ko,"cc-safety-net rule update","cc-safety-net rule migrate --cleanup","cc-safety-net rule verify"]};var ca={name:"status",description:"Show what the runtime is enforcing right now",usage:"status",options:[{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net status"]};var da={name:"statusline",description:"Print status line with mode indicators for shell integration",usage:"statusline --claude-code",options:[{flags:"-cc, --claude-code",description:"Print status line for Claude Code"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net statusline -cc","cc-safety-net statusline --claude-code"]};var Tr=[ca,Qs,la,ea,Nt,_r,ia,aa,sa,oa,na,da];function jf(_){return _.aliases??[]}function Ir(_){let L=_.toLowerCase();return Tr.find((j)=>j.name.toLowerCase()===L||jf(j).some((Y)=>Y.toLowerCase()===L))}import{existsSync as Ih}from"node:fs";import{basename as Hf}from"node:path";function Ar(_,L=7,j=G(_)){let Y=Date.now()-L*24*60*60*1000,Z=[],oe=new Set,se=0,fe,ge,Pe,Ee;if(j)J(_,j);let Re={count:0},Le=j?Yn(j,Re):[];for(let Te of Le)for(let Be of Dt(Te,Re)){if(Be.decision==="allow")continue;let Fe=new Date(Be.ts).getTime();if(Fe>=Y){if(se++,oe.add(Be.sessionId??Hf(Te,".jsonl")),ge===void 0||Fe<=ge)fe=Be.ts,ge=Fe;if(Ee===void 0||Fe>Ee)Pe=Be.ts,Ee=Fe;Ff(Z,Be,Fe)}}let _e=Z.map((Te)=>({timestamp:Te.ts,command:Te.command,reason:Te.reason,relativeTime:Vs(new Date(Te.ts))}));return{totalBlocked:se,sessionCount:oe.size,recentEntries:_e,oldestEntry:fe,newestEntry:Pe,unreadable:Re.count}}function Ff(_,L,j){let Y=_.findIndex((Z)=>j>new Date(Z.ts).getTime());if(Y===-1){if(_.length<3)_.push(L);return}if(_.splice(Y,0,L),_.length>3)_.pop()}import{dirname as Zf}from"node:path";import{dirname as Mf,join as Uf,resolve as Gf}from"node:path";var Bf="config.json";function bn(_,L,j,Y){g(qf(_),`${JSON.stringify(L,null,2)}
-`,j,Y)}function qf(_){return typeof _==="string"?ae(_):_}function Wo(_){return{errors:ue(Kf(_),": "," "),ruleNames:new Set(Ge(_).map((L)=>L.toLowerCase()))}}var Vf="must match pattern (letters, numbers, hyphens, underscores; max 64 chars)",ua="must match pattern (letters, numbers, hyphens, underscores)";function Kf(_){if(!pa(_))return[e([],"Config must be an object")];return[..._.version===1?[]:[e(["version"],"must be 1")],...Jf(_.rules)]}function Jf(_){if(_===void 0)return[];if(!Array.isArray(_))return[e(["rules"],"must be an array")];return[..._.flatMap((L,j)=>pa(L)?Wf(L,["rules",j]):[e(["rules",j],"must be an object")]),...Ue(_)]}function Wf(_,L){return[...Jo(_.name,[...L,"name"],"required string",p,Vf),...Jo(_.command,[...L,"command"],"required string",E,ua),..._.subcommand===void 0?[]:Jo(_.subcommand,[...L,"subcommand"],"must be a string if provided",E,ua),...zf(_.block_args,[...L,"block_args"]),...Yf(_.reason,[...L,"reason"]),..._.intent===void 0||De(_.intent)?[]:[e([...L,"intent"],Oe)]]}function Jo(_,L,j,Y,Z){if(typeof _!=="string")return[e(L,j)];return Y.test(_)?[]:[e(L,Z)]}function zf(_,L){if(!Array.isArray(_))return[e(L,"required array")];if(_.length===0)return[e(L,"must have at least one element")];return _.flatMap((j,Y)=>{if(typeof j!=="string")return[e([...L,Y],"must be a string")];return j===""?[e([...L,Y],"must not be empty")]:[]})}function Yf(_,L){if(typeof _!=="string")return[e(L,"required string")];if(_==="")return[e(L,"must not be empty")];return _.length>D?[e(L,`must be at most ${D} characters`)]:[]}function pa(_){return!!_&&typeof _==="object"&&!Array.isArray(_)}function zo(_){let L=fa(_);if(!L.ok)return L.result;return Wo(L.parsed)}function fa(_){let L=[],j=new Set;try{let Y=typeof _==="string"?ae(_):_,Z=r(Y);if(Z===null)return L.push(`File not found: ${Y.path}`),{ok:!1,result:{errors:L,ruleNames:j}};if(!Z.trim())return L.push("Config file is empty"),{ok:!1,result:{errors:L,ruleNames:j}};return{ok:!0,parsed:JSON.parse(Z)}}catch(Y){if(Y instanceof o)return L.push(Y.message),{ok:!1,result:{errors:L,ruleNames:j}};let Z=Y instanceof Error?Y.message:String(Y);return L.push(Y instanceof SyntaxError?"Invalid JSON":Z),{ok:!1,result:{errors:L,ruleNames:j}}}}function Lt(_){return Gf(_,".safety-net.json")}function Un(_){let L=fa(_);if(!L.ok)return L.result;let j=lt(L.parsed);return{errors:j.errors,ruleNames:j.sources}}function jt(_,L={}){return Uf(Mf(Ae(_,L)),Bf)}function ma(_,L,j){let Y;try{if(r(L)===null)return{path:_,exists:!1,valid:!1,ruleCount:0};Y=Un(L),Y.errors.push(...z(_,j))}catch(Z){if(!(Z instanceof o))throw Z;Y={errors:[Z.message],ruleNames:new Set}}return{path:_,exists:!0,valid:Y.errors.length===0,ruleCount:Y.ruleNames.size,...Y.errors.length>0?{errors:Y.errors}:{}}}function Xf(_,L){return{source:L,name:_.name,command:_.command,subcommand:_.subcommand,blockArgs:[..._.block_args],reason:_.reason}}function ga(_,L){let j=B(_),Y=I(L),Z=Zf(j),oe=ee(_,{cwd:L,userConfigPath:j,projectConfigPath:Y,userConfigDir:Z}),se=Q(_,{cwd:L,userConfigPath:j,projectConfigPath:Y,userConfigDir:Z}),fe=new Map(oe.rulebooks.flatMap((ge)=>ge.rules.map((Pe)=>[Pe,ge.source])));return{userConfig:ma(j,se.userConfigTarget,se.userScope),projectConfig:ma(Y,se.projectConfigTarget,se.projectScope),effectiveRules:oe.rules.map((ge)=>Xf(ge,fe.get(ge.name)??"project"))}}var Qf=[{flag:n.level,description:"Safety level preset: standard, strict, or paranoid",defaultBehavior:"standard"},{flag:n.strict,description:"Legacy; equivalent to safety.overrides.fail_closed",defaultBehavior:"permissive"},{flag:n.paranoid,description:"Legacy; equivalent to safety.overrides.paranoid_rm and paranoid_interpreters",defaultBehavior:"off"},{flag:n.paranoidRm,description:"Legacy; equivalent to safety.overrides.paranoid_rm",defaultBehavior:"off"},{flag:n.paranoidInterpreters,description:"Legacy; equivalent to safety.overrides.paranoid_interpreters",defaultBehavior:"off"},{flag:n.worktree,description:"Allow local git discards in linked worktrees",defaultBehavior:"off"},{flag:n.debug,description:"Print diagnostic messages to stderr",defaultBehavior:"off"},{flag:n.auditScope,description:"Command decisions recorded: all, or blocked (privacy-minimizing, denials only)",defaultBehavior:"all"},{flag:n.projectTightenOnly,description:"Ignore project policy settings that weaken the user policy",defaultBehavior:"off"}];function ya(_){return[...Qf.map((L)=>({name:L.flag.name,value:me(L.flag,_.env),isSet:vt(L.flag,_.env),legacyName:L.flag.legacyName,legacyValue:L.flag.legacyName?_.env.get(L.flag.legacyName):void 0,legacyIsSet:L.flag.legacyName?_.env.get(L.flag.legacyName)!==void 0:void 0,description:L.description,defaultBehavior:L.defaultBehavior})),{name:"CC_SAFETY_NET_HOME",value:_.env.get("CC_SAFETY_NET_HOME"),isSet:_.env.get("CC_SAFETY_NET_HOME")!==void 0,description:"Override user-scope config/cache directory",defaultBehavior:"~/.cc-safety-net"}]}var ha={error:0,warning:1,info:2},em=["policy","config","audit"];function nm(_){return _.map((L)=>{if(L==="ownership")return"is not owned by the current user";if(L==="permissions")return"has unsafe permissions";if(L==="symlink")return"is a symbolic link";return"is not a directory"}).join(" and ")}var tm=[{derive:(_)=>_.hooks.length>0&&_.hooks.every((L)=>!L.configured)?[{checkId:"integration.none-configured",severity:"error",title:"No integration configured",detail:"CC Safety Net is not connected to any supported coding-agent integration.",fixHint:"Run `cc-safety-net install` and configure at least one integration."}]:[]},{derive:(_)=>_.hooks.filter((L)=>L.inspectionStatus==="failed").map((L)=>{let j=cn(L.platform);return{checkId:"integration.inspection-failed",severity:"error",title:`${j} inspection failed`,detail:`Doctor could not verify the ${j} integration configuration.`,fixHint:`Correct the reported ${j} configuration error, then run \`cc-safety-net doctor\` again.`,integration:L.platform}})},{derive:(_)=>_.userConfig.exists&&!_.userConfig.valid?[{checkId:"config.user-invalid",severity:"error",title:"User configuration is invalid",detail:"Doctor could not load a valid user rules configuration.",fixHint:"Run `cc-safety-net rule verify`, correct the reported error, then rerun doctor.",path:_.userConfig.path}]:[]},{derive:(_)=>_.projectConfig.exists&&!_.projectConfig.valid?[{checkId:"config.project-invalid",severity:"error",title:"Project configuration is invalid",detail:"Doctor could not load a valid project rules configuration.",fixHint:"Run `cc-safety-net rule verify`, correct the reported error, then rerun doctor.",path:_.projectConfig.path}]:[]},{derive:(_)=>_.configState.state==="degraded"?[{checkId:"config.runtime-degraded",severity:"warning",title:"Runtime is enforcing a fallback configuration",detail:`The rejected candidate configuration is not active: ${_.configState.reason}`,fixHint:"Fix the file named in the reason, or run `cc-safety-net rule update` to vendor a remote source, then rerun doctor."}]:[]},{derive:(_)=>_.v2Leftovers&&_.v2Leftovers.length>0?[{checkId:"config.v2-leftovers",severity:"info",title:"Rulebook lock and cache leftovers detected",detail:`Files an earlier version left behind are no longer read: ${_.v2Leftovers.join(", ")}.`,fixHint:"Run `cc-safety-net rule sync` (add `--global` for user scope) to migrate them, then rerun doctor."}]:[]},{derive:(_)=>_.legacyConfigs&&_.legacyConfigs.length>0?[{checkId:"config.legacy-ignored",severity:"warning",title:"Legacy inline rule configs are ignored",detail:`CC Safety Net no longer loads these files, so their rules enforce nothing: ${_.legacyConfigs.join(", ")}.`,fixHint:"Run `cc-safety-net rule migrate` to convert them (add `--cleanup` to delete each file once it is converted), then rerun doctor."}]:[]},{derive:(_)=>{let L=_.environment.find((j)=>j.name==="CC_SAFETY_NET_AUDIT_SCOPE");return ot(L?.value)==="invalid"?[{checkId:"environment.audit-scope-invalid",severity:"warning",title:"Audit scope value is invalid",detail:"CC_SAFETY_NET_AUDIT_SCOPE is not `all` or `blocked`, so allowed command decisions are not recorded.",fixHint:"Set CC_SAFETY_NET_AUDIT_SCOPE to `all` or `blocked`, then restart the integration."}]:[]}},...em.map((_)=>({derive:(L)=>L.posture.directories.filter((j)=>j.kind===_&&j.status==="unsafe").map((j)=>({checkId:`posture.${_}-directory-unsafe`,severity:"error",title:`${_[0]?.toUpperCase()}${_.slice(1)} directory is unsafe`,detail:`The ${_} directory ${nm(j.issues)}.`,fixHint:"Ensure this is a real directory owned by the current user with no group or other write access, then rerun doctor.",...j.path?{path:j.path}:{}}))})),{derive:(_)=>{let L=[..._.effectiveSafety.weakenedRuleOverrides].sort();return L.length>0?[{checkId:"posture.rule-overrides-weaken-preset",severity:"warning",title:"Rule overrides weaken the selected preset",detail:`Explicit overrides disable rules the resolved preset would enable: ${L.join(", ")}.`,fixHint:`Remove these \`off\` overrides or set them to \`on\`: ${L.join(", ")}.`}]:[]}}];function va(_){return tm.flatMap((L,j)=>L.derive(_).map((Y,Z)=>({finding:Y,catalogOrder:j,occurrence:Z}))).sort((L,j)=>ha[L.finding.severity]-ha[j.finding.severity]||L.catalogOrder-j.catalogOrder||L.occurrence-j.occurrence).map((L)=>L.finding)}function Dn(){return Boolean(process.stdout.isTTY&&!process.env.NO_COLOR)}var rm=(_)=>Dn()?`\x1B[32m${_}\x1B[0m`:_,om=(_)=>Dn()?`\x1B[33m${_}\x1B[0m`:_,im=(_)=>Dn()?`\x1B[34m${_}\x1B[0m`:_,sm=(_)=>Dn()?`\x1B[36m${_}\x1B[0m`:_,am=(_)=>Dn()?`\x1B[31m${_}\x1B[0m`:_,lm=(_)=>Dn()?`\x1B[2m${_}\x1B[0m`:_,cm=(_)=>Dn()?`\x1B[1m${_}\x1B[0m`:_,en={green:rm,yellow:om,blue:im,cyan:sm,red:am,dim:lm,bold:cm},dm="\x1B[0m",um=[39,82,198,226,208,51,196,46,201,214,93,154,220,27,49,190,200,33,129,227,45,160,63,118,123,202];function pm(_){let L=_;return()=>(L=(L*1664525+1013904223)%4294967296,L/4294967296)}function fm(_){let L=[...um],j=pm(_);for(let Y=L.length-1;Y>0;Y--){let Z=Math.floor(j()*(Y+1)),oe=L[Y];L[Y]=L[Z],L[Z]=oe}return L}function mm(_,L=0){if(!Dn())return"";let j=fm(L);return`\x1B[38;5;${j[_%j.length]}m`}function ba(_,L,j=0){if(!Dn())return`"${_}"`;return`${mm(L,j)}"${_}"${dm}`}function Or(_){return _==="default"?"built-in default":`${_} policy`}var gm=new RegExp("\x1B\\[[0-9;]*m","g"),Yo=(_)=>_.replace(gm,"").length;function Zn(_){let L=(_.headers??_.rows[0]??[]).map((se,fe)=>{let ge=Math.max(..._.rows.map((Pe)=>Yo(Pe[fe]??"")));return Math.max(Yo(se),ge)}),j=(se,fe)=>se+" ".repeat(Math.max(0,fe-Yo(se))),Y=(se,fe)=>fe[0]+L.map((ge)=>se.repeat(ge+2)).join(fe[1])+fe[2],Z=(se)=>`│ ${se.map((fe,ge)=>j(fe,L[ge]??0)).join(" │ ")} │`,oe=_.headers?[`   ${Z(_.headers)}`,`   ${Y("─",["├","┼","┤"])}`]:[];return[`   ${Y("─",["┌","┬","┐"])}`,...oe,..._.rows.map((se)=>`   ${Z(se)}`),`   ${Y("─",["└","┴","┘"])}`].join(`
-`)}function wa(_){let L=[];L.push("Hook Integration"),L.push(ym(_));let j=[],Y=[];for(let Z of _){let oe=cn(Z.platform);if(Z.errors&&Z.errors.length>0)for(let se of Z.errors)if(Z.configured)j.push({platform:oe,message:se});else Y.push({platform:oe,message:se})}for(let Z of j)L.push(`   Warning (${Z.platform}): ${Z.message}`);for(let Z of Y)L.push(en.red(`   Error (${Z.platform}): ${Z.message}`));return L.join(`
-`)}function ym(_){let L=["Platform","Discovery","Configuration","Inspection"],j=_.map((Y)=>{let Z=cn(Y.platform);if(Y.inspectionStatus==="not-inspected"){let ge=en.dim("Not inspected");return[Z,ge,ge,ge]}let oe=Y.detected?en.green("Detected"):Y.inspectionStatus==="failed"?en.red("Unknown"):en.dim("Not detected"),se=Y.configured?en.green("Configured"):Y.detected?en.yellow("Not configured"):Y.inspectionStatus==="failed"?en.red("Unknown"):en.dim("Not applicable"),fe=Y.inspectionStatus==="verified"?en.green("Verified"):Y.inspectionStatus==="failed"?en.red("Failed"):en.dim("Not applicable");return[Z,oe,se,fe]});return Zn({headers:L,rows:j})}function ka(_){let j=["Guard Engine Verification",`   Synthetic self-test: ${_.failed>0?en.red(`${_.passed}/${_.total} FAIL`):en.green(`${_.passed}/${_.total} passed`)}`],Y=_.results.filter((Z)=>!Z.passed);if(Y.length>0){j.push(""),j.push(en.red("   Failures:"));for(let Z of Y)j.push(en.red(`   • ${Z.description}`)),j.push(en.red(`     expected ${Z.expected}, got ${Z.actual}`))}return j.join(`
-`)}function hm(_){if(_.length===0)return"   (no custom rules)";let L=["Source","Name","Command","Block Args"],j=_.map((Y)=>[Y.source,Y.name,Y.subcommand?`${Y.command} ${Y.subcommand}`:Y.command,Y.blockArgs.join(", ")]);return Zn({headers:L,rows:j})}function Ca(_){let L=[];if(L.push("Configuration"),L.push(vm(_.userConfig,_.projectConfig)),L.push(""),_.effectiveRules.length>0)L.push(`   Effective rules (${_.effectiveRules.length} total):`),L.push(hm(_.effectiveRules));else L.push("   Effective rules: (none - using built-in rules only)");return L.join(`
-`)}function vm(_,L){let j=["Scope","Status"],Y=(oe)=>{if(!oe.exists)return en.dim("N/A");if(!oe.valid)return en.red(`Invalid (${oe.errors?.[0]??"unknown error"})`);return en.green("Configured")},Z=[["User",Y(_)],["Project",Y(L)]];return Zn({headers:j,rows:Z})}function xa(_){let L=[];return L.push("Environment"),L.push(bm(_)),L.join(`
-`)}function Sa(_){let L=_.effectiveSafety.policyScopes,j=["Effective Safety",`   Selected preset: ${_.effectiveSafety.selectedPreset}${L?` (${Or(L.levelScope)})`:""}`,`   Effective: ${_.effectiveSafety.level}`],Y=[["fail_closed","fail_closed"],["paranoid_rm","paranoid_rm"],["paranoid_interpreters","paranoid_interpreters"]];for(let[Z,oe]of Y){let se=_.effectiveSafety.capabilities[Z],fe=se.enabled?en.green("ON"):en.dim("OFF"),ge=se.sources.length>0?` (${se.sources.join(", ")})`:"";j.push(`   ${oe}: ${fe} via ${se.source}${ge}`)}if(L&&L.weakenings.length>0){j.push(`   Project policy deltas${L.weakeningsIgnored?" (ignored)":""}:`);for(let Z of L.weakenings)j.push(`      ${Z}`)}j.push(`   Stored rule customizations: ${_.effectiveSafety.ruleCounts.stored}`),j.push(`   Effective rule customizations: ${_.effectiveSafety.ruleCounts.effective}`);for(let[Z,oe]of Object.entries(_.effectiveSafety.ruleOverrides))j.push(`   ${Z}: ${oe}`);return j.join(`
-`)}function Pa(_){let L=["Findings"];if(_.length===0)return L.push("   No findings from inspected doctor facts."),L.join(`
-`);for(let j of _){let Y=`[${j.severity.toUpperCase()}] ${j.checkId}: ${gn(j.title)}`,Z=j.severity==="error"?en.red:j.severity==="warning"?en.yellow:en.blue;if(L.push(`   ${Z(Y)}`),L.push(`      ${gn(j.detail)}`),j.path)L.push(`      Path: ${gn(j.path)}`);if(j.fixHint)L.push(`      Fix: ${gn(j.fixHint)}`)}return L.join(`
-`)}function bm(_){let L=["Variable","Status","Legacy"],j=_.map((Y)=>{let Z=Y.isSet?en.green("✓"):en.dim("✗"),oe=Y.legacyName&&Y.legacyIsSet?`${Y.legacyName} ${en.green("✓")}`:Y.legacyName??"";return[Y.name,Z,oe]});return Zn({headers:L,rows:j})}function Ea(_){let L=[];if(_.totalBlocked===0)L.push("Recent Activity"),L.push("   No blocked commands in the last 7 days"),L.push("   Tip: This is normal for new installations");else L.push(`Recent Activity · last 7 days (${_.totalBlocked} blocked / ${_.sessionCount} sessions)`),L.push(wm(_.recentEntries));if(_.unreadable>0)L.push(`   Warning: ${_.unreadable} audit log ${_.unreadable===1?"source":"sources"} could not be read; this summary is incomplete`);return L.join(`
-`)}function wm(_){let L=["Time","Command"],j=_.map((Y)=>{let Z=gn(Y.command.replace(/\r\n|\r|\n/g," ↵ ").replace(/\t/g," ")),oe=Z.length>40?`${Z.slice(0,37)}...`:Z;return[Y.relativeTime,oe]});return Zn({headers:L,rows:j})}function Ra(_){let L=[];if(L.push("Update Check"),_.latestVersion===null&&!_.error)return L.push($r([["Status",en.dim("Skipped")],["Installed",_.currentVersion]])),L.join(`
-`);if(_.error)return L.push($r([["Status",`${en.yellow("⚠")} Error`],["Installed",_.currentVersion],["Error",en.dim(_.error)]])),L.join(`
-`);if(_.updateAvailable)return L.push($r([["Status",`${en.yellow("⚠")} Update Available`],["Current",_.currentVersion],["Latest",en.green(_.latestVersion??"")]])),L.push(""),L.push("   Run: bunx cc-safety-net@latest doctor"),L.push("   Or:  npx cc-safety-net@latest doctor"),L.join(`
-`);return L.push($r([["Status",`${en.green("✓")} Up to date`],["Version",_.currentVersion]])),L.join(`
-`)}function $r(_){return Zn({rows:_})}function _a(_){let L=[];return L.push("System Info"),L.push(km(_)),L.join(`
-`)}function km(_){let L=["Component","Version"],j=(oe)=>{if(oe===null)return en.dim("not found");return oe},Z=[{label:"cc-safety-net",value:_.version},...Rr.map((oe)=>({label:cn(oe),value:_.versions[oe]??null})),{label:"Node.js",value:_.nodeVersion},{label:"npm",value:_.npmVersion},{label:"Bun",value:_.bunVersion},{label:"Platform",value:_.platform}].map((oe)=>[oe.label,j(oe.value)]);return Zn({headers:L,rows:Z})}function Ta(_){if(_.findings.length===0)return en.green(`
-No findings from inspected doctor facts.`);let L={error:_.findings.filter((oe)=>oe.severity==="error").length,warning:_.findings.filter((oe)=>oe.severity==="warning").length,info:_.findings.filter((oe)=>oe.severity==="info").length},j=["error","warning","info"].filter((oe)=>L[oe]>0).map((oe)=>`${L[oe]} ${oe}`),Y=_.findings.length===1?"finding":"findings",Z=`
-${_.findings.length} ${Y}: ${j.join(", ")}.`;if(L.error>0)return en.red(Z);if(L.warning>0)return en.yellow(Z);return en.blue(Z)}import{lstatSync as Cm}from"node:fs";import{dirname as Zo}from"node:path";function Xo(_,L){try{let j=Cm(L);if(j.isSymbolicLink())return{kind:_,path:L,status:"unsafe",issues:["symlink"]};if(!j.isDirectory())return{kind:_,path:L,status:"unsafe",issues:["not-directory"]};if(process.platform==="win32"||typeof process.getuid!=="function")return{kind:_,path:L,status:"unknown",issues:[]};let Y=[...j.uid!==process.getuid()?["ownership"]:[],...(j.mode&18)!==0?["permissions"]:[]];return{kind:_,path:L,status:Y.length>0?"unsafe":"safe",issues:Y}}catch(j){if(typeof j==="object"&&j!==null&&"code"in j&&j.code==="ENOENT")return{kind:_,path:L,status:"not-applicable",issues:[]};return{kind:_,path:L,status:"unknown",issues:[]}}}function Ia(_,L){let j=G(_);return{directories:[Xo("policy",Zo(Zo(L))),Xo("config",Zo(L)),...j?[Xo("audit",j)]:[{kind:"audit",status:"unknown",issues:[]}]]}}import{spawn as xm}from"node:child_process";import{existsSync as Aa}from"node:fs";import{delimiter as Sm,extname as Pm,join as Em}from"node:path";import{stripVTControlCharacters as Oa}from"node:util";var Da="2.6.12",Rm=5000,_m="_CC_SAFETY_NET_TEST_SPAWN_PLATFORM";function pn(){return Da}function Qo(_,L){let j=_[L];if(j)return j;let Y=Object.keys(_).find((Z)=>Z.toLowerCase()===L.toLowerCase()&&!!_[Z]);return Y?_[Y]:j}function Tm(_){return(Qo(_,"PATHEXT")||".COM;.EXE;.BAT;.CMD").split(";").filter((L)=>L.length>0)}function Im(_,L){let j=Pm(_)?[_]:[...Tm(L).map((Y)=>`${_}${Y}`),_];if(_.includes("/")||_.includes("\\"))return j.find((Y)=>Aa(Y))??_;return(Qo(L,"PATH")??"").split(Sm).flatMap((Y)=>j.map((Z)=>Em(Y,Z))).find((Y)=>Aa(Y))??_}function $a(_){if(!/[\s"&|<>^]/.test(_))return _;return`"${_.replace(/"/g,'""')}"`}function Xn(_,L){let[j,...Y]=_,Z=L[_m]==="win32"?"win32":process.platform;if(!j||Z!=="win32")return{cmd:j??"",args:Y};let oe=Im(j,L);if(!/\.(?:bat|cmd)$/i.test(oe))return{cmd:oe,args:Y};return{cmd:Qo(L,"COMSPEC")??"cmd.exe",args:["/d","/c",["call",$a(oe),...Y.map($a)].join(" ")]}}var Ht=async(_,L=Rm)=>{let j=await Am(_,{timeoutMs:L});if(j.code!==0)return null;return Oa(j.stdout).trim()||Oa(j.stderr).trim()||null};function Am(_,L){let[j,...Y]=_;if(!j)return Promise.resolve({code:null,stdout:"",stderr:""});return new Promise((Z)=>{try{let oe=Xn([j,...Y],process.env),se=xm(oe.cmd,oe.args,{stdio:["ignore","pipe","pipe"]}),fe=!1,ge="",Pe="";se.stdout.on("data",(Le)=>{ge+=Le.toString()}),se.stderr.on("data",(Le)=>{Pe+=Le.toString()});let Ee=(Le)=>{if(fe)return;fe=!0,clearTimeout(Re),Z(Le)},Re=setTimeout(()=>{se.kill(),Ee({code:null,stdout:ge,stderr:Pe})},L.timeoutMs);se.on("close",(Le)=>{Ee({code:Le,stdout:ge,stderr:Pe})}),se.on("error",()=>{Ee({code:null,stdout:ge,stderr:Pe})})}catch{Z({code:null,stdout:"",stderr:""})}})}function Dr(_){if(!_)return null;let L=/Claude Code\s+(\d+\.\d+\.\d+)/i.exec(_);if(L)return L[1]??null;let j=/v?(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)/i.exec(_);if(j)return j[1]??null;return _.split(`
-`)[0]?.trim()||null}async function Nr(_,L=Ht,j=process.cwd()){let Y=Promise.all(En.map(async(Re)=>[Re.id,Dr(await L([...Re.probeCommand]))])),[Z,oe,se,fe,ge,Pe,Ee]=await Promise.all([Y,Y.then(async(Re)=>{let Le=Re.find(([Be])=>Be==="opencode")?.[1];if(!Le?.startsWith("2.")||!_(Le))return null;let _e=["--param",`location[directory]=${j}`],Te=["opencode","api","integration.list",..._e];return await L(Te,30000),L(["opencode","api","plugin.list",..._e],30000)}),L(["codex","plugin","list"],30000),L(["amp","plugins","list"],30000),L(["node","--version"]),L(["npm","--version"]),L(["bun","--version"])]);return{version:Da,versions:Object.fromEntries(Z),codexPluginListOutput:se,ampPluginListOutput:fe,openCodePluginListOutput:oe,nodeVersion:Dr(ge),npmVersion:Dr(Pe),bunVersion:Dr(Ee),platform:`${process.platform} ${process.arch}`}}function ei(_,L){if(L==="dev")return!1;let j=_.split(".").map(Number),Y=L.split(".").map(Number),[Z=0,oe=0,se=0]=j,[fe=0,ge=0,Pe=0]=Y;if(Z!==fe)return Z>fe;if(oe!==ge)return oe>ge;return se>Pe}async function Gn(){let _=pn(),L=new AbortController,j=setTimeout(()=>L.abort(),3000);try{let Y=await fetch("https://registry.npmjs.org/cc-safety-net/latest",{signal:L.signal});if(!Y.ok)return{currentVersion:_,latestVersion:null,updateAvailable:!1,error:`npm registry returned ${Y.status}`};let Z=await Y.json(),oe=ei(Z.version,_);return{currentVersion:_,latestVersion:Z.version,updateAvailable:oe}}catch(Y){return{currentVersion:_,latestVersion:null,updateAvailable:!1,error:Y instanceof Error?Y.message:"Network error"}}finally{clearTimeout(j)}}import*as Ga from"node:readline";var Ha=(_)=>`\x1B[${_}B`,Om=(_)=>`\x1B[${_}A`;var Na=["░","▒","▓","╱","╲","┃","━","┏","┓","┗","┛","╋"];function $m(_){return new Promise((L)=>setTimeout(L,_))}function Dm(_,L,j){if(!j)return L(_);if(j.aborted)return Promise.resolve();return new Promise((Y,Z)=>{let oe=()=>j.removeEventListener("abort",se),se=()=>{oe(),Y()};j.addEventListener("abort",se,{once:!0}),L(_).then(()=>{oe(),Y()},(fe)=>{oe(),Z(fe)})})}function Lr(_){return Math.max(0,Math.min(1,_))}function Ft(_){return Math.max(0,Math.min(255,Math.round(_)))}function ni(_){return _<=0.0031308?12.92*_:1.055*_**0.4166666666666667-0.055}function Nm(_,L,j){let Y=j*Math.PI/180,Z=L*Math.cos(Y),oe=L*Math.sin(Y),se=(_+0.3963377774*Z+0.2158037573*oe)**3,fe=(_-0.1055613458*Z-0.0638541728*oe)**3,ge=(_-0.0894841775*Z-1.291485548*oe)**3;return{blue:Ft(ni(Lr(-0.0041960863*se-0.7034186147*fe+1.707614701*ge))*255),green:Ft(ni(Lr(-1.2684380046*se+2.6097574011*fe-0.3413193965*ge))*255),red:Ft(ni(Lr(4.0767416621*se-3.3077115913*fe+0.2309699292*ge))*255)}}function ti(_,L){let j=(L*_*180/Math.PI%360+360)%360;return Nm(0.72,0.15,j)}function Fa(_,L=0.1){let j=ti(L,_);return`\x1B[38;2;${j.red};${j.green};${j.blue}m`}function Lm(_,L){return{blue:Ft(_.blue+(255-_.blue)*L),green:Ft(_.green+(255-_.green)*L),red:Ft(_.red+(255-_.red)*L)}}function Ma(_,L,j){let Y=Math.imul(_+2654435769,2246822507)^Math.imul(L+3266489909,668265263)^Math.imul(j+374761393,2654435761),Z=Y^Y>>>15,oe=Math.imul(Z,739982445),se=oe^oe>>>12,fe=Math.imul(se,695872825);return((fe^fe>>>15)>>>0)/4294967296}function jm(_,L,j){let Y=Math.floor(Ma(_,L,j)*Na.length);return Na[Y]??"░"}function La(_){let L=Lr(_);return L*L*L*(L*(L*6-15)+10)}function Hm(_){if(_.length===0)return"";let L=[],j=!1,Y="";for(let Z of _){let oe=`${Z.red};${Z.green};${Z.blue}`;if(Z.bold!==j)L.push(Z.bold?"\x1B[1m":"\x1B[22m"),j=Z.bold;if(oe!==Y)L.push(`\x1B[38;2;${oe}m`),Y=oe;L.push(Z.character)}return`${L.join("")}\x1B[22m\x1B[39m`}function Fm(_,L,j,Y,Z){return _.map((oe,se)=>({...ti(j,Y+L+se/Z),bold:!1,character:oe}))}function Mm(_,L,j,Y,Z,oe,se,fe){let ge=Math.max(1,Y*0.75),Pe=Math.min(1,j/ge),Ee=Z*La(Pe),Re=Math.max(0,(j-ge)/Math.max(1,Y-ge)),Le=(1-La(j/Y))*fe*2,_e=0.35*Math.max(0,1-Re*2),Te=Pe>=1,Be=Math.min(_.length,Math.ceil(Ee+2+1));return _.slice(0,Be).map((Fe,Ze)=>{let tn=ti(oe,se+L+Ze/fe+Le),on=Ze+Ma(L,Ze,7919)*2-1;if(on>Ee+2)return{...tn,bold:!1,character:" "};let an=Ee-on,nn=0.8*Math.exp(-(an*an)/12.5),sn=Math.min(0.9,nn+_e),Sn=!Te&&on>Ee-4;return{...Lm(tn,sn),bold:sn>0.3,character:Sn?jm(L,Ze,j):Fe}})}function ja(_){return`\x1B[?2026h${_.map((L,j)=>`\x1B8${j>0?Ha(j):""}${Hm(L)}`).join("")}\x1B[?2026l`}async function ri(_,L={}){if(!_)return;let j=L.output??process.stdout,Y=L.sleep??$m,Z=L.seed??0,oe=_.split(`
-`).map((Ee)=>Array.from(Ee)),se=Math.max(...oe.map((Ee)=>Ee.length)),fe=12000*oe.filter((Ee)=>Ee.length>0).length/40,ge=se>0?Math.max(1,Math.ceil(fe/16.666666666666668)):0,Pe=ge>0?fe/ge:0;j.write(`\x1B[?25l${oe.length>1?`${`
-`.repeat(oe.length-1)}${Om(oe.length-1)}`:""}\x1B7`);try{for(let Ee=1;Ee<=ge;Ee+=1){if(L.signal?.aborted)break;j.write(ja(oe.map((Re,Le)=>Mm(Re,Le,Ee,ge,se,0.1,Z,3)))),await Dm(Pe,Y,L.signal)}}finally{if(j.write(ja(oe.map((Ee,Re)=>Fm(Ee,Re,0.1,Z,3)))),j.write("\x1B8"),oe.length>1)j.write(Ha(oe.length-1));j.write(`
-\x1B[0m\x1B[?25h`)}}var Ua=["┏━┛┏━┛  ┏━┛┏━┃┏━┛┏━┛━┏┛┃ ┃  ┏━ ┏━┛━┏┛","┃  ┃    ━━┃┏━┃┏━┛┏━┛ ┃ ━┏┛  ┃ ┃┏━┛ ┃ ","━━┛━━┛  ━━┛┛ ┛┛  ━━┛ ┛  ┛   ┛ ┛━━┛ ┛ "].join(`
-`);function Um(_){return Boolean(_.isTTY)}async function er(_={}){let L=_.output??process.stdout;if(!Um(L))return;let j=_.input??process.stdin,Y={output:L,seed:_.seed??Math.random()*8192,sleep:_.sleep};if(!j.isTTY||typeof j.setRawMode!=="function"){await ri(Ua,Y);return}let Z=new AbortController,oe=j.readableFlowing===!0,se=j.isRaw===!0,fe=!1,ge=(Pe,Ee)=>{if(Ee.ctrl&&Ee.name==="c")fe=!0;if(fe||Ee.name==="return"||Ee.name==="enter")Z.abort()};Ga.emitKeypressEvents(j),j.on("keypress",ge),j.setRawMode(!0),j.resume();try{await ri(Ua,{...Y,signal:Z.signal})}finally{if(j.off("keypress",ge),j.setRawMode(se),!oe)j.pause()}if(!fe)return;if(_.onInterrupt){_.onInterrupt();return}process.kill(process.pid,"SIGINT")}import{createHash as Vm}from"node:crypto";import{existsSync as qa}from"node:fs";import{dirname as jr,join as Va}from"node:path";import{dirname as Ba,join as Gm}from"node:path";var Bm="rule.lock";function qm(_){return Gm(Ba(_),Bm)}function hn(_,L){let j=L.global?L.userConfigPath??B(_,L):L.projectConfigPath??I(L.cwd??process.cwd()),Y=L.global?at(_,L):ct(j,L.cwd??process.cwd()),Z=qm(j);return{configDir:Ba(j),configPath:j,lockPath:Z,filesystemScope:Y,configTarget:i(Y,j),lockTarget:i(Y,Z)}}var Km="`cc-safety-net rule sync` is deprecated: rulebooks are live files that need no synchronization. This run only migrates the lock and cache an earlier version left behind.",Jm="cache",Wm="rulebooks";function Ka(_,L={}){let j=hn(_,L),Y=i(j.filesystemScope,Wa(j.configDir)),Z=r(j.lockTarget);if(console.log(Km),Z===null&&!qa(Y.path))return console.log(`No v2 lock or cache leftovers found in ${jr(j.configDir)}; nothing to migrate.`),0;let oe=Qm(Z),se=d(j.configTarget);if(!se.config&&(r(j.configTarget)!==null||oe.size>0))return console.error(`Cannot migrate: the rules config in ${jr(j.configDir)} is missing or unreadable while v2 leftovers remain. Restore rule.json, then re-run rule sync.`),1;let fe=se.config?.rules??[];for(let ge of fe.flatMap((Pe)=>zm(Pe,oe,j,Y,L.global===!0)))console.log(ge);return W(j.lockTarget),wt(Y),console.log(`Removed the v2 lock and cache under ${jr(j.configDir)}.`),0}function Ja(_,L){return[...new Set([{cwd:L},{cwd:L,global:!0}].flatMap((j)=>{let Y=hn(_,j);return[Y.lockPath,Wa(Y.configDir)]}))].filter((j)=>qa(j))}function zm(_,L,j,Y,Z){if(!C(_))return[];let oe=M(_).name,se=i(j.filesystemScope,F(j.configDir,oe)),fe=r(se);if(fe!==null&&Ym(fe,oe))return[];let ge=L.get(_),Pe=ge?Zm(ge,oe,Y.path,j.filesystemScope):null;if(Pe===null)return[`Could not migrate ${_} from the v2 cache. Run \`cc-safety-net rule update ${_}${Z?" --global":""}\` to vendor it.`];if(g(se,Pe),fe!==null)return[`Restored ${_} from the v2 cache over an invalid file.`];return[`Vendored ${_} from the v2 cache.`]}function Ym(_,L){let j=we(_);return!("problem"in j)&&j.rulebook.name===L}function Zm(_,L,j,Y){let Z=Va(j,Wm,`${Xm(_)}--${_.digest.replace("sha256:","").slice(0,12)}`,ye),oe=r(i(Y,Z));if(oe===null||tg(oe)!==_.digest)return null;let se=we(oe);if("problem"in se||se.rulebook.name!==L)return null;return oe}function Wa(_){return Va(jr(_),Jm)}function Xm(_){return([_.owner,_.repo,_.display_ref,_.name].every((Y)=>typeof Y==="string"&&Y!=="")?`${_.owner}/${_.repo}#${_.display_ref}/${_.name}`:_.spec).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"rulebook"}function Qm(_){let L=_===null?null:ng(_),j=za(L)&&Array.isArray(L.rulebooks)?L.rulebooks:[];return new Map(j.filter(eg).map((Y)=>[Y.spec,Y]))}function eg(_){return za(_)&&typeof _.spec==="string"&&typeof _.digest==="string"}function za(_){return!!_&&typeof _==="object"}function ng(_){try{return JSON.parse(_)}catch{return null}}function tg(_){return`sha256:${Vm("sha256").update(_).digest("hex")}`}var Ya="\r\x1B[2K",rg="\x1B[?25l",og="\x1B[39m",ig="\x1B[?25h",sg=100,ag=0.55,lg=80,Za=["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"];function cg(_){return new Promise((L)=>setTimeout(L,_))}async function Hr(_,L={}){let j=L.output??process.stdout;if(!j.isTTY)return _;let Y=L.sleep??cg,Z=!1,oe=_.then((fe)=>(Z=!0,fe),(fe)=>{throw Z=!0,fe});if(await Promise.race([oe.then(()=>!0),Y(sg).then(()=>!1)]))return oe;j.write(rg);try{for(let fe=0;!Z;fe+=1)j.write(`${Ya}${Fa(fe*ag)}${Za[fe%Za.length]}${og} ${L.loadingMessage??"Loading…"}`),await Promise.race([oe,Y(lg)]);return await oe}finally{j.write(`${Ya}${ig}`)}}async function nr(_,L,j,Y={}){let Z=L();if(_)await j();if(_&&Z.ready)await Hr(Z.ready,Y);return Z.finish()}import{stripVTControlCharacters as dg}from"node:util";var Fr="amp plugins list",ug=/^\s*[✓✗]\s+cc-safety-net(?:\.ts)?\s+\(User Plugins\)\s+(\S+)\s*$/;function Xa(_){if(!_.ampPluginListOutput)return{platform:"amp",status:"n/a"};let L=dg(_.ampPluginListOutput).split(`
-`).map((j)=>ug.exec(j)?.[1]).find((j)=>j!==void 0);if(!L)return{platform:"amp",status:"n/a"};if(L!=="active")return{platform:"amp",status:"disabled",method:Fr,configPath:Fr,errors:[`Amp personal plugin cc-safety-net is ${L}; run "plugins: reload" in Amp or reinstall with install --amp`]};return{platform:"amp",status:"configured",method:Fr,configPath:Fr}}import{existsSync as vg,readFileSync as bg}from"node:fs";import{isAbsolute as tS,join as hg}from"node:path";function tr(_){return hg(_,".gemini","config","hooks.json")}var el=new Map([["run_command","auto"]]),nl="manage_task";var wg=/cc-safety-net\s+hook\s+(?:[^\s]+\s+)*(?:--agy-cli|-ac)(\s|["']|$)/;function kg(_){if(!_||typeof _!=="object"||Array.isArray(_))return[];return Object.values(_).flatMap((L)=>{if(!L||typeof L!=="object"||Array.isArray(L))return[];let j=L,Y=j.PreToolUse;if(!Array.isArray(Y))return[];return Y.flatMap((Z)=>{if(!Z||typeof Z!=="object"||Array.isArray(Z))return[];let oe=Z.hooks;if(!Array.isArray(oe))return[];return oe.flatMap((se)=>{if(!se||typeof se!=="object"||Array.isArray(se))return[];let fe=se.command;if(typeof fe!=="string"||!wg.test(fe))return[];return[{command:fe,enabled:j.enabled!==!1}]})})})}function tl(_){let L=tr(_.environment.home);if(!vg(L))return{platform:"antigravity-cli",status:"n/a",configPath:L};let j;try{j=kg(JSON.parse(bg(L,"utf-8")))}catch(Y){return{platform:"antigravity-cli",status:"n/a",configPath:L,errors:[`Failed to parse Antigravity hooks config ${L}: ${Y instanceof Error?Y.message:String(Y)}`]}}if(j.some((Y)=>Y.enabled))return{platform:"antigravity-cli",status:"configured",method:"hook config",configPath:L};if(j.length>0)return{platform:"antigravity-cli",status:"disabled",method:"hook config",configPath:L};return{platform:"antigravity-cli",status:"n/a",configPath:L}}import{existsSync as Eg}from"node:fs";import{join as Ln}from"node:path";import{existsSync as Cg,lstatSync as xg,readFileSync as Sg}from"node:fs";import{join as Pg}from"node:path";function vn(_,L=(j)=>j){if(!Cg(_))return{kind:"missing"};try{return{kind:"ok",value:JSON.parse(L(Sg(_,"utf-8")))}}catch{return{kind:"unreadable"}}}function Nn(_,L){if(_==="~")return L;if(_.startsWith("~/")||_.startsWith("~\\"))return Pg(L,_.slice(2));return _}function dn(_){try{return xg(_)}catch{return}}function Br(_,L){let j=dn(L);if(!j)return{platform:_,status:"n/a",configPath:L};if(!j.isSymbolicLink()&&j.isDirectory())return;return{platform:_,status:"n/a",configPath:L,errors:[`${L} is a symlink or not a directory; move or remove it before installing`]}}function Xe(_,L){return typeof _==="object"&&_!==null?_[L]:void 0}var qr="cc-safety-net@cc-marketplace";function Vr(_){return _.env.get("CLAUDE_CONFIG_DIR")||Ln(_.home,".claude")}function rl(_){return Ln(_.env.get("CLAUDE_CODE_PLUGIN_CACHE_DIR")||Ln(Vr(_),"plugins"),"installed_plugins.json")}function ol(_,L){let j=Xe(Xe(_,"plugins"),L);return Array.isArray(j)&&j.length>0}function Kr(_,L){let j=vn(rl(_));return j.kind==="ok"&&ol(j.value,L)}function ii(_){return il(rl(_),Ln(Vr(_),"settings.json"))}function il(_,L){let j=vn(_);if(j.kind==="unreadable")return{platform:"claude-code",status:"not-inspected"};if(j.kind==="missing")return{platform:"claude-code",status:"n/a"};if(!ol(j.value,qr))return{platform:"claude-code",status:"n/a"};let Y=vn(L);if(Y.kind==="unreadable")return{platform:"claude-code",status:"not-inspected"};if(!(Y.kind==="ok"&&Xe(Xe(Y.value,"enabledPlugins"),qr)===!0))return{platform:"claude-code",status:"disabled",method:"plugin config",configPath:L,errors:[`${qr} is installed but not enabled in Claude Code`]};return{platform:"claude-code",status:"configured",method:"plugin config",configPath:_}}function sl(_){let L=Ln(_.home,".claude"),j=Ln(L,"plugins","installed_plugins.json");if(il(j,Ln(L,"settings.json")).status!=="configured")return;let Y=vn(j),Z=Y.kind==="ok"?Xe(Xe(Y.value,"plugins"),qr):void 0,oe=(Array.isArray(Z)?Z:[]).filter((Pe)=>Xe(Pe,"scope")==="user").map((Pe)=>Xe(Pe,"installPath")).find((Pe)=>typeof Pe==="string");if(!oe)return;let se=Ln(oe,".cursor-plugin","plugin.json"),fe=vn(se),ge=fe.kind==="ok"?Xe(fe.value,"hooks"):void 0;return typeof ge==="string"&&Eg(Ln(oe,ge))?se:void 0}function al(_){return ii(_.environment)}var ll="Start Codex, open `/hooks`, select the cc-safety-net PreToolUse hook, and press `t` to trust it.";function cl(_){if(!_.codexPluginListOutput)return{platform:"codex",status:"n/a"};let L=_.codexPluginListOutput.split(`
-`).find((j)=>j.includes("https://github.com/kenryu42/cc-safety-net.git"));if(!L)return{platform:"codex",status:"n/a"};if(!L.includes("installed,"))return{platform:"codex",status:"n/a"};if(!L.includes("installed, enabled"))return{platform:"codex",status:"disabled",method:"codex plugin list",configPath:"codex plugin list",errors:["Codex plugin line for https://github.com/kenryu42/cc-safety-net.git must contain installed, enabled."]};return{platform:"codex",status:"configured",method:"codex plugin list",configPath:"codex plugin list",errors:["Codex runs only trusted hooks, and doctor cannot check trust. Start Codex, open `/hooks`, select the cc-safety-net PreToolUse hook, and press `t` to trust it."]}}import{existsSync as Yr,readdirSync as Rg,readFileSync as _g}from"node:fs";import{join as wn}from"node:path";function yn(_){let L="",j=0,Y=!1,Z=!1,oe=-1;while(j<_.length){let se=_[j],fe=_[j+1];if(Z){L+=se,Z=!1,j++;continue}if(se==='"'&&!Y){Y=!0,oe=-1,L+=se,j++;continue}if(se==='"'&&Y){Y=!1,L+=se,j++;continue}if(se==="\\"&&Y){Z=!0,L+=se,j++;continue}if(Y){L+=se,j++;continue}if(se==="/"&&fe==="/"){while(j<_.length&&_[j]!==`
-`)j++;continue}if(se==="/"&&fe==="*"){j+=2;while(j<_.length-1){if(_[j]==="*"&&_[j+1]==="/"){j+=2;break}j++}continue}if(se===","){oe=L.length,L+=se,j++;continue}if(se==="}"||se==="]"){if(oe!==-1){let ge=L.slice(oe+1);if(/^\s*$/.test(ge))L=L.slice(0,oe)+ge}oe=-1,L+=se,j++;continue}if(!/\s/.test(se))oe=-1;L+=se,j++}return L}function ul(_,L,j){let Y=L+1,Z=!1;while(Y<_.length){if(Z){Z=!1,Y++;continue}if(_[Y]==="\\"){Z=!0,Y++;continue}if(_[Y]==='"')return Y+1;Y++}throw Error(j)}function ai(_,L,j){let Y=_[L],Z=Y==="["?"]":"}",oe=0,se=L;while(se<_.length){let fe=j.skipComment?.(_,se)??se;if(fe!==se){se=fe;continue}if(_[se]==='"'){se=ul(_,se,j.stringError);continue}if(_[se]===Y)oe++;if(_[se]===Z){if(oe--,oe===0)return se}se++}throw Error(j.bracketError)}function pl(_,L){let j=_.lastIndexOf(`
-`,L)+1;return/^[ \t]*/.exec(_.slice(j))?.[0]??""}function fl(_,L){let j=L.end+(/^\s*/.exec(_.slice(L.end))?.[0].length??0);if(_[j]===","){let se=_[j+1]===`
-`?j+2:j+1;return`${_.slice(0,L.start)}${_.slice(se)}`}let Y=_.slice(0,L.start).search(/\s*$/)-1;if(_[Y]!==",")return`${_.slice(0,L.start)}${_.slice(L.end)}`;let Z=_.lastIndexOf(`
-`,Y-1),oe=Z!==-1&&/^\s*$/.test(_.slice(Z+1,Y))?Z:Y;return`${_.slice(0,oe)}${_.slice(L.end)}`}function si(_,L){if(_.startsWith("//",L)){let j=_.indexOf(`
-`,L+2);return j===-1?_.length:j+1}if(_.startsWith("/*",L)){let j=_.indexOf("*/",L+2);return j===-1?_.length:j+2}return L}function dl(_,L){let j=L;while(j<_.length){if(/\s/.test(_[j]??"")){j++;continue}let Y=si(_,j);if(Y===j)return j;j=Y}return j}function ml(_,L,j){let Y=0,Z=0;while(Z<_.length){let oe=si(_,Z);if(oe!==Z){Z=oe;continue}if(_[Z]==='"'){let se=ul(_,Z,j.stringError);if(Y===1&&JSON.parse(_.slice(Z,se))===L){let fe=dl(_,se),ge=dl(_,fe+1);if(_[fe]===":"&&_[ge]==="[")return{start:ge,end:ai(_,ge,{skipComment:si,...j})}}Z=se;continue}if(_[Z]==="{"||_[Z]==="[")Y++;if(_[Z]==="}"||_[Z]==="]")Y--;Z++}return}var Tn="cc-safety-net@cc-marketplace",Jr=["cc-marketplace","cc-safety-net"],gl=["_direct","copilot-safety-net"],yl=["cc-marketplace","safety-net"],hl="safety-net@cc-marketplace";function Wr(_,L){let j=L.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");return new RegExp(`(^|[^a-z0-9-])${j}([^a-z0-9-]|$)`,"m").test(_??"")}function vl(_){return Wr(_,"cc-safety-net@cc-marketplace")}function bl(_){return Wr(_,"cc-marketplace")}function wl(_){return Wr(_,"copilot-safety-net")}function kl(_){return Wr(_,"safety-net@cc-marketplace")}function zr(_){if(!_?.includes("cc-safety-net"))return!1;return/(^|\s)hook\s+(?:[^\s]+\s+)*(--copilot-cli|-cp)(\s|$)/.test(_)}function xl(_,L){if(!_)return null;let j=_.match(/(\d+)\.(\d+)\.(\d+)/);if(!j)return null;let Y=[Number(j[1]),Number(j[2]),Number(j[3])];for(let Z=0;Z<L.length;Z++){let oe=Y[Z]??0,se=L[Z]??0;if(oe!==se)return oe>se}return!0}function Tg(_){return xl(_,[0,0,422])}function Ig(_){return xl(_,[1,0,8])}function ir(_){return _.env.get("COPILOT_HOME")||wn(_.home,".copilot")}function Sl(_){return _.disableAllHooks!==!0&&Pl(_)}function Pl(_){return(_.hooks?.preToolUse??[]).some((j)=>{if(j.type!==void 0&&j.type!=="command")return!1;return zr(j.command)||zr(j.bash)||zr(j.powershell)||zr(j.exec&&[j.exec,...j.args??[]].join(" "))})}function rr(_){return _===void 0||typeof _==="string"}function Ag(_){return _===void 0||Array.isArray(_)&&_.every((L)=>typeof L==="string")}function Og(_){if(!_||typeof _!=="object"||Array.isArray(_))return!1;let L=_;if(L.disableAllHooks!==void 0&&typeof L.disableAllHooks!=="boolean")return!1;if(L.hooks===void 0)return!0;if(!L.hooks||typeof L.hooks!=="object"||Array.isArray(L.hooks))return!1;let j=L.hooks.preToolUse;if(j===void 0)return!0;return Array.isArray(j)&&j.every((Y)=>Y!==null&&typeof Y==="object"&&!Array.isArray(Y)&&rr(Y.type)&&rr(Y.command)&&rr(Y.bash)&&rr(Y.powershell)&&rr(Y.exec)&&Ag(Y.args))}function li(_,L){try{let j=JSON.parse(yn(_g(_,"utf-8")));if(!Og(j)){L?.push(`Invalid hook config ${_}: hooks.preToolUse must be an array of hook objects`);return}return j}catch(j){L?.push(`Failed to parse ${_}: ${j instanceof Error?j.message:String(j)}`);return}}function El(_,L){try{return Rg(_).filter((j)=>j.endsWith(".json")).sort((j,Y)=>j.localeCompare(Y))}catch(j){return L?.push(`Failed to read ${_}: ${j instanceof Error?j.message:String(j)}`),[]}}function $g(_,L){if(!Yr(_))return[];let j=[];for(let Y of El(_,L)){let Z=wn(_,Y),oe=li(Z,L);if(oe&&Sl(oe))j.push(Z)}return j}function or(_,L){if(!Yr(_))return;let j=li(_,L);if(!j)return;return{path:_,config:j}}function Cl(_,L,j,Y){if(L){_.push(`GitHub Copilot CLI ${L} does not support ${j}; requires ${Y}+`);return}_.push(`GitHub Copilot CLI version unavailable; skipping ${j} because it requires ${Y}+`)}function Dg(_){for(let L of _){if(L?.config.disableAllHooks===!0)return L.path;if(L?.config.disableAllHooks===!1)return}return}function Ng(_,L,j,Y){let Z=ir(_),oe=wn(L,".github","hooks"),se=wn(Z,"hooks"),fe=wn(L,".github","copilot"),ge=wn(L,".claude"),Pe=Ig(j),Ee=Pe===!0?Y:void 0,Re=[or(wn(fe,"settings.local.json"),Ee),or(wn(fe,"settings.json"),Ee),or(wn(ge,"settings.local.json"),Ee),or(wn(ge,"settings.json"),Ee)],Le=or(wn(Z,"settings.json"),Ee),_e=[Le?.config.disableAllHooks===!0?void 0:Le];if(Pe!==!1){let nn=Dg(Re);if(nn){if(Pe===null)Y.push(`GitHub Copilot CLI version unavailable; treating disableAllHooks in ${nn} as active`);return{activeConfigPaths:[],repoInlineSources:Re,disabledBy:nn}}}let Te=$g(oe,Y),Be=Tg(j),Fe=Be===!0?Y:void 0,Ze=Yr(se)?El(se,Fe):[],tn=[];for(let nn of Ze){let sn=wn(se,nn),Sn=li(sn,Fe);if(Sn&&Sl(Sn))tn.push(sn)}if(Be!==!0&&tn.length>0)Cl(Y,j,`user hook files in ${se}`,"0.0.422"),tn.length=0;let on=[];for(let nn of[...Re,..._e]){if(!nn)continue;if(!Pl(nn.config))continue;if(Pe===!0){on.push(nn);continue}Cl(Y,j,"inline hook definitions in Copilot config files","1.0.8");break}let an=(nn)=>nn.filter((sn)=>!!sn&&on.includes(sn)).map((sn)=>sn.path);return{activeConfigPaths:[...an(Re),...Te,...an(_e),...tn],repoInlineSources:Re}}function Rl(_){let L=[],j=Ng(_.environment,_.cwd,_.copilotCliVersion,L);if(j.disabledBy)return{platform:"copilot-cli",status:"disabled",method:"hook config",configPath:j.disabledBy,configPaths:[j.disabledBy],errors:L.length>0?L:void 0};let Y=ir(_.environment),Z=wn(Y,"installed-plugins",...Jr),oe=Yr(Z),se=wn(Y,"settings.json"),fe=vn(se,yn),ge=(_e)=>Xe(Xe(_e,"enabledPlugins"),Tn),Pe=j.repoInlineSources.find((_e)=>typeof ge(_e?.config)==="boolean"),Ee=Pe??(fe.kind==="ok"?{path:se,config:fe.value}:void 0);if(oe&&!Pe&&fe.kind==="unreadable")return{platform:"copilot-cli",status:"not-inspected"};let Re=oe&&Ee!==void 0&&ge(Ee.config)===!1;if(Re&&j.activeConfigPaths.length===0)return{platform:"copilot-cli",status:"disabled",method:"plugin config",configPath:Ee.path,errors:[`${Tn} is installed but not enabled in Copilot CLI`]};let Le=oe&&!Re;if(Le||j.activeConfigPaths.length>0){let _e=j.activeConfigPaths[0];return{platform:"copilot-cli",status:"configured",method:Le?"plugin config":"hook config",configPath:_e??(Le?Z:void 0),configPaths:j.activeConfigPaths.length>0?j.activeConfigPaths:void 0,errors:L.length>0?L:void 0}}return{platform:"copilot-cli",status:"n/a",errors:L.length>0?L:void 0}}import{existsSync as yi,readdirSync as zg,readFileSync as Yg}from"node:fs";import{join as gi}from"node:path";import{existsSync as fi,mkdirSync as Gg,readFileSync as Bg,rmSync as qg}from"node:fs";import{dirname as Vg,join as Zr}from"node:path";import{existsSync as Lg,renameSync as jg,statSync as Hg,writeFileSync as Fg}from"node:fs";function ln(_,L){let j=`${_}.${process.pid}.tmp`;Fg(j,L,Lg(_)?{mode:Hg(_).mode&511}:{}),jg(j,_)}import{spawn as Mg}from"node:child_process";function Ug(_){return _.join(" ")}function ci(_,L,j){return[`Failed to run ${Ug(_)}${L===null?"":` (exit ${L})`}.`,j.trim()].filter(Boolean).join(`
-`)}function di(_){let L={stdout:"",stderr:""};return _.stdout.setEncoding("utf-8"),_.stderr.setEncoding("utf-8"),_.stdout.on("data",(j)=>{L.stdout+=j}),_.stderr.on("data",(j)=>{L.stderr+=j}),L}function fn(_,L){return new Promise((j,Y)=>{let Z=Xn([..._],process.env),oe=Mg(Z.cmd,Z.args,{stdio:["ignore","pipe","pipe"]}),se=di(oe),fe=()=>[se.stdout,se.stderr].filter(Boolean).join(`
-`),ge=L?.timeoutMs??120000,Pe=setTimeout(()=>{oe.kill(),Y(Error(ci(_,null,`Timed out after ${ge}ms.
-${fe()}`.trim())))},ge);oe.on("error",(Ee)=>{clearTimeout(Pe),Y(Error(ci(_,null,`${Ee.message}
-${fe()}`.trim())))}),oe.on("close",(Ee)=>{if(clearTimeout(Pe),Ee!==0){Y(Error(ci(_,Ee,fe())));return}j(L?.stdoutOnly?se.stdout:fe())})})}async function ui(_){for(let L of _)await fn(L)}async function _l(_){for(let L of _)try{await fn(L)}catch(j){console.warn(j instanceof Error?j.message:String(j))}}var kn=Object.fromEntries(Qt.map((_)=>[_.id,`npx -y cc-safety-net hook ${_.flags[1]}`]));var ar=kn.cursor,Tl=30;function Qr(_){return Zr(_.home,".cursor","hooks.json")}var sr="cc-safety-net";function mi(_){let L=Zr(_.home,".cursor","plugins");return{cache:Zr(L,"cache",sr),marketplaceClone:Zr(L,"marketplaces","github.com","kenryu42","cc-safety-net")}}async function Il(_){let L=Object.values(mi(_));if(!L.some((Y)=>fi(Y)))return;let j="No marketplace matches";return await fn(["cursor-agent","plugin","marketplace","remove",sr]).catch((Y)=>{if(!(Y instanceof Error&&Y.message.includes(j)))throw Y}),L.forEach((Y)=>qg(Y,{recursive:!0,force:!0})),[`Removed the ${sr} marketplace from your Cursor account.`,"If /plugins in cursor-agent still lists CC Safety Net as installed, uninstall it there."].join(`
-`)}function it(_){return typeof _==="object"&&_!==null&&!Array.isArray(_)}function pi(){return{command:ar,timeout:Tl,failClosed:!0}}function Xr(_){return it(_)&&_.command===ar}function Kg(_){return Object.keys(_).length===3&&_.command===ar&&_.timeout===Tl&&_.failClosed===!0}function Jg(_){try{return JSON.parse(Bg(_,"utf-8"))}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Cursor hooks config ${_}: ${L.message}`);throw L}}function Al(_){let L=Jg(_);if(!it(L))throw Error(`Cursor hooks config ${_} must be a JSON object`);if(L.version!==1)throw Error(`Cursor hooks config ${_} must set "version": 1`);if(L.hooks!==void 0&&!it(L.hooks))throw Error(`Cursor hooks config ${_} "hooks" must be an object`);let j=it(L.hooks)?L.hooks.preToolUse:void 0;if(j!==void 0&&!Array.isArray(j))throw Error(`Cursor hooks config ${_} "hooks.preToolUse" must be an array`);return L}function Ol(_){let L=it(_.hooks)?_.hooks.preToolUse:void 0;return Array.isArray(L)?L:[]}function Wg(_){if(!_.some(Xr))return[..._,pi()];return _.reduce((L,j)=>{if(!Xr(j))return L.result.push(j),L;if(!L.inserted)L.result.push(pi()),L.inserted=!0;return L},{result:[],inserted:!1}).result}function $l(_,L,j){let Y=it(L.hooks)?L.hooks:{},Z={...L,hooks:{...Y,preToolUse:j}};ln(_,`${JSON.stringify(Z,null,2)}
-`)}function Dl(_){let L=Qr(_);if(!fi(L))return Gg(Vg(L),{recursive:!0}),ln(L,`${JSON.stringify({version:1,hooks:{preToolUse:[pi()]}},null,2)}
-`),{path:L,alreadyInstalled:!1};let j=Al(L),Y=Ol(j),Z=Y.filter(Xr);if(it(j.hooks)&&Array.isArray(j.hooks.preToolUse)&&Z.length===1&&Z[0]!==void 0&&Kg(Z[0]))return{path:L,alreadyInstalled:!0};return $l(L,j,Wg(Y)),{path:L,alreadyInstalled:!1}}function Nl(_){let L=Qr(_);if(!fi(L))return{path:L,alreadyInstalled:!1};let j=Al(L),Y=Ol(j),Z=Y.filter((oe)=>!Xr(oe));if(Z.length===Y.length)return{path:L,alreadyInstalled:!1};return $l(L,j,Z),{path:L,alreadyInstalled:!0}}function Zg(_){if(!_||typeof _!=="object"||Array.isArray(_))return[];let L=_.hooks;if(!L||typeof L!=="object"||Array.isArray(L))return[];let j=L.preToolUse;if(!Array.isArray(j))return[];return j.filter((Y)=>!!Y&&typeof Y==="object"&&!Array.isArray(Y)&&Y.command===ar)}function Xg(_){let L=[];if(_.length>1)L.push("Multiple managed cc-safety-net hooks found; reinstall to collapse duplicates");let j=_[0];if(j&&j.failClosed!==!0)L.push('Managed hook is missing "failClosed": true; reinstall to repair');if(j&&j.timeout!==30)L.push('Managed hook "timeout" is not 30; reinstall to repair');return L}var eo="Claude Code plugin",hi="Cursor plugin";function Qg(_){let L=gi(mi(_).cache,sr);if(!yi(L))return{};try{return{version:zg(L).map((j)=>gi(L,j)).find((j)=>yi(gi(j,".cache-complete")))}}catch{return{unreadable:L}}}function ey(_,L){if(L){let Z=["Cursor records enabled plugins on your Cursor account, which doctor cannot check, and keeps a plugin's files after it is uninstalled.","Cursor pins marketplace plugins to the commit they were added at, so `cc-safety-net update` cannot update this plugin, while the npx hook (`cc-safety-net install --cursor`) stays current."].join(" ");return{method:hi,configPath:L,duplicate:`The Cursor plugin also runs this check, so every tool call is checked twice. ${Z} If the plugin is installed, run \`cc-safety-net uninstall --cursor\`, uninstall CC Safety Net from /plugins in cursor-agent, then run \`cc-safety-net install --cursor\`.`,alone:`${Z} If /plugins in cursor-agent does not list CC Safety Net as installed, run \`cc-safety-net install --cursor\`.`}}let j=sl(_);if(!j)return;let Y="Cursor runs the Claude Code plugin only while it imports Claude Code plugins, which doctor cannot check.";return{method:eo,configPath:j,duplicate:`The Claude Code plugin also runs this check in Cursor, so every tool call is checked twice. ${Y} If Cursor runs it, run \`cc-safety-net uninstall --cursor\` to remove this hook.`,alone:`${Y} If it stops, run \`cc-safety-net install --cursor\`.`}}function Ll(_){let L=ny(_),j=Qg(_.environment);if(j.unreadable)return L.status==="configured"?{...L,errors:[...L.errors??[],`Cannot read ${j.unreadable}, so doctor cannot tell whether the Cursor plugin also runs this check.`]}:{platform:"cursor",status:"not-inspected"};let Y=ey(_.environment,j.version);if(!Y)return L;if(L.status==="configured")return{...L,errors:[...L.errors??[],Y.duplicate]};return{platform:"cursor",status:"configured",method:Y.method,configPath:Y.configPath,errors:[...L.errors??[],Y.alone]}}function ny(_){let L=Qr(_.environment);if(!yi(L))return{platform:"cursor",status:"n/a",configPath:L};let j;try{j=JSON.parse(Yg(L,"utf-8"))}catch(oe){return{platform:"cursor",status:"n/a",configPath:L,errors:[`Failed to parse Cursor hooks config ${L}: ${oe instanceof Error?oe.message:String(oe)}`]}}let Y=Zg(j);if(Y.length===0)return{platform:"cursor",status:"n/a",configPath:L};let Z=Xg(Y);return{platform:"cursor",status:"configured",method:"hook config",configPath:L,errors:Z.length>0?Z:void 0}}import{readdirSync as ty}from"node:fs";import{join as vi,resolve as ry}from"node:path";var bi="cc-safety-net";function wi(_){let L=_.env.get("DSH_HOME");return vi(L?.trim()?ry(Nn(L,_.home)):vi(_.home,".dsh"),"profiles")}function jl(_){let L=wi(_),j=dn(L)?.isDirectory()?ty(L,{withFileTypes:!0}).filter((Z)=>Z.isDirectory()&&Z.name!=="node_modules").map((Z)=>{let oe=vi(L,Z.name,"package.json");return{name:Z.name,configPath:oe,manifest:vn(oe)}}):[];return{installed:j.flatMap((Z)=>{if(Z.manifest.kind!=="ok")return[];let oe=Z.manifest.value;if(Xe(Xe(oe,"dependencies"),bi)===void 0)return[];let se=Xe(Xe(Xe(oe,"dsh"),"profile"),"bundles");return[{name:Z.name,configPath:Z.configPath,enabled:Array.isArray(se)&&se.includes(bi)}]}),unreadable:j.some((Z)=>Z.manifest.kind==="unreadable")}}function ki(_){return jl(_).installed}function Hl(_){let L=jl(_.environment),j=L.installed.filter((oe)=>oe.enabled),Y=L.installed.filter((oe)=>!oe.enabled),Z=Y.map((oe)=>`${bi} is installed in the ${oe.name} profile but its bundle is disabled`);if(j.length>0)return{platform:"deepseek-harness",status:"configured",method:"dsh bundle",configPaths:j.map((oe)=>oe.configPath),...Z.length>0?{errors:Z}:{}};if(Y.length>0)return{platform:"deepseek-harness",status:"disabled",method:"dsh bundle",configPaths:Y.map((oe)=>oe.configPath),errors:Z};return L.unreadable?{platform:"deepseek-harness",status:"not-inspected"}:{platform:"deepseek-harness",status:"n/a"}}import{existsSync as cy}from"node:fs";import{existsSync as Ul,mkdirSync as oy,readFileSync as iy}from"node:fs";import{dirname as sy,join as Si}from"node:path";function Ci(_){return typeof _==="object"&&_!==null&&!Array.isArray(_)}function xi(_,L){return Ci(_)&&_.command===L}function Fl(_,L){return Ci(_)&&Array.isArray(_.hooks)&&_.hooks.some((j)=>xi(j,L))}function gt(_,L){return{hooks:[{type:"command",command:_,timeout:L}]}}function jn(_,L){return _.flatMap((j)=>{if(!Ci(j)||!Array.isArray(j.hooks))return[j];let Y=j.hooks.filter((Z)=>!xi(Z,L));if(Y.length===j.hooks.length)return[j];return Y.length===0?[]:[{...j,hooks:Y}]})}function Mt(_,L,j){let Y=_.filter((Z)=>Fl(Z,L));return Y.length===1&&JSON.stringify(Y[0])===JSON.stringify(gt(L,j))}function Ut(_,L){return _.find((j)=>Fl(j,L))}function Gt(_,L,j){let Y=Array.isArray(_.hooks)?_.hooks.find((Z)=>xi(Z,L)):void 0;return[..._.matcher===void 0||_.matcher===""||_.matcher==="*"?[]:['Managed hook has a "matcher" that narrows coverage; reinstall to repair'],...Y?.type==="command"?[]:['Managed hook "type" is not "command"; reinstall to repair'],...Y?.timeout===j?[]:[`Managed hook "timeout" is not ${j}; reinstall to repair`]]}var yt=kn.devin,no=30,ay={config:{},hooks:{},preToolUse:[]};function to(_,L=process.platform){let j=L==="win32"?_.env.get("APPDATA")||Si(_.home,"AppData","Roaming"):_.env.get("XDG_CONFIG_HOME")||Si(_.home,".config");return Si(j,"devin","config.json")}function Ml(_){return typeof _==="object"&&_!==null&&!Array.isArray(_)}function ly(_){try{return{ok:!0,value:JSON.parse(yn(iy(_,"utf-8")))}}catch(L){return{ok:!1,message:L instanceof Error?L.message:String(L)}}}function Pi(_){let L=ly(_);if(!L.ok)return`Failed to parse Devin CLI config ${_}: ${L.message}`;let j=L.value;if(!Ml(j))return`Devin CLI config ${_} must be a JSON object`;let Y=j.hooks===void 0?{}:j.hooks;if(!Ml(Y))return`Devin CLI config ${_} "hooks" must be an object`;let Z=Y.PreToolUse===void 0?[]:Y.PreToolUse;if(!Array.isArray(Z))return`Devin CLI config ${_} "hooks.PreToolUse" must be an array`;return{config:j,hooks:Y,preToolUse:Z}}function Gl(_){let L=Pi(_);if(typeof L==="string")throw Error(L);return L}function Bl(_,L,j){let Y={...L.config,hooks:{...L.hooks,PreToolUse:j}};ln(_,`${JSON.stringify(Y,null,2)}
-`)}function ql(_){let L=to(_),j=Ul(L)?Gl(L):ay;if(Mt(j.preToolUse,yt,no))return{path:L,alreadyInstalled:!0};return oy(sy(L),{recursive:!0}),Bl(L,j,[...jn(j.preToolUse,yt),gt(yt,no)]),{path:L,alreadyInstalled:!1}}function Vl(_){let L=to(_);if(!Ul(L))return{path:L,alreadyInstalled:!1};let j=Gl(L),Y=jn(j.preToolUse,yt);if(JSON.stringify(Y)===JSON.stringify(j.preToolUse))return{path:L,alreadyInstalled:!1};return Bl(L,j,Y),{path:L,alreadyInstalled:!0}}function Kl(_){let L=to(_.environment);if(!cy(L))return{platform:"devin",status:"n/a",configPath:L};let j=Pi(L);if(typeof j==="string")return{platform:"devin",status:"n/a",configPath:L,errors:[j]};let Y=Ut(j.preToolUse,yt);if(!Y)return{platform:"devin",status:"n/a",configPath:L};let Z=Gt(Y,yt,no);return{platform:"devin",status:"configured",method:"hook config",configPath:L,errors:Z.length>0?Z:void 0}}import{existsSync as yy,readFileSync as hy}from"node:fs";import{existsSync as Bt,mkdirSync as dy,readFileSync as uy,rmSync as py}from"node:fs";import{dirname as fy,join as Ri}from"node:path";var ht=kn.droid,ro=30;function oo(_){return Ri(_.home,".factory","hooks.json")}function Jl(_){return Ri(_.home,".factory","settings.json")}function Wl(_){return Ri(_.home,".factory","hooks","hooks.json")}function Ei(_){return typeof _==="object"&&_!==null&&!Array.isArray(_)}function zl(_){try{return JSON.parse(yn(uy(_,"utf-8")))}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Factory Droid hooks config ${_}: ${L.message}`);throw L}}function _i(_){let L=zl(_);if(!Ei(L))throw Error(`Factory Droid hooks config ${_} must be a JSON object`);if(L.PreToolUse===void 0||Array.isArray(L.PreToolUse))return L;throw Error(`Factory Droid hooks config ${_} "PreToolUse" must be an array`)}function my(_){if(!Bt(_))return{};let L=zl(_);return Ei(L)&&Ei(L.hooks)&&L.hooks.PreToolUse!==void 0?{PreToolUse:L.hooks.PreToolUse}:{}}function gy(_){let L=Wl(_);return{...my(Jl(_)),...Bt(L)?_i(L):{}}}function Yl(_){return Array.isArray(_.PreToolUse)?_.PreToolUse:[]}function Zl(_,L,j){ln(_,`${JSON.stringify({...L,PreToolUse:j},null,2)}
-`)}function Xl(_){let L=oo(_),j=Bt(L),Y=j?_i(L):gy(_),Z=Yl(Y);if(j&&Mt(Z,ht,ro))return{path:L,alreadyInstalled:!0};return dy(fy(L),{recursive:!0}),Zl(L,Y,[...jn(Z,ht),gt(ht,ro)]),{path:L,alreadyInstalled:!1}}function Ql(_){let L=oo(_);if(!Bt(L))return{path:L,alreadyInstalled:!1};let j=_i(L),Y=Yl(j),Z=jn(Y,ht);if(JSON.stringify(Z)===JSON.stringify(Y))return{path:L,alreadyInstalled:!1};let oe=Bt(Jl(_))||Bt(Wl(_));if(Z.length===0&&Object.keys(j).length===1&&!oe)return py(L),{path:L,alreadyInstalled:!0};return Zl(L,j,Z),{path:L,alreadyInstalled:!0}}function ec(_){let L=oo(_.environment);if(!yy(L))return{platform:"droid",status:"n/a",configPath:L};let j;try{j=JSON.parse(yn(hy(L,"utf-8")))}catch(se){return{platform:"droid",status:"n/a",configPath:L,errors:[`Failed to parse Factory Droid hooks config ${L}: ${se instanceof Error?se.message:String(se)}`]}}let Y=typeof j==="object"&&j!==null&&"PreToolUse"in j?j.PreToolUse:void 0,Z=Ut(Array.isArray(Y)?Y:[],ht);if(!Z)return{platform:"droid",status:"n/a",configPath:L};let oe=[...Z.commandRegex===void 0||Z.commandRegex===""?[]:['Managed hook has a "commandRegex" that narrows coverage; reinstall to repair'],...Gt(Z,ht,ro)];return{platform:"droid",status:"configured",method:"hook config",configPath:L,errors:oe.length>0?oe:void 0}}import{existsSync as vy}from"node:fs";import{join as Ti}from"node:path";var Ii="gemini-safety-net";function Ai(_){let L=Ti(_.home,".gemini","extensions"),j=Ti(L,Ii);if(!vy(j))return{platform:"gemini-cli",status:"n/a"};let Y=Ti(L,"extension-enablement.json"),Z=vn(Y);if(Z.kind==="unreadable")return{platform:"gemini-cli",status:"not-inspected"};let oe=Z.kind==="ok"?Xe(Xe(Z.value,Ii),"overrides"):void 0;if(Array.isArray(oe)&&oe.some((fe)=>typeof fe==="string"&&fe.startsWith("!")))return{platform:"gemini-cli",status:"disabled",method:"extension config",configPath:Y,errors:[`${Ii} is disabled in Gemini CLI`]};return{platform:"gemini-cli",status:"configured",method:"extension config",configPath:j}}function nc(_){return Ai(_.environment)}import{existsSync as Cy,readFileSync as dc,statSync as xy}from"node:fs";import{dirname as cc,join as Sy}from"node:path";import{existsSync as rc,mkdirSync as by,readFileSync as oc,rmSync as wy}from"node:fs";import{dirname as ky,join as tc}from"node:path";var Bn=kn["grok-build"],so=30,Oi=gt(Bn,so);function ao(_){return tc(_.env.get("GROK_HOME")??tc(_.home,".grok"),"hooks","cc-safety-net.json")}function lo(_){return typeof _==="object"&&_!==null&&!Array.isArray(_)}function ic(_){try{let L=JSON.parse(_);return lo(L)?L:null}catch{return null}}function sc(_){let L=lo(_.hooks)?_.hooks.PreToolUse:void 0;return Array.isArray(L)?L:[]}function io(_,L,j){let Y=lo(L.hooks)?L.hooks:{};ln(_,`${JSON.stringify({...L,hooks:{...Y,PreToolUse:j}},null,2)}
-`)}function ac(_){let L=ao(_);if(!rc(L))return by(ky(L),{recursive:!0}),io(L,{},[Oi]),{path:L,alreadyInstalled:!1};let j=ic(oc(L,"utf-8"));if(!j)return io(L,{},[Oi]),{path:L,alreadyInstalled:!1};let Y=sc(j);if(Mt(Y,Bn,so))return{path:L,alreadyInstalled:!0};return io(L,j,[...jn(Y,Bn),Oi]),{path:L,alreadyInstalled:!1}}function lc(_){let L=ao(_);if(!rc(L))return{path:L,alreadyInstalled:!1};let j=ic(oc(L,"utf-8"));if(!j)return{path:L,alreadyInstalled:!1};let Y=sc(j),Z=jn(Y,Bn);if(JSON.stringify(Z)===JSON.stringify(Y))return{path:L,alreadyInstalled:!1};let oe=lo(j.hooks)?j.hooks:{};if(Z.length===0&&Object.keys(j).length===1&&Object.keys(oe).length===1)return wy(L),{path:L,alreadyInstalled:!0};return io(L,j,Z),{path:L,alreadyInstalled:!0}}function $i(_){return!!_&&typeof _==="object"&&!Array.isArray(_)}function Py(_){try{return xy(_,{throwIfNoEntry:!1})?.isFile()===!0?dc(_,"utf-8"):""}catch{return}}function uc(_){let L=ao(_.environment);if(!Cy(L))return{platform:"grok-build",status:"n/a",configPath:L};let j;try{j=JSON.parse(dc(L,"utf-8"))}catch(Re){return{platform:"grok-build",status:"n/a",configPath:L,errors:[`Failed to parse Grok Build hooks config ${L}: ${Re instanceof Error?Re.message:String(Re)}`]}}let Y=$i(j)&&$i(j.hooks)&&Array.isArray(j.hooks.PreToolUse)?j.hooks.PreToolUse:[],Z=Ut(Y,Bn);if(!Z)return{platform:"grok-build",status:"n/a",configPath:L};let oe=Array.isArray(Z.hooks)?Z.hooks.findIndex((Re)=>$i(Re)&&Re.command===Bn):-1,se=`global/cc-safety-net:pre_tool_use[${Y.indexOf(Z)}].hooks[${oe}]`,fe=Sy(cc(cc(L)),"disabled-hooks"),ge=Py(fe),Pe=ge?.split(`
-`).some((Re)=>Re.trim()===se)===!0,Ee=[...ge===void 0?[`Cannot read ${fe}, so doctor cannot tell whether Grok Build skips the hook`]:[],...Pe?[`Grok Build skips the hook: ${se} is listed in ${fe}; enable it in /hooks`]:[],...Gt(Z,Bn,so)];return{platform:"grok-build",status:Pe?"disabled":"configured",method:"hook config",configPath:L,errors:Ee.length>0?Ee:void 0}}import{readFileSync as wc}from"node:fs";import{join as kc}from"node:path";var Pn="cc-safety-net",Di="# cc-safety-net managed Hermes Agent plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --hermes-agent",Ey=30;function pc(_){return`${Di}
-# version: ${_}
-`}function Ry(_){return`${pc(_)}name: ${Pn}
-version: "${_}"
+import{a,s,Me,nt,T,vt,rt,c,n,ot,_,S,ge,xt,m,Ie,x,st,l,o,w,i,ae,r,h,ye,W,wt,Ct,p,ve,be,Et,M,X,ce,C,kt,A,y,le,z,u,O,Q,at,ct,F,E,D,xe,Se,$e,ue,d,e,je,Oe,Ue,we,lt,ut,de,De,pe,He,ee,V,Ge,Ce,q,dt,K,te,ne,fe,pt,ft,k,I,Be,mt,ze,R,Ve,Ne,qe,v,t,re,Ee,b,j,g,N,Rt,Ke,Je,f,U}from"./chunks/index-pzctbrv3.js";import{Qe}from"./chunks/index-3s2q5wht.js";import{Ye,Re}from"./chunks/index-wshq0mgp.js";import{et}from"./chunks/index-2r2nzahr.js";import"./chunks/index-90bkfxht.js";import{ie,J,tt,G,B}from"./chunks/index-gkf3ty4y.js";var wf=["-h","--help"];function mn(P,L){let H=Object.entries(P.booleans??{}),Y=Object.entries(P.values??{}),Z=Object.entries(P.lists??{}),oe=Object.fromEntries(H.map(([_e])=>[_e,!1])),se={},me=Object.fromEntries(Z.map(([_e])=>[_e,[]])),he=[],ke=[],Pe=!1,Te=-1;for(let[_e,Ae]of L.entries()){if(_e<=Te)continue;if(Ae==="--"){he.push(...L.slice(_e+1));break}if(wf.includes(Ae)){Pe=!0;continue}let Le=H.find(([,Ze])=>Ze.includes(Ae));if(Le){oe[Le[0]]=!0;continue}let We=Y.find(([,Ze])=>Ze.includes(Ae));if(We){let Ze=L[_e+1];if(Ze===void 0||Ze.startsWith("-")){ke.push(`${Ae} requires a value`);continue}se[We[0]]=Ze,Te=_e+1;continue}let Fe=Z.find(([,Ze])=>Ze.includes(Ae));if(Fe){let Ze=L.slice(_e+1),tn=Ze.findIndex((ln)=>ln.startsWith("-")),on=Ze.slice(0,tn===-1?Ze.length:tn);if(on.length===0){ke.push(`${Ae} requires at least one value`);continue}me[Fe[0]]=[...me[Fe[0]]??[],...on],Te=_e+on.length;continue}if(Ae.startsWith("-")){ke.push(`Unknown option for ${P.label}: ${Ae}`);continue}if(P.positionals==="tail"){he.push(...L.slice(_e));break}he.push(Ae)}if(P.positionals!=="list"&&P.positionals!=="tail")ke.push(...he.map((_e)=>`Unexpected argument for ${P.label}: ${_e}`));return{flags:oe,values:se,lists:me,positionals:he,help:Pe,errors:ke}}function $n(P){for(let L of P)console.error(L);return P.length>0}import{readdirSync as Ef,statSync as Zs,unlinkSync as Tf}from"node:fs";import{basename as Xs,dirname as Af,isAbsolute as _f,join as If,relative as Of,resolve as $f,sep as Df}from"node:path";var zs=(P)=>{let L=Date.now()-new Date(P).getTime();if(!Number.isFinite(L))return"";let H=Math.floor(L/60000),Y=Math.floor(H/60),Z=Math.floor(Y/24);if(Z>0)return`${Z}d ago`;if(Y>0)return`${Y}h ago`;if(H>0)return`${H}m ago`;return"just now"},Go=(P)=>{let L=(P??"").trim().split(/\s+/).filter((Z)=>Z&&!/^[A-Za-z_][A-Za-z0-9_]*=/.test(Z)),H=L[0]?.split("/").pop();if(!H)return null;let Y=L[1];return Y&&/^[a-z][a-z0-9-]*$/.test(Y)?`${H} ${Y}`:H};function Ws(P){let L=(Z)=>`${Z.sessionId}
+${Go(Z.segment||Z.command)}`,H=P.filter((Z)=>Z.decision!=="allow"),Y=H.filter((Z)=>Z.sessionId).reduce((Z,oe)=>Z.set(L(oe),(Z.get(L(oe))??0)+1),new Map);return new Set(H.filter((Z)=>Z.failureStage||(Y.get(L(Z))??0)>=2))}import{existsSync as kf,readdirSync as Cf,readFileSync as xf}from"node:fs";import{join as Pf}from"node:path";function Yn(P,L){try{return Cf(P,{withFileTypes:!0,encoding:"utf8"}).flatMap((H)=>{let Y=Pf(P,H.name);if(H.isDirectory())return Yn(Y,L);if(H.name.endsWith(".jsonl"))return[Y];return[]})}catch{if(L&&kf(P))L.count++;return[]}}var Sf=["segment","reason","sessionId","decision","agent","ruleId","failureStage"];function Rf(P){if(!P||typeof P!=="object"||Array.isArray(P))return!1;let L=P;if(typeof L.ts!=="string"||typeof L.command!=="string")return!1;return Sf.every((H)=>L[H]===void 0||typeof L[H]==="string")}function Dt(P,L){try{return xf(P,"utf-8").split(`
+`).filter(Boolean).flatMap((H)=>{try{let Y=JSON.parse(H);if(!Rf(Y)){if(L)L.count++;return[]}return[Y]}catch{if(L)L.count++;return[]}})}catch{if(L)L.count++;return[]}}function gn(P){return Array.from(P,(L)=>{let H=L.charCodeAt(0);if(H<=31||H>=127&&H<=159)return`\\x${H.toString(16).padStart(2,"0")}`;return L}).join("")}function Nf(P,L){let H=ie(P),Y=mn({label:"logs",booleans:{all:["--all"],suspect:["--suspect"],json:["--json"],pruneLegacy:["--prune-legacy"],dryRun:["--dry-run"]},values:{id:["--id"],limit:["--limit"],since:["--since"],agent:["--agent"],rule:["--rule"],session:["--session"],project:["--project"]}},L);if($n(Y.errors))return null;if(Y.values.id!==void 0&&!/^[a-f0-9]{16}$/.test(Y.values.id))return console.error("--id must be 16 hexadecimal characters"),null;let Z=Y.values.limit===void 0?20:Ys(Y.values.limit);if(Z===null)return console.error("--limit must be a positive number"),null;let oe=Y.values.since===void 0?Math.min(30,H):Ys(Y.values.since);if(oe===null||oe>H)return console.error(`--since must be a positive number of days no greater than ${H}`),null;let se={limit:Z,limitExplicit:Y.values.limit!==void 0,since:oe,sinceExplicit:Y.values.since!==void 0,all:Y.flags.all,json:Y.flags.json,suspect:Y.flags.suspect,pruneLegacy:Y.flags.pruneLegacy,dryRun:Y.flags.dryRun,id:Y.values.id,agent:Y.values.agent,rule:Y.values.rule,session:Y.values.session,project:Y.values.project===void 0?void 0:$f(Y.values.project)};if(se.id&&(se.agent!==void 0||se.rule!==void 0||se.session!==void 0||se.project!==void 0||se.suspect||se.sinceExplicit||se.limitExplicit))return console.error("--id cannot be combined with --agent, --rule, --session, --project, --suspect, --since, or --limit"),null;if(se.pruneLegacy&&(se.id!==void 0||se.agent!==void 0||se.rule!==void 0||se.session!==void 0||se.project!==void 0||se.suspect||se.all||se.sinceExplicit||se.limitExplicit))return console.error("--prune-legacy cannot be combined with --id, --agent, --rule, --session, --project, --suspect, --all, --since, or --limit"),null;if(se.dryRun&&!se.pruneLegacy)return console.error("--dry-run requires --prune-legacy"),null;return se}async function Qs(P,L,H={}){let Y=Nf(P,L);if(!Y)return 1;let Z=H.logsDir??G(P);if(Y.pruneLegacy)return Lf(Z,Y.json,Y.dryRun);if(!Z)return console.log(Y.json?"[]":Y.id?`No retained audit log entry found for id ${gn(Y.id)}.`:"No audit log entries found."),0;J(P,Z);let oe={count:0},se=Yn(Z,oe).flatMap((Te)=>Dt(Te,oe).map((_e)=>({entry:_e,file:Te})));if(oe.count>0)console.error(`warning: ${oe.count} audit log ${oe.count===1?"source":"sources"} could not be read; these results are incomplete`);if(Y.id)return Mf(se,Y,H.timeZone);let me=Date.now()-Y.since*24*60*60*1000,he=se.filter((Te)=>Uf(Te,Y,Z,me)),ke=Y.suspect?Ws(he.map((Te)=>Te.entry)):null,Pe=(ke?he.filter((Te)=>ke.has(Te.entry)):he).sort((Te,_e)=>Date.parse(_e.entry.ts)-Date.parse(Te.entry.ts)).slice(0,Y.limit);if(Y.json)return console.log(JSON.stringify(Pe.map((Te)=>Te.entry),null,2)),0;if(Pe.length===0)return console.log("No audit log entries found."),0;for(let Te of Pe)console.log(qf(Te.entry,H.timeZone));return 0}function Lf(P,L,H){let Y=P?Ff(P).map((me)=>If(P,me)):[];if(H)return jf(Y,L);let Z=[],oe=0,se=0;for(let me of Y){let he=Zs(me,{throwIfNoEntry:!1})?.size??0,ke=Hf(me);if(ke){Z.push(`${Xs(me)}: ${ke}`);continue}oe++,se+=he}if(L)return console.log(JSON.stringify({removedFiles:oe,removedBytes:se,failedFiles:Z.length})),Z.length===0?0:1;console.log(oe===0&&Z.length===0?"No legacy audit log files found.":`Removed ${oe} legacy audit log ${oe===1?"file":"files"} (${ea(se)}).`);for(let me of Z)console.error(`Could not remove ${gn(me)}`);if(console.log("Nested v2 audit logs were not changed."),oe>0)console.log("This deletion cannot be undone.");return Z.length===0?0:1}function jf(P,L){let H=P.reduce((Y,Z)=>Y+(Zs(Z,{throwIfNoEntry:!1})?.size??0),0);if(L)return console.log(JSON.stringify({dryRun:!0,files:P.length,bytes:H})),0;if(console.log(P.length===0?"No legacy audit log files found.":`Would remove ${P.length} legacy audit log ${P.length===1?"file":"files"} (${ea(H)}).`),console.log("Nested v2 audit logs are not included."),P.length>0)console.log("Run the same command without --dry-run to delete them.");return 0}function Ff(P){try{return Ef(P,{withFileTypes:!0}).filter((L)=>L.isFile()&&L.name.endsWith(".jsonl")).map((L)=>L.name)}catch{return[]}}function Hf(P){try{return Tf(P),null}catch(L){return L instanceof Error?L.message:String(L)}}function ea(P){let L=["B","KiB","MiB","GiB"],H=Math.min(Math.floor(Math.log2(Math.max(P,1))/10),L.length-1);return`${Math.round(P/1024**H*10)/10} ${L[H]}`}function Mf(P,L,H){let Y=P.filter((oe)=>oe.entry.id===L.id);if(Y.length>1)return console.error(`Multiple audit log entries found for id ${gn(L.id??"")}.`),1;if(L.json)return console.log(JSON.stringify(Y.map((oe)=>oe.entry),null,2)),0;let Z=Y[0];if(!Z)return console.log(`No retained audit log entry found for id ${gn(L.id??"")}.`),0;return console.log(Vf(Z.entry,H)),0}function Uf(P,L,H,Y){if(!L.all&&P.entry.decision==="allow")return!1;if(Date.parse(P.entry.ts)<Y)return!1;if(L.agent!==void 0&&P.entry.agent!==L.agent)return!1;if(L.rule!==void 0&&P.entry.ruleId!==L.rule)return!1;if(L.session!==void 0&&!Bf(P,H,L.session))return!1;if(L.project!==void 0&&!Gf(P.entry.cwd,L.project))return!1;return!0}function Bf(P,L,H){if(P.entry.sessionId===H)return!0;return Af(P.file)===L&&Xs(P.file,".jsonl")===H}function Gf(P,L){if(!P)return!1;let H=Of(L,P);return H!==".."&&!H.startsWith(`..${Df}`)&&!_f(H)}function qf(P,L){let H=gn(P.id??"-"),Y=gn(P.decision??"deny"),Z=P.cwd?`  [${gn(P.cwd)}]`:"",oe=P.segment||P.command,se=oe===P.command?"":"↳ ",me=oe.length>50?`${oe.slice(0,50)}…`:oe;return`${H.padEnd(16)}  ${gn(na(P.ts,L))}  ${Y.padEnd(5)}  ${gn(P.agent??"-").padEnd(15)}  ${gn(P.ruleId??"-").padEnd(20)}  ${se}${gn(me)}${Z}`}function Vf(P,L){let H=(Z)=>gn(Z===void 0||Z===null||Z===""?"-":Z),Y=P.shape?`${P.agent??"-"} (shape: ${P.shape})`:P.agent??"-";return[`id:        ${H(P.id)}`,`ts:        ${H(na(P.ts,L))}`,`decision:  ${H(P.decision)}`,`agent:     ${H(Y)}`,`level:     ${H(P.level)}`,`tool:      ${H(P.toolName)}`,`rule:      ${H(P.ruleId)}`,`intent:    ${H(P.intent)}`,`stage:     ${H(P.failureStage)}`,`error:     ${H(P.errorCode)}`,`session:   ${H(P.sessionId)}`,`cwd:       ${H(P.cwd)}`,`version:   ${H(P.v)}`,`truncated: ${H(P.truncated===!0?"yes":void 0)}`,`reason:    ${H(P.reason)}`,`command:   ${H(P.command)}`,`segment:   ${H(P.segment)}`].join(`
+`)}function na(P,L){let H=new Date(P);if(Number.isNaN(H.getTime()))return P;return new Intl.DateTimeFormat("sv-SE",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:L}).format(H)}function Ys(P){let L=Number(P);return Number.isFinite(L)&&L>0?L:null}var ta={name:"doctor",aliases:["--doctor"],description:"Run diagnostic checks to verify installation and configuration",usage:"doctor [options]",options:[{flags:"--json",description:"Output diagnostics as JSON"},{flags:"--skip-update-check",description:"Skip npm registry version check"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net doctor","cc-safety-net doctor --json","cc-safety-net doctor --skip-update-check"]};var ra={name:"explain",description:"Show step-by-step analysis trace of how a command would be analyzed",usage:"explain [options] <command>",argument:"<command>",options:[{flags:"--json",description:"Output analysis as JSON"},{flags:"--cwd",argument:"<path>",description:"Use custom working directory"},{flags:"-h, --help",description:"Show this help"}],examples:['cc-safety-net explain "git reset --hard"','cc-safety-net explain --json "rm -rf /"','cc-safety-net explain --cwd /tmp "git status"']};var oa={name:"gui",description:"Open the local policy editor GUI",usage:"gui [options]",options:[{flags:"--no-open",description:"Print the URL without opening a browser"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net gui","cc-safety-net gui --no-open"]};var qo=["npx","--offline","--no-install","@deepseek-ai/dsh","--version"],ia=["cursor-agent","--version"],sa=[{id:"antigravity-cli",displayName:"Antigravity CLI",runtime:{flags:["-ac","--agy-cli"],description:"Run as Antigravity CLI PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--agy-cli",artifactKind:"hook config",probeCommand:["agy","--version"]}},{id:"claude-code",displayName:"Claude Code",runtime:{displayName:"Coding CLI",flags:["-cc","--coding-cli"],legacyFlags:["--claude-code"],description:"Run as Coding CLI PreToolUse hook",legacyTopLevelFlags:["-cc","--claude-code"]},install:{flag:"--claude-code",artifactKind:"plugin",probeCommand:["claude","--version"]}},{id:"codex",displayName:"Codex",runtime:{flags:["-cx","--codex"],description:"Run as a Codex PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--codex",artifactKind:"plugin",probeCommand:["codex","--version"]}},{id:"copilot-cli",displayName:"GitHub Copilot CLI",runtime:{flags:["-cp","--copilot-cli"],description:"Run as GitHub Copilot CLI PreToolUse hook",legacyTopLevelFlags:["-cp","--copilot-cli"]},install:{flag:"--copilot-cli",artifactKind:"plugin",probeCommand:["copilot","--binary-version"]}},{id:"gemini-cli",displayName:"Gemini CLI",runtime:{flags:["-gc","--gemini-cli"],description:"Run as Gemini CLI BeforeTool hook",legacyTopLevelFlags:["-gc","--gemini-cli"]},install:{flag:"--gemini-cli",artifactKind:"extension",probeCommand:["gemini","--version"]}},{id:"grok-build",displayName:"Grok Build",runtime:{flags:["-gb","--grok-build"],description:"Run as Grok Build PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--grok-build",artifactKind:"hook config",probeCommand:["grok","--version"]}},{id:"hermes-agent",displayName:"Hermes Agent",runtime:{flags:["-ha","--hermes-agent"],description:"Run as Hermes Agent pre_tool_call hook",legacyTopLevelFlags:[]},install:{flag:"--hermes-agent",artifactKind:"plugin",probeCommand:["hermes","--version"]}},{id:"kimi-code",displayName:"Kimi Code",runtime:{flags:["-kc","--kimi-code"],description:"Run as Kimi Code PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--kimi-code",artifactKind:"hook config",probeCommand:["kimi","--version"]}},{id:"openclaw",displayName:"OpenClaw",install:{flag:"--openclaw",artifactKind:"plugin",probeCommand:["openclaw","--version"]}},{id:"opencode",displayName:"OpenCode",install:{flag:"--opencode",artifactKind:"plugin",probeCommand:["opencode","--version"]}},{id:"pi",displayName:"Pi",install:{flag:"--pi",artifactKind:"package",probeCommand:["pi","--version"]}},{id:"cursor",displayName:"Cursor",runtime:{flags:["-cu","--cursor"],description:"Run as Cursor preToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--cursor",artifactKind:"hook config",probeCommand:["cursor","--version"]}},{id:"deepseek-harness",displayName:"DeepSeek Harness",install:{flag:"--deepseek-harness",artifactKind:"package",probeCommand:qo}},{id:"devin",displayName:"Devin CLI",runtime:{flags:["-dv","--devin"],description:"Run as Devin CLI PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--devin",artifactKind:"hook config",probeCommand:["devin","--version"]}},{id:"droid",displayName:"Factory Droid",runtime:{flags:["-fd","--droid"],description:"Run as Factory Droid PreToolUse hook",legacyTopLevelFlags:[]},install:{flag:"--droid",artifactKind:"hook config",probeCommand:["droid","--version"]}},{id:"amp",displayName:"Amp Code",install:{flag:"--amp",artifactKind:"plugin",probeCommand:["amp","--version"]}}],Vo=sa.slice().sort((P,L)=>P.displayName.localeCompare(L.displayName,"en")),Er=Vo.map((P)=>P.id).sort((P,L)=>Number(L==="claude-code")-Number(P==="claude-code")),er=Vo.filter((P)=>("runtime"in P)).map((P)=>({id:P.id,displayName:"displayName"in P.runtime?P.runtime.displayName:P.displayName,flags:P.runtime.flags,legacyFlags:"legacyFlags"in P.runtime?P.runtime.legacyFlags:[],description:P.runtime.description,legacyTopLevelFlags:P.runtime.legacyTopLevelFlags})),Rn=Vo.map((P)=>({id:P.id,...P.install})),Kf=Object.fromEntries(sa.map((P)=>[P.id,P.displayName]));function cn(P){return Kf[P]}var Jf=er.map((P)=>({flags:P.flags.join(", "),description:P.description})),zf=er.flatMap((P)=>P.flags.map((L)=>`cc-safety-net hook ${L}`)),aa={name:"hook",description:"Run as an agent CLI hook (reads JSON from stdin)",usage:"hook INTEGRATION_FLAG",options:[...Jf,{flags:"-h, --help",description:"Show this help"}],examples:zf};var la={name:"install",description:"Install CC Safety Net into a coding agent CLI",usage:"install [TARGET_FLAG]",options:[...Rn.map((P)=>({flags:P.flag,description:`Install ${cn(P.id)} ${P.artifactKind}`})),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net install",...Rn.map((P)=>`cc-safety-net install ${P.flag}`)]},ca={name:"uninstall",description:"Uninstall CC Safety Net from a coding agent CLI",usage:"uninstall [TARGET_FLAG]",options:[...Rn.map((P)=>({flags:P.flag,description:`Uninstall ${cn(P.id)} ${P.artifactKind}`})),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net uninstall",...Rn.map((P)=>`cc-safety-net uninstall ${P.flag}`)]},da={name:"update",description:"Update every installed CC Safety Net integration to the latest version",usage:"update",options:[{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net update"]};var ua={name:"logs",description:"Browse audit log entries recorded by hooks",usage:"logs [options]",options:[{flags:"--id",argument:"<id>",description:"Show one entry from retained history by its 16-character id (not guaranteed once it is older than the configured retention)"},{flags:"--limit",argument:"<n>",description:"Maximum entries to print",default:"20"},{flags:"--since",argument:"<days>",description:"Only include entries newer than this many days (max: the configured audit retention, 1-365)",default:"30"},{flags:"--agent",argument:"<name>",description:"Filter by agent name"},{flags:"--rule",argument:"<ruleId>",description:"Filter by rule id"},{flags:"--session",argument:"<id>",description:"Filter by session id"},{flags:"--project",argument:"<path>",description:"Filter by project path"},{flags:"--suspect",description:"Only denials that look like false positives"},{flags:"--all",description:"Include allow entries"},{flags:"--prune-legacy",description:"Permanently delete all legacy root-level logs; nested logs are untouched"},{flags:"--dry-run",description:"With --prune-legacy, report what would be deleted and delete nothing"},{flags:"--json",description:"Output entries as JSON"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net logs --id 3fa9c2d1a70e8b42","cc-safety-net logs --agent claude-code","cc-safety-net logs --project . --since 7","cc-safety-net logs --suspect --since 7","cc-safety-net logs --json","cc-safety-net logs --prune-legacy --dry-run","cc-safety-net logs --prune-legacy"]};var Tr={name:"policy",description:"Check and apply project or user policy proposals",usage:"policy <subcommand>",subcommands:[{usage:"check <file>",description:"Validate a policy proposal and print its diff"},{usage:"apply <file>",description:"Apply a proposal after confirming in a terminal"}],options:[{flags:"-g, --global",description:"Use the user-scope policy instead of the project one"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net policy check proposal.json","cc-safety-net policy apply proposal.json","cc-safety-net policy apply proposal.json --global"]};var Ko=[{flags:"--ref",argument:"<ref>",description:"Use a branch, tag, or commit"},{flags:"--only",argument:"<rulebook...>",description:"Add only these repository rulebooks"},{flags:"-g, --global",description:"Use user-scope rule config"},{flags:"-h, --help",description:"Show this help"}],Jo=["cc-safety-net rule add project-rules","cc-safety-net rule add acme/safety-rules","cc-safety-net rule add acme/safety-rules --only aws gcloud","cc-safety-net rule add acme/safety-rules --ref v2 --only aws","cc-safety-net rule add --only terraform aws"],Nt={name:"rule",description:"Manage CC Safety Net rule config and rulebook sources",usage:"rule <subcommand>",subcommands:[{usage:"init [--example]",description:"Create inert rule config"},{usage:"add [source] [--ref <ref>] [--only <rulebook...>]",description:"Add rulebook sources and sync"},{usage:"remove <source>",description:"Remove a rulebook source and sync"},{usage:"update [source]",description:"Re-fetch and vendor remote rulebooks"},{usage:"sync",description:"Deprecated: migrate lock and cache leftovers"},{usage:"list",description:"List active rulebooks"},{usage:"wrapper add <command>",description:"Trust a transparent command wrapper"},{usage:"wrapper remove <command>",description:"Remove a transparent command wrapper"},{usage:"wrapper list",description:"List transparent command wrappers"},{usage:"tool add <name...> [--cwd-arg <name>] [--project]",description:"Analyze community shell tools (user scope by default)"},{usage:"tool remove <name...> [--project]",description:"Stop analyzing declared tools"},{usage:"tool list",description:"List declared command tools in both scopes"},{usage:"migrate [--cleanup]",description:"Migrate legacy inline rules"},{usage:"doc",description:"Print the rulebook authoring guide"},{usage:"verify",description:"Validate rule config files"}],options:[{flags:"-g, --global",description:"Use user-scope rule config"},{flags:"--cleanup",description:"Delete legacy files after rule migrate verifies them"},{flags:"--delete-source",description:"Delete clean local source directory on remove"},{flags:"--example",description:"Create an inactive example rulebook with rule init"},{flags:"--project",description:"Use project-scope rule config with rule tool"},{flags:"--cwd-arg",argument:"<name>",description:"Name the working-directory argument with rule tool add"},...Ko.slice(0,2),{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net rule init","cc-safety-net rule init --example","cc-safety-net rule wrapper add rtk","cc-safety-net rule tool add ops_bash","cc-safety-net rule tool add ops_run_background --cwd-arg cwd --project",...Jo,"cc-safety-net rule update","cc-safety-net rule migrate --cleanup","cc-safety-net rule verify"]};var pa={name:"status",description:"Show what the runtime is enforcing right now",usage:"status",options:[{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net status"]};var fa={name:"statusline",description:"Print status line with mode indicators for shell integration",usage:"statusline --claude-code",options:[{flags:"-cc, --claude-code",description:"Print status line for Claude Code"},{flags:"-h, --help",description:"Show this help"}],examples:["cc-safety-net statusline -cc","cc-safety-net statusline --claude-code"]};var Ar=[pa,ta,ua,ra,Nt,Tr,la,da,ca,aa,oa,fa];function Wf(P){return P.aliases??[]}function _r(P){let L=P.toLowerCase();return Ar.find((H)=>H.name.toLowerCase()===L||Wf(H).some((Y)=>Y.toLowerCase()===L))}import{existsSync as Bh}from"node:fs";import{basename as Yf}from"node:path";function Ir(P,L=7,H=G(P)){let Y=Date.now()-L*24*60*60*1000,Z=[],oe=new Set,se=0,me,he,ke,Pe;if(H)J(P,H);let Te={count:0},_e=H?Yn(H,Te):[];for(let Le of _e)for(let We of Dt(Le,Te)){if(We.decision==="allow")continue;let Fe=new Date(We.ts).getTime();if(Fe>=Y){if(se++,oe.add(We.sessionId??Yf(Le,".jsonl")),he===void 0||Fe<=he)me=We.ts,he=Fe;if(Pe===void 0||Fe>Pe)ke=We.ts,Pe=Fe;Zf(Z,We,Fe)}}let Ae=Z.map((Le)=>({timestamp:Le.ts,command:Le.command,reason:Le.reason,relativeTime:zs(new Date(Le.ts))}));return{totalBlocked:se,sessionCount:oe.size,recentEntries:Ae,oldestEntry:me,newestEntry:ke,unreadable:Te.count}}function Zf(P,L,H){let Y=P.findIndex((Z)=>H>new Date(Z.ts).getTime());if(Y===-1){if(P.length<3)P.push(L);return}if(P.splice(Y,0,L),P.length>3)P.pop()}import{dirname as cm}from"node:path";import{dirname as Xf,join as Qf,resolve as em}from"node:path";var nm="config.json";function bn(P,L,H,Y){h(tm(P),`${JSON.stringify(L,null,2)}
+`,H,Y)}function tm(P){return typeof P==="string"?ae(P):P}function Wo(P){return{errors:de(om(P),": "," "),ruleNames:new Set(He(P).map((L)=>L.toLowerCase()))}}var rm="must match pattern (letters, numbers, hyphens, underscores; max 64 chars)",ma="must match pattern (letters, numbers, hyphens, underscores)";function om(P){if(!ga(P))return[e([],"Config must be an object")];return[...P.version===1?[]:[e(["version"],"must be 1")],...im(P.rules)]}function im(P){if(P===void 0)return[];if(!Array.isArray(P))return[e(["rules"],"must be an array")];return[...P.flatMap((L,H)=>ga(L)?sm(L,["rules",H]):[e(["rules",H],"must be an object")]),...je(P)]}function sm(P,L){return[...zo(P.name,[...L,"name"],"required string",p,rm),...zo(P.command,[...L,"command"],"required string",E,ma),...P.subcommand===void 0?[]:zo(P.subcommand,[...L,"subcommand"],"must be a string if provided",E,ma),...am(P.block_args,[...L,"block_args"]),...lm(P.reason,[...L,"reason"]),...P.intent===void 0||De(P.intent)?[]:[e([...L,"intent"],Oe)]]}function zo(P,L,H,Y,Z){if(typeof P!=="string")return[e(L,H)];return Y.test(P)?[]:[e(L,Z)]}function am(P,L){if(!Array.isArray(P))return[e(L,"required array")];if(P.length===0)return[e(L,"must have at least one element")];return P.flatMap((H,Y)=>{if(typeof H!=="string")return[e([...L,Y],"must be a string")];return H===""?[e([...L,Y],"must not be empty")]:[]})}function lm(P,L){if(typeof P!=="string")return[e(L,"required string")];if(P==="")return[e(L,"must not be empty")];return P.length>D?[e(L,`must be at most ${D} characters`)]:[]}function ga(P){return!!P&&typeof P==="object"&&!Array.isArray(P)}function Yo(P){let L=ya(P);if(!L.ok)return L.result;return Wo(L.parsed)}function ya(P){let L=[],H=new Set;try{let Y=typeof P==="string"?ae(P):P,Z=r(Y);if(Z===null)return L.push(`File not found: ${Y.path}`),{ok:!1,result:{errors:L,ruleNames:H}};if(!Z.trim())return L.push("Config file is empty"),{ok:!1,result:{errors:L,ruleNames:H}};return{ok:!0,parsed:JSON.parse(Z)}}catch(Y){if(Y instanceof o)return L.push(Y.message),{ok:!1,result:{errors:L,ruleNames:H}};let Z=Y instanceof Error?Y.message:String(Y);return L.push(Y instanceof SyntaxError?"Invalid JSON":Z),{ok:!1,result:{errors:L,ruleNames:H}}}}function Lt(P){return em(P,".safety-net.json")}function Un(P){let L=ya(P);if(!L.ok)return L.result;let H=lt(L.parsed);return{errors:H.errors,ruleNames:H.sources}}function jt(P,L={}){return Qf(Xf(le(P,L)),nm)}function ha(P,L,H){let Y;try{if(r(L)===null)return{path:P,exists:!1,valid:!1,ruleCount:0};Y=Un(L),Y.errors.push(...V(P,H))}catch(Z){if(!(Z instanceof o))throw Z;Y={errors:[Z.message],ruleNames:new Set}}return{path:P,exists:!0,valid:Y.errors.length===0,ruleCount:Y.ruleNames.size,...Y.errors.length>0?{errors:Y.errors}:{}}}function dm(P,L){return{source:L,name:P.name,command:P.command,subcommand:P.subcommand,blockArgs:[...P.block_args],reason:P.reason}}function va(P,L){let H=z(P),Y=A(L),Z=cm(H),oe=ee(P,{cwd:L,userConfigPath:H,projectConfigPath:Y,userConfigDir:Z}),se=Q(P,{cwd:L,userConfigPath:H,projectConfigPath:Y,userConfigDir:Z}),me=new Map(oe.rulebooks.flatMap((he)=>he.rules.map((ke)=>[ke,he.source])));return{userConfig:ha(H,se.userConfigTarget,se.userScope),projectConfig:ha(Y,se.projectConfigTarget,se.projectScope),effectiveRules:oe.rules.map((he)=>dm(he,me.get(he.name)??"project"))}}var um=[{flag:n.level,description:"Safety level preset: standard, strict, or paranoid",defaultBehavior:"standard"},{flag:n.strict,description:"Legacy; equivalent to safety.overrides.fail_closed",defaultBehavior:"permissive"},{flag:n.paranoid,description:"Legacy; equivalent to safety.overrides.paranoid_rm and paranoid_interpreters",defaultBehavior:"off"},{flag:n.paranoidRm,description:"Legacy; equivalent to safety.overrides.paranoid_rm",defaultBehavior:"off"},{flag:n.paranoidInterpreters,description:"Legacy; equivalent to safety.overrides.paranoid_interpreters",defaultBehavior:"off"},{flag:n.worktree,description:"Allow local git discards in linked worktrees",defaultBehavior:"off"},{flag:n.debug,description:"Print diagnostic messages to stderr",defaultBehavior:"off"},{flag:n.auditScope,description:"Command decisions recorded: all, or blocked (privacy-minimizing, denials only)",defaultBehavior:"all"},{flag:n.projectTightenOnly,description:"Ignore project policy settings that weaken the user policy",defaultBehavior:"off"}];function ba(P){return[...um.map((L)=>({name:L.flag.name,value:ge(L.flag,P.env),isSet:xt(L.flag,P.env),legacyName:L.flag.legacyName,legacyValue:L.flag.legacyName?P.env.get(L.flag.legacyName):void 0,legacyIsSet:L.flag.legacyName?P.env.get(L.flag.legacyName)!==void 0:void 0,description:L.description,defaultBehavior:L.defaultBehavior})),{name:"CC_SAFETY_NET_HOME",value:P.env.get("CC_SAFETY_NET_HOME"),isSet:P.env.get("CC_SAFETY_NET_HOME")!==void 0,description:"Override user-scope config/cache directory",defaultBehavior:"~/.cc-safety-net"}]}var wa={error:0,warning:1,info:2},pm=["policy","config","audit"];function fm(P){return P.map((L)=>{if(L==="ownership")return"is not owned by the current user";if(L==="permissions")return"has unsafe permissions";if(L==="symlink")return"is a symbolic link";return"is not a directory"}).join(" and ")}var mm=[{derive:(P)=>P.hooks.length>0&&P.hooks.every((L)=>!L.configured)?[{checkId:"integration.none-configured",severity:"error",title:"No integration configured",detail:"CC Safety Net is not connected to any supported coding-agent integration.",fixHint:"Run `cc-safety-net install` and configure at least one integration."}]:[]},{derive:(P)=>P.hooks.filter((L)=>L.inspectionStatus==="failed").map((L)=>{let H=cn(L.platform);return{checkId:"integration.inspection-failed",severity:"error",title:`${H} inspection failed`,detail:`Doctor could not verify the ${H} integration configuration.`,fixHint:`Correct the reported ${H} configuration error, then run \`cc-safety-net doctor\` again.`,integration:L.platform}})},{derive:(P)=>P.userConfig.exists&&!P.userConfig.valid?[{checkId:"config.user-invalid",severity:"error",title:"User configuration is invalid",detail:"Doctor could not load a valid user rules configuration.",fixHint:"Run `cc-safety-net rule verify`, correct the reported error, then rerun doctor.",path:P.userConfig.path}]:[]},{derive:(P)=>P.projectConfig.exists&&!P.projectConfig.valid?[{checkId:"config.project-invalid",severity:"error",title:"Project configuration is invalid",detail:"Doctor could not load a valid project rules configuration.",fixHint:"Run `cc-safety-net rule verify`, correct the reported error, then rerun doctor.",path:P.projectConfig.path}]:[]},{derive:(P)=>P.configState.state==="degraded"?[{checkId:"config.runtime-degraded",severity:"warning",title:"Runtime is enforcing a fallback configuration",detail:`The rejected candidate configuration is not active: ${P.configState.reason}`,fixHint:"Fix the file named in the reason, or run `cc-safety-net rule update` to vendor a remote source, then rerun doctor."}]:[]},{derive:(P)=>P.v2Leftovers&&P.v2Leftovers.length>0?[{checkId:"config.v2-leftovers",severity:"info",title:"Rulebook lock and cache leftovers detected",detail:`Files an earlier version left behind are no longer read: ${P.v2Leftovers.join(", ")}.`,fixHint:"Run `cc-safety-net rule sync` (add `--global` for user scope) to migrate them, then rerun doctor."}]:[]},{derive:(P)=>P.legacyConfigs&&P.legacyConfigs.length>0?[{checkId:"config.legacy-ignored",severity:"warning",title:"Legacy inline rule configs are ignored",detail:`CC Safety Net no longer loads these files, so their rules enforce nothing: ${P.legacyConfigs.join(", ")}.`,fixHint:"Run `cc-safety-net rule migrate` to convert them (add `--cleanup` to delete each file once it is converted), then rerun doctor."}]:[]},{derive:(P)=>{let L=P.environment.find((H)=>H.name==="CC_SAFETY_NET_AUDIT_SCOPE");return ot(L?.value)==="invalid"?[{checkId:"environment.audit-scope-invalid",severity:"warning",title:"Audit scope value is invalid",detail:"CC_SAFETY_NET_AUDIT_SCOPE is not `all` or `blocked`, so allowed command decisions are not recorded.",fixHint:"Set CC_SAFETY_NET_AUDIT_SCOPE to `all` or `blocked`, then restart the integration."}]:[]}},...pm.map((P)=>({derive:(L)=>L.posture.directories.filter((H)=>H.kind===P&&H.status==="unsafe").map((H)=>({checkId:`posture.${P}-directory-unsafe`,severity:"error",title:`${P[0]?.toUpperCase()}${P.slice(1)} directory is unsafe`,detail:`The ${P} directory ${fm(H.issues)}.`,fixHint:"Ensure this is a real directory owned by the current user with no group or other write access, then rerun doctor.",...H.path?{path:H.path}:{}}))})),{derive:(P)=>{let L=[...P.effectiveSafety.weakenedRuleOverrides].sort();return L.length>0?[{checkId:"posture.rule-overrides-weaken-preset",severity:"warning",title:"Rule overrides weaken the selected preset",detail:`Explicit overrides disable rules the resolved preset would enable: ${L.join(", ")}.`,fixHint:`Remove these \`off\` overrides or set them to \`on\`: ${L.join(", ")}.`}]:[]}}];function ka(P){return mm.flatMap((L,H)=>L.derive(P).map((Y,Z)=>({finding:Y,catalogOrder:H,occurrence:Z}))).sort((L,H)=>wa[L.finding.severity]-wa[H.finding.severity]||L.catalogOrder-H.catalogOrder||L.occurrence-H.occurrence).map((L)=>L.finding)}function Dn(){return Boolean(process.stdout.isTTY&&!process.env.NO_COLOR)}var gm=(P)=>Dn()?`\x1B[32m${P}\x1B[0m`:P,ym=(P)=>Dn()?`\x1B[33m${P}\x1B[0m`:P,hm=(P)=>Dn()?`\x1B[34m${P}\x1B[0m`:P,vm=(P)=>Dn()?`\x1B[36m${P}\x1B[0m`:P,bm=(P)=>Dn()?`\x1B[31m${P}\x1B[0m`:P,wm=(P)=>Dn()?`\x1B[2m${P}\x1B[0m`:P,km=(P)=>Dn()?`\x1B[1m${P}\x1B[0m`:P,en={green:gm,yellow:ym,blue:hm,cyan:vm,red:bm,dim:wm,bold:km},Cm="\x1B[0m",xm=[39,82,198,226,208,51,196,46,201,214,93,154,220,27,49,190,200,33,129,227,45,160,63,118,123,202];function Pm(P){let L=P;return()=>(L=(L*1664525+1013904223)%4294967296,L/4294967296)}function Sm(P){let L=[...xm],H=Pm(P);for(let Y=L.length-1;Y>0;Y--){let Z=Math.floor(H()*(Y+1)),oe=L[Y];L[Y]=L[Z],L[Z]=oe}return L}function Rm(P,L=0){if(!Dn())return"";let H=Sm(L);return`\x1B[38;5;${H[P%H.length]}m`}function Ca(P,L,H=0){if(!Dn())return`"${P}"`;return`${Rm(L,H)}"${P}"${Cm}`}function Or(P){return P==="default"?"built-in default":`${P} policy`}var Em=new RegExp("\x1B\\[[0-9;]*m","g"),Zo=(P)=>P.replace(Em,"").length;function Zn(P){let L=(P.headers??P.rows[0]??[]).map((se,me)=>{let he=Math.max(...P.rows.map((ke)=>Zo(ke[me]??"")));return Math.max(Zo(se),he)}),H=(se,me)=>se+" ".repeat(Math.max(0,me-Zo(se))),Y=(se,me)=>me[0]+L.map((he)=>se.repeat(he+2)).join(me[1])+me[2],Z=(se)=>`│ ${se.map((me,he)=>H(me,L[he]??0)).join(" │ ")} │`,oe=P.headers?[`   ${Z(P.headers)}`,`   ${Y("─",["├","┼","┤"])}`]:[];return[`   ${Y("─",["┌","┬","┐"])}`,...oe,...P.rows.map((se)=>`   ${Z(se)}`),`   ${Y("─",["└","┴","┘"])}`].join(`
+`)}function xa(P){let L=[];L.push("Hook Integration"),L.push(Tm(P));let H=[],Y=[];for(let Z of P){let oe=cn(Z.platform);if(Z.errors&&Z.errors.length>0)for(let se of Z.errors)if(Z.configured)H.push({platform:oe,message:se});else Y.push({platform:oe,message:se})}for(let Z of H)L.push(`   Warning (${Z.platform}): ${Z.message}`);for(let Z of Y)L.push(en.red(`   Error (${Z.platform}): ${Z.message}`));return L.join(`
+`)}function Tm(P){let L=["Platform","Discovery","Configuration","Inspection"],H=P.map((Y)=>{let Z=cn(Y.platform);if(Y.inspectionStatus==="not-inspected"){let he=en.dim("Not inspected");return[Z,he,he,he]}let oe=Y.detected?en.green("Detected"):Y.inspectionStatus==="failed"?en.red("Unknown"):en.dim("Not detected"),se=Y.configured?en.green("Configured"):Y.detected?en.yellow("Not configured"):Y.inspectionStatus==="failed"?en.red("Unknown"):en.dim("Not applicable"),me=Y.inspectionStatus==="verified"?en.green("Verified"):Y.inspectionStatus==="failed"?en.red("Failed"):en.dim("Not applicable");return[Z,oe,se,me]});return Zn({headers:L,rows:H})}function Pa(P){let H=["Guard Engine Verification",`   Synthetic self-test: ${P.failed>0?en.red(`${P.passed}/${P.total} FAIL`):en.green(`${P.passed}/${P.total} passed`)}`],Y=P.results.filter((Z)=>!Z.passed);if(Y.length>0){H.push(""),H.push(en.red("   Failures:"));for(let Z of Y)H.push(en.red(`   • ${Z.description}`)),H.push(en.red(`     expected ${Z.expected}, got ${Z.actual}`))}return H.join(`
+`)}function Am(P){if(P.length===0)return"   (no custom rules)";let L=["Source","Name","Command","Block Args"],H=P.map((Y)=>[Y.source,Y.name,Y.subcommand?`${Y.command} ${Y.subcommand}`:Y.command,Y.blockArgs.join(", ")]);return Zn({headers:L,rows:H})}function Sa(P){let L=[];if(L.push("Configuration"),L.push(_m(P.userConfig,P.projectConfig)),L.push(""),P.effectiveRules.length>0)L.push(`   Effective rules (${P.effectiveRules.length} total):`),L.push(Am(P.effectiveRules));else L.push("   Effective rules: (none - using built-in rules only)");return L.join(`
+`)}function _m(P,L){let H=["Scope","Status"],Y=(oe)=>{if(!oe.exists)return en.dim("N/A");if(!oe.valid)return en.red(`Invalid (${oe.errors?.[0]??"unknown error"})`);return en.green("Configured")},Z=[["User",Y(P)],["Project",Y(L)]];return Zn({headers:H,rows:Z})}function Ra(P){let L=[];return L.push("Environment"),L.push(Im(P)),L.join(`
+`)}function Ea(P){let L=P.effectiveSafety.policyScopes,H=["Effective Safety",`   Selected preset: ${P.effectiveSafety.selectedPreset}${L?` (${Or(L.levelScope)})`:""}`,`   Effective: ${P.effectiveSafety.level}`],Y=[["fail_closed","fail_closed"],["paranoid_rm","paranoid_rm"],["paranoid_interpreters","paranoid_interpreters"]];for(let[Z,oe]of Y){let se=P.effectiveSafety.capabilities[Z],me=se.enabled?en.green("ON"):en.dim("OFF"),he=se.sources.length>0?` (${se.sources.join(", ")})`:"";H.push(`   ${oe}: ${me} via ${se.source}${he}`)}if(L&&L.weakenings.length>0){H.push(`   Project policy deltas${L.weakeningsIgnored?" (ignored)":""}:`);for(let Z of L.weakenings)H.push(`      ${Z}`)}H.push(`   Stored rule customizations: ${P.effectiveSafety.ruleCounts.stored}`),H.push(`   Effective rule customizations: ${P.effectiveSafety.ruleCounts.effective}`);for(let[Z,oe]of Object.entries(P.effectiveSafety.ruleOverrides))H.push(`   ${Z}: ${oe}`);return H.join(`
+`)}function Ta(P){let L=["Findings"];if(P.length===0)return L.push("   No findings from inspected doctor facts."),L.join(`
+`);for(let H of P){let Y=`[${H.severity.toUpperCase()}] ${H.checkId}: ${gn(H.title)}`,Z=H.severity==="error"?en.red:H.severity==="warning"?en.yellow:en.blue;if(L.push(`   ${Z(Y)}`),L.push(`      ${gn(H.detail)}`),H.path)L.push(`      Path: ${gn(H.path)}`);if(H.fixHint)L.push(`      Fix: ${gn(H.fixHint)}`)}return L.join(`
+`)}function Im(P){let L=["Variable","Status","Legacy"],H=P.map((Y)=>{let Z=Y.isSet?en.green("✓"):en.dim("✗"),oe=Y.legacyName&&Y.legacyIsSet?`${Y.legacyName} ${en.green("✓")}`:Y.legacyName??"";return[Y.name,Z,oe]});return Zn({headers:L,rows:H})}function Aa(P){let L=[];if(P.totalBlocked===0)L.push("Recent Activity"),L.push("   No blocked commands in the last 7 days"),L.push("   Tip: This is normal for new installations");else L.push(`Recent Activity · last 7 days (${P.totalBlocked} blocked / ${P.sessionCount} sessions)`),L.push(Om(P.recentEntries));if(P.unreadable>0)L.push(`   Warning: ${P.unreadable} audit log ${P.unreadable===1?"source":"sources"} could not be read; this summary is incomplete`);return L.join(`
+`)}function Om(P){let L=["Time","Command"],H=P.map((Y)=>{let Z=gn(Y.command.replace(/\r\n|\r|\n/g," ↵ ").replace(/\t/g," ")),oe=Z.length>40?`${Z.slice(0,37)}...`:Z;return[Y.relativeTime,oe]});return Zn({headers:L,rows:H})}function _a(P){let L=[];if(L.push("Update Check"),P.latestVersion===null&&!P.error)return L.push($r([["Status",en.dim("Skipped")],["Installed",P.currentVersion]])),L.join(`
+`);if(P.error)return L.push($r([["Status",`${en.yellow("⚠")} Error`],["Installed",P.currentVersion],["Error",en.dim(P.error)]])),L.join(`
+`);if(P.updateAvailable)return L.push($r([["Status",`${en.yellow("⚠")} Update Available`],["Current",P.currentVersion],["Latest",en.green(P.latestVersion??"")]])),L.push(""),L.push("   Run: bunx cc-safety-net@latest doctor"),L.push("   Or:  npx cc-safety-net@latest doctor"),L.join(`
+`);return L.push($r([["Status",`${en.green("✓")} Up to date`],["Version",P.currentVersion]])),L.join(`
+`)}function $r(P){return Zn({rows:P})}function Ia(P){let L=[];return L.push("System Info"),L.push($m(P)),L.join(`
+`)}function $m(P){let L=["Component","Version"],H=(oe)=>{if(oe===null)return en.dim("not found");return oe},Z=[{label:"cc-safety-net",value:P.version},...Er.map((oe)=>({label:cn(oe),value:P.versions[oe]??null})),{label:"Node.js",value:P.nodeVersion},{label:"npm",value:P.npmVersion},{label:"Bun",value:P.bunVersion},{label:"Platform",value:P.platform}].map((oe)=>[oe.label,H(oe.value)]);return Zn({headers:L,rows:Z})}function Oa(P){if(P.findings.length===0)return en.green(`
+No findings from inspected doctor facts.`);let L={error:P.findings.filter((oe)=>oe.severity==="error").length,warning:P.findings.filter((oe)=>oe.severity==="warning").length,info:P.findings.filter((oe)=>oe.severity==="info").length},H=["error","warning","info"].filter((oe)=>L[oe]>0).map((oe)=>`${L[oe]} ${oe}`),Y=P.findings.length===1?"finding":"findings",Z=`
+${P.findings.length} ${Y}: ${H.join(", ")}.`;if(L.error>0)return en.red(Z);if(L.warning>0)return en.yellow(Z);return en.blue(Z)}import{lstatSync as Dm}from"node:fs";import{dirname as Xo}from"node:path";function Qo(P,L){try{let H=Dm(L);if(H.isSymbolicLink())return{kind:P,path:L,status:"unsafe",issues:["symlink"]};if(!H.isDirectory())return{kind:P,path:L,status:"unsafe",issues:["not-directory"]};if(process.platform==="win32"||typeof process.getuid!=="function")return{kind:P,path:L,status:"unknown",issues:[]};let Y=[...H.uid!==process.getuid()?["ownership"]:[],...(H.mode&18)!==0?["permissions"]:[]];return{kind:P,path:L,status:Y.length>0?"unsafe":"safe",issues:Y}}catch(H){if(typeof H==="object"&&H!==null&&"code"in H&&H.code==="ENOENT")return{kind:P,path:L,status:"not-applicable",issues:[]};return{kind:P,path:L,status:"unknown",issues:[]}}}function $a(P,L){let H=G(P);return{directories:[Qo("policy",Xo(Xo(L))),Qo("config",Xo(L)),...H?[Qo("audit",H)]:[{kind:"audit",status:"unknown",issues:[]}]]}}import{spawn as Nm}from"node:child_process";import{existsSync as Da}from"node:fs";import{delimiter as Lm,extname as jm,join as Fm}from"node:path";import{stripVTControlCharacters as Na}from"node:util";var ja="2.6.16",Hm=5000,Mm="_CC_SAFETY_NET_TEST_SPAWN_PLATFORM";function pn(){return ja}function ei(P,L){let H=P[L];if(H)return H;let Y=Object.keys(P).find((Z)=>Z.toLowerCase()===L.toLowerCase()&&!!P[Z]);return Y?P[Y]:H}function Um(P){return(ei(P,"PATHEXT")||".COM;.EXE;.BAT;.CMD").split(";").filter((L)=>L.length>0)}function Bm(P,L){let H=jm(P)?[P]:[...Um(L).map((Y)=>`${P}${Y}`),P];if(P.includes("/")||P.includes("\\"))return H.find((Y)=>Da(Y))??P;return(ei(L,"PATH")??"").split(Lm).flatMap((Y)=>H.map((Z)=>Fm(Y,Z))).find((Y)=>Da(Y))??P}function La(P){if(!/[\s"&|<>^]/.test(P))return P;return`"${P.replace(/"/g,'""')}"`}function Xn(P,L){let[H,...Y]=P,Z=L[Mm]==="win32"?"win32":process.platform;if(!H||Z!=="win32")return{cmd:H??"",args:Y};let oe=Bm(H,L);if(!/\.(?:bat|cmd)$/i.test(oe))return{cmd:oe,args:Y};return{cmd:ei(L,"COMSPEC")??"cmd.exe",args:["/d","/c",["call",La(oe),...Y.map(La)].join(" ")]}}var Ft=async(P,L=Hm)=>{let H=await Gm(P,{timeoutMs:L});if(H.code!==0)return null;return Na(H.stdout).trim()||Na(H.stderr).trim()||null};function Gm(P,L){let[H,...Y]=P;if(!H)return Promise.resolve({code:null,stdout:"",stderr:""});return new Promise((Z)=>{try{let oe=Xn([H,...Y],process.env),se=Nm(oe.cmd,oe.args,{stdio:["ignore","pipe","pipe"]}),me=!1,he="",ke="";se.stdout.on("data",(_e)=>{he+=_e.toString()}),se.stderr.on("data",(_e)=>{ke+=_e.toString()});let Pe=(_e)=>{if(me)return;me=!0,clearTimeout(Te),Z(_e)},Te=setTimeout(()=>{se.kill(),Pe({code:null,stdout:he,stderr:ke})},L.timeoutMs);se.on("close",(_e)=>{Pe({code:_e,stdout:he,stderr:ke})}),se.on("error",()=>{Pe({code:null,stdout:he,stderr:ke})})}catch{Z({code:null,stdout:"",stderr:""})}})}function Dr(P){if(!P)return null;let L=/Claude Code\s+(\d+\.\d+\.\d+)/i.exec(P);if(L)return L[1]??null;let H=/v?(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?)/i.exec(P);if(H)return H[1]??null;return P.split(`
+`)[0]?.trim()||null}async function Nr(P,L=Ft,H=process.cwd()){let Y=Promise.all(Rn.map(async(Te)=>[Te.id,Dr(await L([...Te.probeCommand]))])),[Z,oe,se,me,he,ke,Pe]=await Promise.all([Y,Y.then(async(Te)=>{let _e=Te.find(([We])=>We==="opencode")?.[1];if(!_e?.startsWith("2.")||!P(_e))return null;let Ae=["--param",`location[directory]=${H}`],Le=["opencode","api","integration.list",...Ae];return await L(Le,30000),L(["opencode","api","plugin.list",...Ae],30000)}),L(["codex","plugin","list"],30000),L(["amp","plugins","list"],30000),L(["node","--version"]),L(["npm","--version"]),L(["bun","--version"])]);return{version:ja,versions:Object.fromEntries(Z),codexPluginListOutput:se,ampPluginListOutput:me,openCodePluginListOutput:oe,nodeVersion:Dr(he),npmVersion:Dr(ke),bunVersion:Dr(Pe),platform:`${process.platform} ${process.arch}`}}function ni(P,L){if(L==="dev")return!1;let H=P.split(".").map(Number),Y=L.split(".").map(Number),[Z=0,oe=0,se=0]=H,[me=0,he=0,ke=0]=Y;if(Z!==me)return Z>me;if(oe!==he)return oe>he;return se>ke}async function Bn(){let P=pn(),L=new AbortController,H=setTimeout(()=>L.abort(),3000);try{let Y=await fetch("https://registry.npmjs.org/cc-safety-net/latest",{signal:L.signal});if(!Y.ok)return{currentVersion:P,latestVersion:null,updateAvailable:!1,error:`npm registry returned ${Y.status}`};let Z=await Y.json(),oe=ni(Z.version,P);return{currentVersion:P,latestVersion:Z.version,updateAvailable:oe}}catch(Y){return{currentVersion:P,latestVersion:null,updateAvailable:!1,error:Y instanceof Error?Y.message:"Network error"}}finally{clearTimeout(H)}}import*as Va from"node:readline";var Ua=(P)=>`\x1B[${P}B`,qm=(P)=>`\x1B[${P}A`;var Fa=["░","▒","▓","╱","╲","┃","━","┏","┓","┗","┛","╋"];function Vm(P){return new Promise((L)=>setTimeout(L,P))}function Km(P,L,H){if(!H)return L(P);if(H.aborted)return Promise.resolve();return new Promise((Y,Z)=>{let oe=()=>H.removeEventListener("abort",se),se=()=>{oe(),Y()};H.addEventListener("abort",se,{once:!0}),L(P).then(()=>{oe(),Y()},(me)=>{oe(),Z(me)})})}function Lr(P){return Math.max(0,Math.min(1,P))}function Ht(P){return Math.max(0,Math.min(255,Math.round(P)))}function ti(P){return P<=0.0031308?12.92*P:1.055*P**0.4166666666666667-0.055}function Jm(P,L,H){let Y=H*Math.PI/180,Z=L*Math.cos(Y),oe=L*Math.sin(Y),se=(P+0.3963377774*Z+0.2158037573*oe)**3,me=(P-0.1055613458*Z-0.0638541728*oe)**3,he=(P-0.0894841775*Z-1.291485548*oe)**3;return{blue:Ht(ti(Lr(-0.0041960863*se-0.7034186147*me+1.707614701*he))*255),green:Ht(ti(Lr(-1.2684380046*se+2.6097574011*me-0.3413193965*he))*255),red:Ht(ti(Lr(4.0767416621*se-3.3077115913*me+0.2309699292*he))*255)}}function ri(P,L){let H=(L*P*180/Math.PI%360+360)%360;return Jm(0.72,0.15,H)}function Ba(P,L=0.1){let H=ri(L,P);return`\x1B[38;2;${H.red};${H.green};${H.blue}m`}function zm(P,L){return{blue:Ht(P.blue+(255-P.blue)*L),green:Ht(P.green+(255-P.green)*L),red:Ht(P.red+(255-P.red)*L)}}function Ga(P,L,H){let Y=Math.imul(P+2654435769,2246822507)^Math.imul(L+3266489909,668265263)^Math.imul(H+374761393,2654435761),Z=Y^Y>>>15,oe=Math.imul(Z,739982445),se=oe^oe>>>12,me=Math.imul(se,695872825);return((me^me>>>15)>>>0)/4294967296}function Wm(P,L,H){let Y=Math.floor(Ga(P,L,H)*Fa.length);return Fa[Y]??"░"}function Ha(P){let L=Lr(P);return L*L*L*(L*(L*6-15)+10)}function Ym(P){if(P.length===0)return"";let L=[],H=!1,Y="";for(let Z of P){let oe=`${Z.red};${Z.green};${Z.blue}`;if(Z.bold!==H)L.push(Z.bold?"\x1B[1m":"\x1B[22m"),H=Z.bold;if(oe!==Y)L.push(`\x1B[38;2;${oe}m`),Y=oe;L.push(Z.character)}return`${L.join("")}\x1B[22m\x1B[39m`}function Zm(P,L,H,Y,Z){return P.map((oe,se)=>({...ri(H,Y+L+se/Z),bold:!1,character:oe}))}function Xm(P,L,H,Y,Z,oe,se,me){let he=Math.max(1,Y*0.75),ke=Math.min(1,H/he),Pe=Z*Ha(ke),Te=Math.max(0,(H-he)/Math.max(1,Y-he)),_e=(1-Ha(H/Y))*me*2,Ae=0.35*Math.max(0,1-Te*2),Le=ke>=1,We=Math.min(P.length,Math.ceil(Pe+2+1));return P.slice(0,We).map((Fe,Ze)=>{let tn=ri(oe,se+L+Ze/me+_e),on=Ze+Ga(L,Ze,7919)*2-1;if(on>Pe+2)return{...tn,bold:!1,character:" "};let ln=Pe-on,nn=0.8*Math.exp(-(ln*ln)/12.5),sn=Math.min(0.9,nn+Ae),Pn=!Le&&on>Pe-4;return{...zm(tn,sn),bold:sn>0.3,character:Pn?Wm(L,Ze,H):Fe}})}function Ma(P){return`\x1B[?2026h${P.map((L,H)=>`\x1B8${H>0?Ua(H):""}${Ym(L)}`).join("")}\x1B[?2026l`}async function oi(P,L={}){if(!P)return;let H=L.output??process.stdout,Y=L.sleep??Vm,Z=L.seed??0,oe=P.split(`
+`).map((Pe)=>Array.from(Pe)),se=Math.max(...oe.map((Pe)=>Pe.length)),me=12000*oe.filter((Pe)=>Pe.length>0).length/40,he=se>0?Math.max(1,Math.ceil(me/16.666666666666668)):0,ke=he>0?me/he:0;H.write(`\x1B[?25l${oe.length>1?`${`
+`.repeat(oe.length-1)}${qm(oe.length-1)}`:""}\x1B7`);try{for(let Pe=1;Pe<=he;Pe+=1){if(L.signal?.aborted)break;H.write(Ma(oe.map((Te,_e)=>Xm(Te,_e,Pe,he,se,0.1,Z,3)))),await Km(ke,Y,L.signal)}}finally{if(H.write(Ma(oe.map((Pe,Te)=>Zm(Pe,Te,0.1,Z,3)))),H.write("\x1B8"),oe.length>1)H.write(Ua(oe.length-1));H.write(`
+\x1B[0m\x1B[?25h`)}}var qa=["┏━┛┏━┛  ┏━┛┏━┃┏━┛┏━┛━┏┛┃ ┃  ┏━ ┏━┛━┏┛","┃  ┃    ━━┃┏━┃┏━┛┏━┛ ┃ ━┏┛  ┃ ┃┏━┛ ┃ ","━━┛━━┛  ━━┛┛ ┛┛  ━━┛ ┛  ┛   ┛ ┛━━┛ ┛ "].join(`
+`);function Qm(P){return Boolean(P.isTTY)}async function nr(P={}){let L=P.output??process.stdout;if(!Qm(L))return;let H=P.input??process.stdin,Y={output:L,seed:P.seed??Math.random()*8192,sleep:P.sleep};if(!H.isTTY||typeof H.setRawMode!=="function"){await oi(qa,Y);return}let Z=new AbortController,oe=H.readableFlowing===!0,se=H.isRaw===!0,me=!1,he=(ke,Pe)=>{if(Pe.ctrl&&Pe.name==="c")me=!0;if(me||Pe.name==="return"||Pe.name==="enter")Z.abort()};Va.emitKeypressEvents(H),H.on("keypress",he),H.setRawMode(!0),H.resume();try{await oi(qa,{...Y,signal:Z.signal})}finally{if(H.off("keypress",he),H.setRawMode(se),!oe)H.pause()}if(!me)return;if(P.onInterrupt){P.onInterrupt();return}process.kill(process.pid,"SIGINT")}import{createHash as rg}from"node:crypto";import{existsSync as Ja}from"node:fs";import{dirname as jr,join as za}from"node:path";import{dirname as Ka,join as eg}from"node:path";var ng="rule.lock";function tg(P){return eg(Ka(P),ng)}function hn(P,L){let H=L.global?L.userConfigPath??z(P,L):L.projectConfigPath??A(L.cwd??process.cwd()),Y=L.global?at(P,L):ct(H,L.cwd??process.cwd()),Z=tg(H);return{configDir:Ka(H),configPath:H,lockPath:Z,filesystemScope:Y,configTarget:i(Y,H),lockTarget:i(Y,Z)}}var og="`cc-safety-net rule sync` is deprecated: rulebooks are live files that need no synchronization. This run only migrates the lock and cache an earlier version left behind.",ig="cache",sg="rulebooks";function Wa(P,L={}){let H=hn(P,L),Y=i(H.filesystemScope,Za(H.configDir)),Z=r(H.lockTarget);if(console.log(og),Z===null&&!Ja(Y.path))return console.log(`No v2 lock or cache leftovers found in ${jr(H.configDir)}; nothing to migrate.`),0;let oe=ug(Z),se=d(H.configTarget);if(!se.config&&(r(H.configTarget)!==null||oe.size>0))return console.error(`Cannot migrate: the rules config in ${jr(H.configDir)} is missing or unreadable while v2 leftovers remain. Restore rule.json, then re-run rule sync.`),1;let me=se.config?.rules??[];for(let he of me.flatMap((ke)=>ag(ke,oe,H,Y,L.global===!0)))console.log(he);return W(H.lockTarget),wt(Y),console.log(`Removed the v2 lock and cache under ${jr(H.configDir)}.`),0}function Ya(P,L){return[...new Set([{cwd:L},{cwd:L,global:!0}].flatMap((H)=>{let Y=hn(P,H);return[Y.lockPath,Za(Y.configDir)]}))].filter((H)=>Ja(H))}function ag(P,L,H,Y,Z){if(!C(P))return[];let oe=M(P).name,se=i(H.filesystemScope,F(H.configDir,oe)),me=r(se);if(me!==null&&lg(me,oe))return[];let he=L.get(P),ke=he?cg(he,oe,Y.path,H.filesystemScope):null;if(ke===null)return[`Could not migrate ${P} from the v2 cache. Run \`cc-safety-net rule update ${P}${Z?" --global":""}\` to vendor it.`];if(h(se,ke),me!==null)return[`Restored ${P} from the v2 cache over an invalid file.`];return[`Vendored ${P} from the v2 cache.`]}function lg(P,L){let H=Ce(P);return!("problem"in H)&&H.rulebook.name===L}function cg(P,L,H,Y){let Z=za(H,sg,`${dg(P)}--${P.digest.replace("sha256:","").slice(0,12)}`,ve),oe=r(i(Y,Z));if(oe===null||mg(oe)!==P.digest)return null;let se=Ce(oe);if("problem"in se||se.rulebook.name!==L)return null;return oe}function Za(P){return za(jr(P),ig)}function dg(P){return([P.owner,P.repo,P.display_ref,P.name].every((Y)=>typeof Y==="string"&&Y!=="")?`${P.owner}/${P.repo}#${P.display_ref}/${P.name}`:P.spec).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"rulebook"}function ug(P){let L=P===null?null:fg(P),H=Xa(L)&&Array.isArray(L.rulebooks)?L.rulebooks:[];return new Map(H.filter(pg).map((Y)=>[Y.spec,Y]))}function pg(P){return Xa(P)&&typeof P.spec==="string"&&typeof P.digest==="string"}function Xa(P){return!!P&&typeof P==="object"}function fg(P){try{return JSON.parse(P)}catch{return null}}function mg(P){return`sha256:${rg("sha256").update(P).digest("hex")}`}var Qa="\r\x1B[2K",gg="\x1B[?25l",yg="\x1B[39m",hg="\x1B[?25h",vg=100,bg=0.55,wg=80,el=["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"];function kg(P){return new Promise((L)=>setTimeout(L,P))}async function Fr(P,L={}){let H=L.output??process.stdout;if(!H.isTTY)return P;let Y=L.sleep??kg,Z=!1,oe=P.then((me)=>(Z=!0,me),(me)=>{throw Z=!0,me});if(await Promise.race([oe.then(()=>!0),Y(vg).then(()=>!1)]))return oe;H.write(gg);try{for(let me=0;!Z;me+=1)H.write(`${Qa}${Ba(me*bg)}${el[me%el.length]}${yg} ${L.loadingMessage??"Loading…"}`),await Promise.race([oe,Y(wg)]);return await oe}finally{H.write(`${Qa}${hg}`)}}async function tr(P,L,H,Y={}){let Z=L();if(P)await H();if(P&&Z.ready)await Fr(Z.ready,Y);return Z.finish()}import{stripVTControlCharacters as Cg}from"node:util";var Hr="amp plugins list",xg=/^\s*[✓✗]\s+cc-safety-net(?:\.ts)?\s+\(User Plugins\)\s+(\S+)\s*$/;function nl(P){if(!P.ampPluginListOutput)return{platform:"amp",status:"n/a"};let L=Cg(P.ampPluginListOutput).split(`
+`).map((H)=>xg.exec(H)?.[1]).find((H)=>H!==void 0);if(!L)return{platform:"amp",status:"n/a"};if(L!=="active")return{platform:"amp",status:"disabled",method:Hr,configPath:Hr,errors:[`Amp personal plugin cc-safety-net is ${L}; run "plugins: reload" in Amp or reinstall with install --amp`]};return{platform:"amp",status:"configured",method:Hr,configPath:Hr}}import{existsSync as _g,readFileSync as Ig}from"node:fs";import{isAbsolute as yP,join as Ag}from"node:path";function rr(P){return Ag(P,".gemini","config","hooks.json")}var rl=new Map([["run_command","auto"]]),ol="manage_task";var Og=/cc-safety-net\s+hook\s+(?:[^\s]+\s+)*(?:--agy-cli|-ac)(\s|["']|$)/;function $g(P){if(!P||typeof P!=="object"||Array.isArray(P))return[];return Object.values(P).flatMap((L)=>{if(!L||typeof L!=="object"||Array.isArray(L))return[];let H=L,Y=H.PreToolUse;if(!Array.isArray(Y))return[];return Y.flatMap((Z)=>{if(!Z||typeof Z!=="object"||Array.isArray(Z))return[];let oe=Z.hooks;if(!Array.isArray(oe))return[];return oe.flatMap((se)=>{if(!se||typeof se!=="object"||Array.isArray(se))return[];let me=se.command;if(typeof me!=="string"||!Og.test(me))return[];return[{command:me,enabled:H.enabled!==!1}]})})})}function il(P){let L=rr(P.environment.home);if(!_g(L))return{platform:"antigravity-cli",status:"n/a",configPath:L};let H;try{H=$g(JSON.parse(Ig(L,"utf-8")))}catch(Y){return{platform:"antigravity-cli",status:"n/a",configPath:L,errors:[`Failed to parse Antigravity hooks config ${L}: ${Y instanceof Error?Y.message:String(Y)}`]}}if(H.some((Y)=>Y.enabled))return{platform:"antigravity-cli",status:"configured",method:"hook config",configPath:L};if(H.length>0)return{platform:"antigravity-cli",status:"disabled",method:"hook config",configPath:L};return{platform:"antigravity-cli",status:"n/a",configPath:L}}import{existsSync as Fg}from"node:fs";import{join as Ln}from"node:path";import{existsSync as Dg,lstatSync as Ng,readFileSync as Lg}from"node:fs";import{join as jg}from"node:path";function vn(P,L=(H)=>H){if(!Dg(P))return{kind:"missing"};try{return{kind:"ok",value:JSON.parse(L(Lg(P,"utf-8")))}}catch{return{kind:"unreadable"}}}function Nn(P,L){if(P==="~")return L;if(P.startsWith("~/")||P.startsWith("~\\"))return jg(L,P.slice(2));return P}function dn(P){try{return Ng(P)}catch{return}}function Gr(P,L){let H=dn(L);if(!H)return{platform:P,status:"n/a",configPath:L};if(!H.isSymbolicLink()&&H.isDirectory())return;return{platform:P,status:"n/a",configPath:L,errors:[`${L} is a symlink or not a directory; move or remove it before installing`]}}function Xe(P,L){return typeof P==="object"&&P!==null?P[L]:void 0}var qr="cc-safety-net@cc-marketplace";function Vr(P){return P.env.get("CLAUDE_CONFIG_DIR")||Ln(P.home,".claude")}function sl(P){return Ln(P.env.get("CLAUDE_CODE_PLUGIN_CACHE_DIR")||Ln(Vr(P),"plugins"),"installed_plugins.json")}function al(P,L){let H=Xe(Xe(P,"plugins"),L);return Array.isArray(H)&&H.length>0}function Kr(P,L){let H=vn(sl(P));return H.kind==="ok"&&al(H.value,L)}function si(P){return ll(sl(P),Ln(Vr(P),"settings.json"))}function ll(P,L){let H=vn(P);if(H.kind==="unreadable")return{platform:"claude-code",status:"not-inspected"};if(H.kind==="missing")return{platform:"claude-code",status:"n/a"};if(!al(H.value,qr))return{platform:"claude-code",status:"n/a"};let Y=vn(L);if(Y.kind==="unreadable")return{platform:"claude-code",status:"not-inspected"};if(!(Y.kind==="ok"&&Xe(Xe(Y.value,"enabledPlugins"),qr)===!0))return{platform:"claude-code",status:"disabled",method:"plugin config",configPath:L,errors:[`${qr} is installed but not enabled in Claude Code`]};return{platform:"claude-code",status:"configured",method:"plugin config",configPath:P}}function cl(P){let L=Ln(P.home,".claude"),H=Ln(L,"plugins","installed_plugins.json");if(ll(H,Ln(L,"settings.json")).status!=="configured")return;let Y=vn(H),Z=Y.kind==="ok"?Xe(Xe(Y.value,"plugins"),qr):void 0,oe=(Array.isArray(Z)?Z:[]).filter((ke)=>Xe(ke,"scope")==="user").map((ke)=>Xe(ke,"installPath")).find((ke)=>typeof ke==="string");if(!oe)return;let se=Ln(oe,".cursor-plugin","plugin.json"),me=vn(se),he=me.kind==="ok"?Xe(me.value,"hooks"):void 0;return typeof he==="string"&&Fg(Ln(oe,he))?se:void 0}function dl(P){return si(P.environment)}var ul="Start Codex, open `/hooks`, select the cc-safety-net PreToolUse hook, and press `t` to trust it.";function pl(P){if(!P.codexPluginListOutput)return{platform:"codex",status:"n/a"};let L=P.codexPluginListOutput.split(`
+`).find((H)=>H.includes("https://github.com/kenryu42/cc-safety-net.git"));if(!L)return{platform:"codex",status:"n/a"};if(!L.includes("installed,"))return{platform:"codex",status:"n/a"};if(!L.includes("installed, enabled"))return{platform:"codex",status:"disabled",method:"codex plugin list",configPath:"codex plugin list",errors:["Codex plugin line for https://github.com/kenryu42/cc-safety-net.git must contain installed, enabled."]};return{platform:"codex",status:"configured",method:"codex plugin list",configPath:"codex plugin list",errors:["Codex runs only trusted hooks, and doctor cannot check trust. Start Codex, open `/hooks`, select the cc-safety-net PreToolUse hook, and press `t` to trust it."]}}import{existsSync as Yr,readdirSync as Hg,readFileSync as Mg}from"node:fs";import{join as wn}from"node:path";function yn(P){let L="",H=0,Y=!1,Z=!1,oe=-1;while(H<P.length){let se=P[H],me=P[H+1];if(Z){L+=se,Z=!1,H++;continue}if(se==='"'&&!Y){Y=!0,oe=-1,L+=se,H++;continue}if(se==='"'&&Y){Y=!1,L+=se,H++;continue}if(se==="\\"&&Y){Z=!0,L+=se,H++;continue}if(Y){L+=se,H++;continue}if(se==="/"&&me==="/"){while(H<P.length&&P[H]!==`
+`)H++;continue}if(se==="/"&&me==="*"){H+=2;while(H<P.length-1){if(P[H]==="*"&&P[H+1]==="/"){H+=2;break}H++}continue}if(se===","){oe=L.length,L+=se,H++;continue}if(se==="}"||se==="]"){if(oe!==-1){let he=L.slice(oe+1);if(/^\s*$/.test(he))L=L.slice(0,oe)+he}oe=-1,L+=se,H++;continue}if(!/\s/.test(se))oe=-1;L+=se,H++}return L}function ml(P,L,H){let Y=L+1,Z=!1;while(Y<P.length){if(Z){Z=!1,Y++;continue}if(P[Y]==="\\"){Z=!0,Y++;continue}if(P[Y]==='"')return Y+1;Y++}throw Error(H)}function li(P,L,H){let Y=P[L],Z=Y==="["?"]":"}",oe=0,se=L;while(se<P.length){let me=H.skipComment?.(P,se)??se;if(me!==se){se=me;continue}if(P[se]==='"'){se=ml(P,se,H.stringError);continue}if(P[se]===Y)oe++;if(P[se]===Z){if(oe--,oe===0)return se}se++}throw Error(H.bracketError)}function gl(P,L){let H=P.lastIndexOf(`
+`,L)+1;return/^[ \t]*/.exec(P.slice(H))?.[0]??""}function yl(P,L){let H=L.end+(/^\s*/.exec(P.slice(L.end))?.[0].length??0);if(P[H]===","){let se=P[H+1]===`
+`?H+2:H+1;return`${P.slice(0,L.start)}${P.slice(se)}`}let Y=P.slice(0,L.start).search(/\s*$/)-1;if(P[Y]!==",")return`${P.slice(0,L.start)}${P.slice(L.end)}`;let Z=P.lastIndexOf(`
+`,Y-1),oe=Z!==-1&&/^\s*$/.test(P.slice(Z+1,Y))?Z:Y;return`${P.slice(0,oe)}${P.slice(L.end)}`}function ai(P,L){if(P.startsWith("//",L)){let H=P.indexOf(`
+`,L+2);return H===-1?P.length:H+1}if(P.startsWith("/*",L)){let H=P.indexOf("*/",L+2);return H===-1?P.length:H+2}return L}function fl(P,L){let H=L;while(H<P.length){if(/\s/.test(P[H]??"")){H++;continue}let Y=ai(P,H);if(Y===H)return H;H=Y}return H}function hl(P,L,H){let Y=0,Z=0;while(Z<P.length){let oe=ai(P,Z);if(oe!==Z){Z=oe;continue}if(P[Z]==='"'){let se=ml(P,Z,H.stringError);if(Y===1&&JSON.parse(P.slice(Z,se))===L){let me=fl(P,se),he=fl(P,me+1);if(P[me]===":"&&P[he]==="[")return{start:he,end:li(P,he,{skipComment:ai,...H})}}Z=se;continue}if(P[Z]==="{"||P[Z]==="[")Y++;if(P[Z]==="}"||P[Z]==="]")Y--;Z++}return}var An="cc-safety-net@cc-marketplace",Jr=["cc-marketplace","cc-safety-net"],vl=["_direct","copilot-safety-net"],bl=["cc-marketplace","safety-net"],wl="safety-net@cc-marketplace";function zr(P,L){let H=L.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");return new RegExp(`(^|[^a-z0-9-])${H}([^a-z0-9-]|$)`,"m").test(P??"")}function kl(P){return zr(P,"cc-safety-net@cc-marketplace")}function Cl(P){return zr(P,"cc-marketplace")}function xl(P){return zr(P,"copilot-safety-net")}function Pl(P){return zr(P,"safety-net@cc-marketplace")}function Wr(P){if(!P?.includes("cc-safety-net"))return!1;return/(^|\s)hook\s+(?:[^\s]+\s+)*(--copilot-cli|-cp)(\s|$)/.test(P)}function Rl(P,L){if(!P)return null;let H=P.match(/(\d+)\.(\d+)\.(\d+)/);if(!H)return null;let Y=[Number(H[1]),Number(H[2]),Number(H[3])];for(let Z=0;Z<L.length;Z++){let oe=Y[Z]??0,se=L[Z]??0;if(oe!==se)return oe>se}return!0}function Ug(P){return Rl(P,[0,0,422])}function Bg(P){return Rl(P,[1,0,8])}function sr(P){return P.env.get("COPILOT_HOME")||wn(P.home,".copilot")}function El(P){return P.disableAllHooks!==!0&&Tl(P)}function Tl(P){return(P.hooks?.preToolUse??[]).some((H)=>{if(H.type!==void 0&&H.type!=="command")return!1;return Wr(H.command)||Wr(H.bash)||Wr(H.powershell)||Wr(H.exec&&[H.exec,...H.args??[]].join(" "))})}function or(P){return P===void 0||typeof P==="string"}function Gg(P){return P===void 0||Array.isArray(P)&&P.every((L)=>typeof L==="string")}function qg(P){if(!P||typeof P!=="object"||Array.isArray(P))return!1;let L=P;if(L.disableAllHooks!==void 0&&typeof L.disableAllHooks!=="boolean")return!1;if(L.hooks===void 0)return!0;if(!L.hooks||typeof L.hooks!=="object"||Array.isArray(L.hooks))return!1;let H=L.hooks.preToolUse;if(H===void 0)return!0;return Array.isArray(H)&&H.every((Y)=>Y!==null&&typeof Y==="object"&&!Array.isArray(Y)&&or(Y.type)&&or(Y.command)&&or(Y.bash)&&or(Y.powershell)&&or(Y.exec)&&Gg(Y.args))}function ci(P,L){try{let H=JSON.parse(yn(Mg(P,"utf-8")));if(!qg(H)){L?.push(`Invalid hook config ${P}: hooks.preToolUse must be an array of hook objects`);return}return H}catch(H){L?.push(`Failed to parse ${P}: ${H instanceof Error?H.message:String(H)}`);return}}function Al(P,L){try{return Hg(P).filter((H)=>H.endsWith(".json")).sort((H,Y)=>H.localeCompare(Y))}catch(H){return L?.push(`Failed to read ${P}: ${H instanceof Error?H.message:String(H)}`),[]}}function Vg(P,L){if(!Yr(P))return[];let H=[];for(let Y of Al(P,L)){let Z=wn(P,Y),oe=ci(Z,L);if(oe&&El(oe))H.push(Z)}return H}function ir(P,L){if(!Yr(P))return;let H=ci(P,L);if(!H)return;return{path:P,config:H}}function Sl(P,L,H,Y){if(L){P.push(`GitHub Copilot CLI ${L} does not support ${H}; requires ${Y}+`);return}P.push(`GitHub Copilot CLI version unavailable; skipping ${H} because it requires ${Y}+`)}function Kg(P){for(let L of P){if(L?.config.disableAllHooks===!0)return L.path;if(L?.config.disableAllHooks===!1)return}return}function Jg(P,L,H,Y){let Z=sr(P),oe=wn(L,".github","hooks"),se=wn(Z,"hooks"),me=wn(L,".github","copilot"),he=wn(L,".claude"),ke=Bg(H),Pe=ke===!0?Y:void 0,Te=[ir(wn(me,"settings.local.json"),Pe),ir(wn(me,"settings.json"),Pe),ir(wn(he,"settings.local.json"),Pe),ir(wn(he,"settings.json"),Pe)],_e=ir(wn(Z,"settings.json"),Pe),Ae=[_e?.config.disableAllHooks===!0?void 0:_e];if(ke!==!1){let nn=Kg(Te);if(nn){if(ke===null)Y.push(`GitHub Copilot CLI version unavailable; treating disableAllHooks in ${nn} as active`);return{activeConfigPaths:[],repoInlineSources:Te,disabledBy:nn}}}let Le=Vg(oe,Y),We=Ug(H),Fe=We===!0?Y:void 0,Ze=Yr(se)?Al(se,Fe):[],tn=[];for(let nn of Ze){let sn=wn(se,nn),Pn=ci(sn,Fe);if(Pn&&El(Pn))tn.push(sn)}if(We!==!0&&tn.length>0)Sl(Y,H,`user hook files in ${se}`,"0.0.422"),tn.length=0;let on=[];for(let nn of[...Te,...Ae]){if(!nn)continue;if(!Tl(nn.config))continue;if(ke===!0){on.push(nn);continue}Sl(Y,H,"inline hook definitions in Copilot config files","1.0.8");break}let ln=(nn)=>nn.filter((sn)=>!!sn&&on.includes(sn)).map((sn)=>sn.path);return{activeConfigPaths:[...ln(Te),...Le,...ln(Ae),...tn],repoInlineSources:Te}}function _l(P){let L=[],H=Jg(P.environment,P.cwd,P.copilotCliVersion,L);if(H.disabledBy)return{platform:"copilot-cli",status:"disabled",method:"hook config",configPath:H.disabledBy,configPaths:[H.disabledBy],errors:L.length>0?L:void 0};let Y=sr(P.environment),Z=wn(Y,"installed-plugins",...Jr),oe=Yr(Z),se=wn(Y,"settings.json"),me=vn(se,yn),he=(Ae)=>Xe(Xe(Ae,"enabledPlugins"),An),ke=H.repoInlineSources.find((Ae)=>typeof he(Ae?.config)==="boolean"),Pe=ke??(me.kind==="ok"?{path:se,config:me.value}:void 0);if(oe&&!ke&&me.kind==="unreadable")return{platform:"copilot-cli",status:"not-inspected"};let Te=oe&&Pe!==void 0&&he(Pe.config)===!1;if(Te&&H.activeConfigPaths.length===0)return{platform:"copilot-cli",status:"disabled",method:"plugin config",configPath:Pe.path,errors:[`${An} is installed but not enabled in Copilot CLI`]};let _e=oe&&!Te;if(_e||H.activeConfigPaths.length>0){let Ae=H.activeConfigPaths[0];return{platform:"copilot-cli",status:"configured",method:_e?"plugin config":"hook config",configPath:Ae??(_e?Z:void 0),configPaths:H.activeConfigPaths.length>0?H.activeConfigPaths:void 0,errors:L.length>0?L:void 0}}return{platform:"copilot-cli",status:"n/a",errors:L.length>0?L:void 0}}import{existsSync as hi,readdirSync as ay,readFileSync as ly}from"node:fs";import{join as yi}from"node:path";import{existsSync as mi,mkdirSync as ey,readFileSync as ny,rmSync as ty}from"node:fs";import{dirname as ry,join as Zr}from"node:path";import{existsSync as zg,renameSync as Wg,statSync as Yg,writeFileSync as Zg}from"node:fs";function an(P,L){let H=`${P}.${process.pid}.tmp`;Zg(H,L,zg(P)?{mode:Yg(P).mode&511}:{}),Wg(H,P)}import{spawn as Xg}from"node:child_process";function Qg(P){return P.join(" ")}function di(P,L,H){return[`Failed to run ${Qg(P)}${L===null?"":` (exit ${L})`}.`,H.trim()].filter(Boolean).join(`
+`)}function ui(P){let L={stdout:"",stderr:""};return P.stdout.setEncoding("utf-8"),P.stderr.setEncoding("utf-8"),P.stdout.on("data",(H)=>{L.stdout+=H}),P.stderr.on("data",(H)=>{L.stderr+=H}),L}function fn(P,L){return new Promise((H,Y)=>{let Z=Xn([...P],process.env),oe=Xg(Z.cmd,Z.args,{stdio:["ignore","pipe","pipe"]}),se=ui(oe),me=()=>[se.stdout,se.stderr].filter(Boolean).join(`
+`),he=L?.timeoutMs??120000,ke=setTimeout(()=>{oe.kill(),Y(Error(di(P,null,`Timed out after ${he}ms.
+${me()}`.trim())))},he);oe.on("error",(Pe)=>{clearTimeout(ke),Y(Error(di(P,null,`${Pe.message}
+${me()}`.trim())))}),oe.on("close",(Pe)=>{if(clearTimeout(ke),Pe!==0){Y(Error(di(P,Pe,me())));return}H(L?.stdoutOnly?se.stdout:me())})})}async function pi(P){for(let L of P)await fn(L)}async function Il(P){for(let L of P)try{await fn(L)}catch(H){console.warn(H instanceof Error?H.message:String(H))}}var kn=Object.fromEntries(er.map((P)=>[P.id,`npx -y cc-safety-net hook ${P.flags[1]}`]));var lr=kn.cursor,Ol=30;function Qr(P){return Zr(P.home,".cursor","hooks.json")}var ar="cc-safety-net";function gi(P){let L=Zr(P.home,".cursor","plugins");return{cache:Zr(L,"cache",ar),marketplaceClone:Zr(L,"marketplaces","github.com","kenryu42","cc-safety-net")}}async function $l(P){let L=Object.values(gi(P));if(!L.some((Y)=>mi(Y)))return;let H="No marketplace matches";return await fn(["cursor-agent","plugin","marketplace","remove",ar]).catch((Y)=>{if(!(Y instanceof Error&&Y.message.includes(H)))throw Y}),L.forEach((Y)=>ty(Y,{recursive:!0,force:!0})),[`Removed the ${ar} marketplace from your Cursor account.`,"If /plugins in cursor-agent still lists CC Safety Net as installed, uninstall it there."].join(`
+`)}function it(P){return typeof P==="object"&&P!==null&&!Array.isArray(P)}function fi(){return{command:lr,timeout:Ol,failClosed:!0}}function Xr(P){return it(P)&&P.command===lr}function oy(P){return Object.keys(P).length===3&&P.command===lr&&P.timeout===Ol&&P.failClosed===!0}function iy(P){try{return JSON.parse(ny(P,"utf-8"))}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Cursor hooks config ${P}: ${L.message}`);throw L}}function Dl(P){let L=iy(P);if(!it(L))throw Error(`Cursor hooks config ${P} must be a JSON object`);if(L.version!==1)throw Error(`Cursor hooks config ${P} must set "version": 1`);if(L.hooks!==void 0&&!it(L.hooks))throw Error(`Cursor hooks config ${P} "hooks" must be an object`);let H=it(L.hooks)?L.hooks.preToolUse:void 0;if(H!==void 0&&!Array.isArray(H))throw Error(`Cursor hooks config ${P} "hooks.preToolUse" must be an array`);return L}function Nl(P){let L=it(P.hooks)?P.hooks.preToolUse:void 0;return Array.isArray(L)?L:[]}function sy(P){if(!P.some(Xr))return[...P,fi()];return P.reduce((L,H)=>{if(!Xr(H))return L.result.push(H),L;if(!L.inserted)L.result.push(fi()),L.inserted=!0;return L},{result:[],inserted:!1}).result}function Ll(P,L,H){let Y=it(L.hooks)?L.hooks:{},Z={...L,hooks:{...Y,preToolUse:H}};an(P,`${JSON.stringify(Z,null,2)}
+`)}function jl(P){let L=Qr(P);if(!mi(L))return ey(ry(L),{recursive:!0}),an(L,`${JSON.stringify({version:1,hooks:{preToolUse:[fi()]}},null,2)}
+`),{path:L,alreadyInstalled:!1};let H=Dl(L),Y=Nl(H),Z=Y.filter(Xr);if(it(H.hooks)&&Array.isArray(H.hooks.preToolUse)&&Z.length===1&&Z[0]!==void 0&&oy(Z[0]))return{path:L,alreadyInstalled:!0};return Ll(L,H,sy(Y)),{path:L,alreadyInstalled:!1}}function Fl(P){let L=Qr(P);if(!mi(L))return{path:L,alreadyInstalled:!1};let H=Dl(L),Y=Nl(H),Z=Y.filter((oe)=>!Xr(oe));if(Z.length===Y.length)return{path:L,alreadyInstalled:!1};return Ll(L,H,Z),{path:L,alreadyInstalled:!0}}function cy(P){if(!P||typeof P!=="object"||Array.isArray(P))return[];let L=P.hooks;if(!L||typeof L!=="object"||Array.isArray(L))return[];let H=L.preToolUse;if(!Array.isArray(H))return[];return H.filter((Y)=>!!Y&&typeof Y==="object"&&!Array.isArray(Y)&&Y.command===lr)}function dy(P){let L=[];if(P.length>1)L.push("Multiple managed cc-safety-net hooks found; reinstall to collapse duplicates");let H=P[0];if(H&&H.failClosed!==!0)L.push('Managed hook is missing "failClosed": true; reinstall to repair');if(H&&H.timeout!==30)L.push('Managed hook "timeout" is not 30; reinstall to repair');return L}var eo="Claude Code plugin",vi="Cursor plugin";function uy(P){let L=yi(gi(P).cache,ar);if(!hi(L))return{};try{return{version:ay(L).map((H)=>yi(L,H)).find((H)=>hi(yi(H,".cache-complete")))}}catch{return{unreadable:L}}}function py(P,L){if(L){let Z=["Cursor records enabled plugins on your Cursor account, which doctor cannot check, and keeps a plugin's files after it is uninstalled.","Cursor pins marketplace plugins to the commit they were added at, so `cc-safety-net update` cannot update this plugin, while the npx hook (`cc-safety-net install --cursor`) stays current."].join(" ");return{method:vi,configPath:L,duplicate:`The Cursor plugin also runs this check, so every tool call is checked twice. ${Z} If the plugin is installed, run \`cc-safety-net uninstall --cursor\`, uninstall CC Safety Net from /plugins in cursor-agent, then run \`cc-safety-net install --cursor\`.`,alone:`${Z} If /plugins in cursor-agent does not list CC Safety Net as installed, run \`cc-safety-net install --cursor\`.`}}let H=cl(P);if(!H)return;let Y="Cursor runs the Claude Code plugin only while it imports Claude Code plugins, which doctor cannot check.";return{method:eo,configPath:H,duplicate:`The Claude Code plugin also runs this check in Cursor, so every tool call is checked twice. ${Y} If Cursor runs it, run \`cc-safety-net uninstall --cursor\` to remove this hook.`,alone:`${Y} If it stops, run \`cc-safety-net install --cursor\`.`}}function Hl(P){let L=fy(P),H=uy(P.environment);if(H.unreadable)return L.status==="configured"?{...L,errors:[...L.errors??[],`Cannot read ${H.unreadable}, so doctor cannot tell whether the Cursor plugin also runs this check.`]}:{platform:"cursor",status:"not-inspected"};let Y=py(P.environment,H.version);if(!Y)return L;if(L.status==="configured")return{...L,errors:[...L.errors??[],Y.duplicate]};return{platform:"cursor",status:"configured",method:Y.method,configPath:Y.configPath,errors:[...L.errors??[],Y.alone]}}function fy(P){let L=Qr(P.environment);if(!hi(L))return{platform:"cursor",status:"n/a",configPath:L};let H;try{H=JSON.parse(ly(L,"utf-8"))}catch(oe){return{platform:"cursor",status:"n/a",configPath:L,errors:[`Failed to parse Cursor hooks config ${L}: ${oe instanceof Error?oe.message:String(oe)}`]}}let Y=cy(H);if(Y.length===0)return{platform:"cursor",status:"n/a",configPath:L};let Z=dy(Y);return{platform:"cursor",status:"configured",method:"hook config",configPath:L,errors:Z.length>0?Z:void 0}}import{readdirSync as my}from"node:fs";import{join as bi,resolve as gy}from"node:path";var wi="cc-safety-net";function ki(P){let L=P.env.get("DSH_HOME");return bi(L?.trim()?gy(Nn(L,P.home)):bi(P.home,".dsh"),"profiles")}function Ml(P){let L=ki(P),H=dn(L)?.isDirectory()?my(L,{withFileTypes:!0}).filter((Z)=>Z.isDirectory()&&Z.name!=="node_modules").map((Z)=>{let oe=bi(L,Z.name,"package.json");return{name:Z.name,configPath:oe,manifest:vn(oe)}}):[];return{installed:H.flatMap((Z)=>{if(Z.manifest.kind!=="ok")return[];let oe=Z.manifest.value;if(Xe(Xe(oe,"dependencies"),wi)===void 0)return[];let se=Xe(Xe(Xe(oe,"dsh"),"profile"),"bundles");return[{name:Z.name,configPath:Z.configPath,enabled:Array.isArray(se)&&se.includes(wi)}]}),unreadable:H.some((Z)=>Z.manifest.kind==="unreadable")}}function Ci(P){return Ml(P).installed}function Ul(P){let L=Ml(P.environment),H=L.installed.filter((oe)=>oe.enabled),Y=L.installed.filter((oe)=>!oe.enabled),Z=Y.map((oe)=>`${wi} is installed in the ${oe.name} profile but its bundle is disabled`);if(H.length>0)return{platform:"deepseek-harness",status:"configured",method:"dsh bundle",configPaths:H.map((oe)=>oe.configPath),...Z.length>0?{errors:Z}:{}};if(Y.length>0)return{platform:"deepseek-harness",status:"disabled",method:"dsh bundle",configPaths:Y.map((oe)=>oe.configPath),errors:Z};return L.unreadable?{platform:"deepseek-harness",status:"not-inspected"}:{platform:"deepseek-harness",status:"n/a"}}import{existsSync as ky}from"node:fs";import{existsSync as ql,mkdirSync as yy,readFileSync as hy}from"node:fs";import{dirname as vy,join as Si}from"node:path";function xi(P){return typeof P==="object"&&P!==null&&!Array.isArray(P)}function Pi(P,L){return xi(P)&&P.command===L}function Bl(P,L){return xi(P)&&Array.isArray(P.hooks)&&P.hooks.some((H)=>Pi(H,L))}function gt(P,L){return{hooks:[{type:"command",command:P,timeout:L}]}}function jn(P,L){return P.flatMap((H)=>{if(!xi(H)||!Array.isArray(H.hooks))return[H];let Y=H.hooks.filter((Z)=>!Pi(Z,L));if(Y.length===H.hooks.length)return[H];return Y.length===0?[]:[{...H,hooks:Y}]})}function Mt(P,L,H){let Y=P.filter((Z)=>Bl(Z,L));return Y.length===1&&JSON.stringify(Y[0])===JSON.stringify(gt(L,H))}function Ut(P,L){return P.find((H)=>Bl(H,L))}function Bt(P,L,H){let Y=Array.isArray(P.hooks)?P.hooks.find((Z)=>Pi(Z,L)):void 0;return[...P.matcher===void 0||P.matcher===""||P.matcher==="*"?[]:['Managed hook has a "matcher" that narrows coverage; reinstall to repair'],...Y?.type==="command"?[]:['Managed hook "type" is not "command"; reinstall to repair'],...Y?.timeout===H?[]:[`Managed hook "timeout" is not ${H}; reinstall to repair`]]}var yt=kn.devin,no=30,by={config:{},hooks:{},preToolUse:[]};function to(P,L=process.platform){let H=L==="win32"?P.env.get("APPDATA")||Si(P.home,"AppData","Roaming"):P.env.get("XDG_CONFIG_HOME")||Si(P.home,".config");return Si(H,"devin","config.json")}function Gl(P){return typeof P==="object"&&P!==null&&!Array.isArray(P)}function wy(P){try{return{ok:!0,value:JSON.parse(yn(hy(P,"utf-8")))}}catch(L){return{ok:!1,message:L instanceof Error?L.message:String(L)}}}function Ri(P){let L=wy(P);if(!L.ok)return`Failed to parse Devin CLI config ${P}: ${L.message}`;let H=L.value;if(!Gl(H))return`Devin CLI config ${P} must be a JSON object`;let Y=H.hooks===void 0?{}:H.hooks;if(!Gl(Y))return`Devin CLI config ${P} "hooks" must be an object`;let Z=Y.PreToolUse===void 0?[]:Y.PreToolUse;if(!Array.isArray(Z))return`Devin CLI config ${P} "hooks.PreToolUse" must be an array`;return{config:H,hooks:Y,preToolUse:Z}}function Vl(P){let L=Ri(P);if(typeof L==="string")throw Error(L);return L}function Kl(P,L,H){let Y={...L.config,hooks:{...L.hooks,PreToolUse:H}};an(P,`${JSON.stringify(Y,null,2)}
+`)}function Jl(P){let L=to(P),H=ql(L)?Vl(L):by;if(Mt(H.preToolUse,yt,no))return{path:L,alreadyInstalled:!0};return yy(vy(L),{recursive:!0}),Kl(L,H,[...jn(H.preToolUse,yt),gt(yt,no)]),{path:L,alreadyInstalled:!1}}function zl(P){let L=to(P);if(!ql(L))return{path:L,alreadyInstalled:!1};let H=Vl(L),Y=jn(H.preToolUse,yt);if(JSON.stringify(Y)===JSON.stringify(H.preToolUse))return{path:L,alreadyInstalled:!1};return Kl(L,H,Y),{path:L,alreadyInstalled:!0}}function Wl(P){let L=to(P.environment);if(!ky(L))return{platform:"devin",status:"n/a",configPath:L};let H=Ri(L);if(typeof H==="string")return{platform:"devin",status:"n/a",configPath:L,errors:[H]};let Y=Ut(H.preToolUse,yt);if(!Y)return{platform:"devin",status:"n/a",configPath:L};let Z=Bt(Y,yt,no);return{platform:"devin",status:"configured",method:"hook config",configPath:L,errors:Z.length>0?Z:void 0}}import{existsSync as Ty,readFileSync as Ay}from"node:fs";import{existsSync as Gt,mkdirSync as Cy,readFileSync as xy,rmSync as Py}from"node:fs";import{dirname as Sy,join as Ti}from"node:path";var ht=kn.droid,ro=30;function oo(P){return Ti(P.home,".factory","hooks.json")}function Yl(P){return Ti(P.home,".factory","settings.json")}function Zl(P){return Ti(P.home,".factory","hooks","hooks.json")}function Ei(P){return typeof P==="object"&&P!==null&&!Array.isArray(P)}function Xl(P){try{return JSON.parse(yn(xy(P,"utf-8")))}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Factory Droid hooks config ${P}: ${L.message}`);throw L}}function Ai(P){let L=Xl(P);if(!Ei(L))throw Error(`Factory Droid hooks config ${P} must be a JSON object`);if(L.PreToolUse===void 0||Array.isArray(L.PreToolUse))return L;throw Error(`Factory Droid hooks config ${P} "PreToolUse" must be an array`)}function Ry(P){if(!Gt(P))return{};let L=Xl(P);return Ei(L)&&Ei(L.hooks)&&L.hooks.PreToolUse!==void 0?{PreToolUse:L.hooks.PreToolUse}:{}}function Ey(P){let L=Zl(P);return{...Ry(Yl(P)),...Gt(L)?Ai(L):{}}}function Ql(P){return Array.isArray(P.PreToolUse)?P.PreToolUse:[]}function ec(P,L,H){an(P,`${JSON.stringify({...L,PreToolUse:H},null,2)}
+`)}function nc(P){let L=oo(P),H=Gt(L),Y=H?Ai(L):Ey(P),Z=Ql(Y);if(H&&Mt(Z,ht,ro))return{path:L,alreadyInstalled:!0};return Cy(Sy(L),{recursive:!0}),ec(L,Y,[...jn(Z,ht),gt(ht,ro)]),{path:L,alreadyInstalled:!1}}function tc(P){let L=oo(P);if(!Gt(L))return{path:L,alreadyInstalled:!1};let H=Ai(L),Y=Ql(H),Z=jn(Y,ht);if(JSON.stringify(Z)===JSON.stringify(Y))return{path:L,alreadyInstalled:!1};let oe=Gt(Yl(P))||Gt(Zl(P));if(Z.length===0&&Object.keys(H).length===1&&!oe)return Py(L),{path:L,alreadyInstalled:!0};return ec(L,H,Z),{path:L,alreadyInstalled:!0}}function rc(P){let L=oo(P.environment);if(!Ty(L))return{platform:"droid",status:"n/a",configPath:L};let H;try{H=JSON.parse(yn(Ay(L,"utf-8")))}catch(se){return{platform:"droid",status:"n/a",configPath:L,errors:[`Failed to parse Factory Droid hooks config ${L}: ${se instanceof Error?se.message:String(se)}`]}}let Y=typeof H==="object"&&H!==null&&"PreToolUse"in H?H.PreToolUse:void 0,Z=Ut(Array.isArray(Y)?Y:[],ht);if(!Z)return{platform:"droid",status:"n/a",configPath:L};let oe=[...Z.commandRegex===void 0||Z.commandRegex===""?[]:['Managed hook has a "commandRegex" that narrows coverage; reinstall to repair'],...Bt(Z,ht,ro)];return{platform:"droid",status:"configured",method:"hook config",configPath:L,errors:oe.length>0?oe:void 0}}import{existsSync as _y}from"node:fs";import{join as _i}from"node:path";var Ii="gemini-safety-net";function Oi(P){let L=_i(P.home,".gemini","extensions"),H=_i(L,Ii);if(!_y(H))return{platform:"gemini-cli",status:"n/a"};let Y=_i(L,"extension-enablement.json"),Z=vn(Y);if(Z.kind==="unreadable")return{platform:"gemini-cli",status:"not-inspected"};let oe=Z.kind==="ok"?Xe(Xe(Z.value,Ii),"overrides"):void 0;if(Array.isArray(oe)&&oe.some((me)=>typeof me==="string"&&me.startsWith("!")))return{platform:"gemini-cli",status:"disabled",method:"extension config",configPath:Y,errors:[`${Ii} is disabled in Gemini CLI`]};return{platform:"gemini-cli",status:"configured",method:"extension config",configPath:H}}function oc(P){return Oi(P.environment)}import{existsSync as Dy,readFileSync as fc,statSync as Ny}from"node:fs";import{dirname as pc,join as Ly}from"node:path";import{existsSync as sc,mkdirSync as Iy,readFileSync as ac,rmSync as Oy}from"node:fs";import{dirname as $y,join as ic}from"node:path";var Gn=kn["grok-build"],so=30,$i=gt(Gn,so);function ao(P){return ic(P.env.get("GROK_HOME")??ic(P.home,".grok"),"hooks","cc-safety-net.json")}function lo(P){return typeof P==="object"&&P!==null&&!Array.isArray(P)}function lc(P){try{let L=JSON.parse(P);return lo(L)?L:null}catch{return null}}function cc(P){let L=lo(P.hooks)?P.hooks.PreToolUse:void 0;return Array.isArray(L)?L:[]}function io(P,L,H){let Y=lo(L.hooks)?L.hooks:{};an(P,`${JSON.stringify({...L,hooks:{...Y,PreToolUse:H}},null,2)}
+`)}function dc(P){let L=ao(P);if(!sc(L))return Iy($y(L),{recursive:!0}),io(L,{},[$i]),{path:L,alreadyInstalled:!1};let H=lc(ac(L,"utf-8"));if(!H)return io(L,{},[$i]),{path:L,alreadyInstalled:!1};let Y=cc(H);if(Mt(Y,Gn,so))return{path:L,alreadyInstalled:!0};return io(L,H,[...jn(Y,Gn),$i]),{path:L,alreadyInstalled:!1}}function uc(P){let L=ao(P);if(!sc(L))return{path:L,alreadyInstalled:!1};let H=lc(ac(L,"utf-8"));if(!H)return{path:L,alreadyInstalled:!1};let Y=cc(H),Z=jn(Y,Gn);if(JSON.stringify(Z)===JSON.stringify(Y))return{path:L,alreadyInstalled:!1};let oe=lo(H.hooks)?H.hooks:{};if(Z.length===0&&Object.keys(H).length===1&&Object.keys(oe).length===1)return Oy(L),{path:L,alreadyInstalled:!0};return io(L,H,Z),{path:L,alreadyInstalled:!0}}function Di(P){return!!P&&typeof P==="object"&&!Array.isArray(P)}function jy(P){try{return Ny(P,{throwIfNoEntry:!1})?.isFile()===!0?fc(P,"utf-8"):""}catch{return}}function mc(P){let L=ao(P.environment);if(!Dy(L))return{platform:"grok-build",status:"n/a",configPath:L};let H;try{H=JSON.parse(fc(L,"utf-8"))}catch(Te){return{platform:"grok-build",status:"n/a",configPath:L,errors:[`Failed to parse Grok Build hooks config ${L}: ${Te instanceof Error?Te.message:String(Te)}`]}}let Y=Di(H)&&Di(H.hooks)&&Array.isArray(H.hooks.PreToolUse)?H.hooks.PreToolUse:[],Z=Ut(Y,Gn);if(!Z)return{platform:"grok-build",status:"n/a",configPath:L};let oe=Array.isArray(Z.hooks)?Z.hooks.findIndex((Te)=>Di(Te)&&Te.command===Gn):-1,se=`global/cc-safety-net:pre_tool_use[${Y.indexOf(Z)}].hooks[${oe}]`,me=Ly(pc(pc(L)),"disabled-hooks"),he=jy(me),ke=he?.split(`
+`).some((Te)=>Te.trim()===se)===!0,Pe=[...he===void 0?[`Cannot read ${me}, so doctor cannot tell whether Grok Build skips the hook`]:[],...ke?[`Grok Build skips the hook: ${se} is listed in ${me}; enable it in /hooks`]:[],...Bt(Z,Gn,so)];return{platform:"grok-build",status:ke?"disabled":"configured",method:"hook config",configPath:L,errors:Pe.length>0?Pe:void 0}}import{readFileSync as xc}from"node:fs";import{join as Pc}from"node:path";var Sn="cc-safety-net",Ni="# cc-safety-net managed Hermes Agent plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --hermes-agent",Fy=30;function gc(P){return`${Ni}
+# version: ${P}
+`}function Hy(P){return`${gc(P)}name: ${Sn}
+version: "${P}"
 description: "Block destructive commands and secret-file access before Hermes runs a tool."
 author: "cc-safety-net"
 provides_hooks:
   - pre_tool_call
-`}function _y(_){return`${pc(_)}"""CC Safety Net guard for Hermes Agent.
+`}function My(P){return`${gc(P)}"""CC Safety Net guard for Hermes Agent.
 
 Registers pre_tool_call and forwards the tool call to the packaged CC Safety Net
 adapter (cc-safety-net hook --hermes-agent) over JSON stdin. The adapter prints nothing
@@ -66,7 +66,7 @@ import subprocess
 HOOK_EVENT = "pre_tool_call"
 SUPPORTED_TOOLS = ("patch", "read_file", "terminal", "write_file")
 ANALYZER = [${kn["hermes-agent"].split(" ").map((L)=>`"${L}"`).join(", ")}]
-TIMEOUT_SECONDS = ${Ey}
+TIMEOUT_SECONDS = ${Fy}
 
 
 def _block(detail):
@@ -219,96 +219,109 @@ def _pre_tool_call(tool_name="", args=None, session_id="", task_id="", **_):
 
 def register(ctx):
     ctx.register_hook("pre_tool_call", _pre_tool_call)
-`}function lr(_){return[{name:"__init__.py",content:_y(_)},{name:"plugin.yaml",content:Ry(_)}]}import{mkdirSync as Ty,readdirSync as Iy,readFileSync as fc,rmSync as Ni}from"node:fs";import{basename as Ay,dirname as Oy,join as Hn}from"node:path";var $y="__pycache__",Dy=/^[a-z0-9][a-z0-9_-]{0,63}$/;function Ny(_){try{return fc(_,"utf-8").trim()}catch{return}}function Li(_){let L=_.env.get("HERMES_HOME")?.trim();if(L&&Ay(Oy(L))==="profiles")return L;let j=L||Hn(_.home,".hermes"),Y=Hn(j,"active_profile"),Z=Ny(Y),oe=Z?.toLowerCase();if(!oe||oe==="default")return j;if(!Dy.test(oe))throw Error(`Invalid Hermes profile name "${Z}" in ${Y}; run \`hermes profile use <name>\` with a valid profile.`);return Hn(j,"profiles",oe)}function ji(_){return Hn(Li(_),"plugins",Pn)}function Hi(_){return _.startsWith(Di)}function Fi(_,L){let j=ji(_),Y=dn(j);if(Y&&(Y.isSymbolicLink()||!Y.isDirectory()))throw Error(`Refusing to ${L} ${j}: not a regular directory. Move or remove it and rerun ${L==="install"?"install":"uninstall"} --hermes-agent.`);return j}function mc(_,L){let j=dn(_);if(!j)return;if(j.isSymbolicLink()||!j.isFile())throw Error(`Refusing to ${L} ${_}: not a regular file. Move or remove it.`);let Y=fc(_,"utf-8");if(!Hi(Y))throw Error(`Refusing to ${L} unmanaged file at ${_}. Move or remove it.`);return Y}function gc(_){let L=Fi(_,"install"),j=lr(pn());if(j.map((Z)=>mc(Hn(L,Z.name),"overwrite")).every((Z,oe)=>Z===j[oe]?.content))return{path:L,alreadyInstalled:!0};return Ty(L,{recursive:!0}),j.forEach((Z)=>{ln(Hn(L,Z.name),Z.content)}),{path:L,alreadyInstalled:!1}}function Mi(_){let L=Fi(_,"remove");if(!dn(L))return[];return lr(pn()).filter((j)=>mc(Hn(L,j.name),"remove")!==void 0)}function yc(_){let L=Fi(_,"remove");if(!dn(L))return{path:L,alreadyInstalled:!1};let j=Mi(_);if(j.forEach((Y)=>{Ni(Hn(L,Y.name))}),Ni(Hn(L,$y),{recursive:!0,force:!0}),Iy(L).length===0)Ni(L,{recursive:!0});return{path:L,alreadyInstalled:j.length>0}}var cr="hermes-agent",hc=/^([^\s#][^:]*):/,Ly=/^\s+([A-Za-z_][\w-]*):/,vc=/^\s+-\s*(.*)$/;function jy(_){return _.trim().replace(/^(["'])(.*)\1$/,"$2")}function Hy(_){let L=_.split(/\r?\n/),j=L.findIndex((oe)=>hc.exec(oe)?.[1]?.trim()==="plugins");if(j===-1)return[];let Y=L.slice(j+1),Z=Y.findIndex((oe)=>hc.test(oe));return Z===-1?Y:Y.slice(0,Z)}function bc(_,L){let j=Hy(_),Y=j.findIndex((se)=>Ly.exec(se)?.[1]===L);if(Y===-1)return[];let Z=j.slice(Y+1),oe=Z.findIndex((se)=>!vc.test(se));return(oe===-1?Z:Z.slice(0,oe)).map((se)=>jy(vc.exec(se)?.[1]??""))}function Fy(_){try{return wc(kc(Li(_),"config.yaml"),"utf-8")}catch{return}}function Ui(_){let L=Fy(_)??"";return bc(L,"enabled").includes(Pn)&&!bc(L,"disabled").includes(Pn)}function Cc(_){return/^# version:\s*(.+)$/m.exec(_)?.[1]?.trim()}function My(_,L){let j=dn(_);if(!j)return{error:`${L.name} is missing from ${_}; run install --hermes-agent`};if(j.isSymbolicLink()||!j.isFile())return{error:`${_} is a symlink or not a regular file; move or remove it`};try{let Y=wc(_,"utf-8");if(!Hi(Y))return{error:`Unmanaged ${L.name} occupies ${_}; move or remove it`};if(Cc(Y)===pn()&&Y!==L.content)return{error:`Modified ${L.name} occupies ${_}; run install --hermes-agent to restore it`};return{content:Y}}catch(Y){return{error:`Failed to read ${_}: ${Y instanceof Error?Y.message:String(Y)}`}}}function Uy(_){try{return{path:ji(_)}}catch(L){return{error:L instanceof Error?L.message:String(L)}}}function xc(_){let L=Uy(_.environment);if("error"in L)return{platform:cr,status:"n/a",errors:[L.error]};let j=L.path,Y=Br(cr,j);if(Y)return Y;let Z=lr(pn()).map((ge)=>My(kc(j,ge.name),ge)),oe=Z.flatMap((ge)=>("error"in ge)?[ge.error]:[]);if(oe.length>0)return{platform:cr,status:"n/a",configPath:j,errors:oe};let se=Z.some((ge)=>("content"in ge)&&Cc(ge.content)!==pn()),fe=se?["Installed Hermes Agent plugin is outdated; run install --hermes-agent to update"]:[];if(!Ui(_.environment))return{platform:cr,status:"disabled",method:"plugin directory",configPath:j,errors:[`${Pn} is not enabled in Hermes; run \`hermes plugins enable ${Pn}\``,...fe]};return{platform:cr,status:"configured",method:"plugin directory",configPath:j,errors:se?fe:void 0}}import{existsSync as Gy,readFileSync as By}from"node:fs";import{join as qi}from"node:path";var qy=/cc-safety-net\s+hook\s+(?:[^\s]+\s+)*--kimi-code(\s|["']|$)/,Gi="cc-safety-net",uo="plugin config",Vy=new Set(["event","matcher","command","timeout"]),Ky=new Set(["PreToolUse","PostToolUse","PostToolUseFailure","PermissionRequest","PermissionResult","UserPromptSubmit","UserPromptQueued","TurnStarted","Stop","StopFailure","Interrupt","SessionStart","SessionEnd","SessionHeartbeat","SubagentStart","SubagentStop","TaskStarted","PreCompact","PostCompact","Notification"]);function Sc(_){return _.env.get("KIMI_CODE_HOME")||qi(_.home,".kimi-code")}function co(_,L){let j=[""],Y="",Z=0;for(let oe=0;oe<_.length;oe++){let se=_[oe];if(Y!==""){let fe=Y==='"'&&se==="\\"?_[++oe]??"":"";if(j[j.length-1]+=se+fe,fe===""&&se===Y)Y="";continue}if(se==="#"){let fe=_.indexOf(`
-`,oe);oe=(fe===-1?_.length:fe)-1;continue}if(se===L&&Z===0){j.push("");continue}if(se==='"'||se==="'")Y=se;if(se==="["||se==="{")Z++;if(se==="]"||se==="}")Z--;j[j.length-1]+=se}return j.map((oe)=>oe.trim()).filter((oe)=>oe!=="")}function Pc(_){let L=/^(?:"([^"]*)"|'([^']*)'|([^\s="']+))\s*=\s*([\s\S]+)$/.exec(_);return L?{key:L[1]??L[2]??L[3]??"",value:L[4]??""}:void 0}function Bi(_){return _===void 0?void 0:/^("""|'''|"|')([\s\S]*)\1$/.exec(_)?.[2]}function Jy(_){let L=_.split(/(?=^\s*\[)/m),j=L.filter((Y)=>!/^\s*\[/.test(Y)).flatMap((Y)=>co(Y,`
-`)).map(Pc).find((Y)=>Y?.key==="hooks")?.value;if(j!==void 0)return co(j.slice(1,-1),",").map((Y)=>co(Y.slice(1,-1),","));return L.filter((Y)=>/^\s*\[\[hooks]]/.test(Y)).map((Y)=>co(Y.replace(/^\s*\[\[hooks]]/,""),`
-`))}function Wy(_){let L=_.map(Pc),j=_.find((Ee,Re)=>L[Re]===void 0),Y=L.find((Ee)=>Ee!==void 0&&!Vy.has(Ee.key))?.key,Z=L.find((Ee,Re)=>Ee!==void 0&&L.findIndex((Le)=>Le?.key===Ee.key)<Re)?.key,oe=(Ee)=>L.find((Re)=>Re?.key===Ee)?.value,se=oe("matcher"),fe=oe("timeout"),ge=Number(fe?.replace(/(?<=[\da-f])_(?=[\da-f])/gi,""));return[[j!==void 0,`"${j}" is not a key = value pair`],[Y!==void 0,`unknown key "${Y}"`],[Z!==void 0,`duplicate key "${Z}"`],[!Ky.has(Bi(oe("event"))??""),'"event" is not a Kimi Code hook event'],[se!==void 0&&Bi(se)===void 0,'"matcher" is not a string'],[!Bi(oe("command")),'"command" is missing or empty'],[fe!==void 0&&!(Number.isInteger(ge)&&ge>=1&&ge<=600),'"timeout" is not an integer from 1 to 600']].find(([Ee])=>Ee)?.[1]}function zy(_){let L=qi(Sc(_),"plugins","installed.json"),j=vn(L);if(j.kind==="missing")return;let Y=j.kind==="ok"?Xe(j.value,"plugins"):void 0;if(!Array.isArray(Y))return{platform:"kimi-code",status:"n/a",configPath:L,errors:[`Cannot read ${L}, so doctor cannot tell whether the Kimi Code plugin is installed`]};let Z=Y.find((oe)=>Xe(oe,"id")===Gi);if(Z===void 0)return;if(Xe(Z,"enabled")!==!0)return{platform:"kimi-code",status:"disabled",method:uo,configPath:L,errors:[`${Gi} is installed but not enabled in Kimi Code; run /plugins enable ${Gi}`]};return{platform:"kimi-code",status:"configured",method:uo,configPath:L}}function po(_){let L=qi(Sc(_.environment),"config.toml"),j=()=>zy(_.environment)??{platform:"kimi-code",status:"n/a",configPath:L};if(!Gy(L))return j();let Y;try{Y=By(L,"utf-8")}catch(se){return{platform:"kimi-code",status:"n/a",configPath:L,errors:[`Failed to read ${L}: ${se instanceof Error?se.message:String(se)}`]}}if(!qy.test(Y))return j();let oe=(/"""|'''/.test(Y)?[]:Jy(Y)).flatMap((se,fe)=>{let ge=Wy(se);return ge===void 0?[]:[`Kimi Code ignores every hook because hooks entry ${fe+1} is invalid (${ge}); fix it in ${L}`]});return{platform:"kimi-code",status:oe.length>0?"disabled":"configured",method:"hook config",configPath:L,errors:oe.length>0?oe:void 0}}import{readFileSync as Dc}from"node:fs";import{join as ur}from"node:path";var un="cc-safety-net",xn="index.js",qt="openclaw.plugin.json",Vt="package.json";var fo="// cc-safety-net managed OpenClaw plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --openclaw";import{existsSync as Yy,lstatSync as Zy,readdirSync as Xy,readFileSync as Qy}from"node:fs";import{dirname as Ec,join as qn}from"node:path";import{fileURLToPath as eh}from"node:url";var Vi=qn("openclaw",un),xt=`run \`openclaw plugins enable ${un}\``,nh="config reload superseded by a newer runtime config source",th=[xn,qt,Vt];function Rc(_){let L=_.env.get("OPENCLAW_HOME")?.trim();return L?Nn(L,_.home):_.home}function _c(_){let L=Rc(_),j=_.env.get("OPENCLAW_STATE_DIR")?.trim();if(j)return Nn(j,L);let Y=_.env.get("OPENCLAW_CONFIG_PATH")?.trim();return Y?Ec(Nn(Y,L)):qn(L,".openclaw")}function Tc(_){let L=_.env.get("OPENCLAW_CONFIG_PATH")?.trim();return L?Nn(L,Rc(_)):qn(_c(_),"openclaw.json")}function dr(_){return qn(_c(_),"extensions",un)}function rh(_){let L=Xy(_);if(L.length===0)return!0;if(L.some((Z)=>!th.includes(Z)))return!1;let j=qn(_,xn),Y=dn(j);return Y!==void 0&&!Y.isSymbolicLink()&&Y.isFile()&&Qy(j,"utf-8").startsWith(fo)}function Ki(_){let L=dr(_),j=dn(L);if(!j)return;if(!j.isSymbolicLink()&&j.isDirectory()&&rh(L))return;throw Error(`Refusing to modify ${L}: it does not hold a cc-safety-net managed OpenClaw plugin. Move or remove it, then run the command again.`)}function Ic(){let _=Ec(eh(import.meta.url));return[qn(_,Vi),qn(_,"..",Vi),qn(_,"..","..","..","dist",Vi)]}function Ji(_=Ic()){return _.find((L)=>Yy(L)&&Zy(L).isDirectory())}function oh(_=Ic()){let L=Ji(_);if(!L)throw Error("Packaged OpenClaw plugin directory not found. Reinstall cc-safety-net and try again.");return L}function Ac(_=oh()){return[["openclaw","plugins","install",_,"--force","--accept-capabilities"]]}function ih(_){let L=(()=>{try{return JSON.parse(_)}catch{return}})(),j=Xe(Xe(L,"plugin"),"status");return typeof j==="string"?j:void 0}async function sh(){await fn(["openclaw","plugins","enable",un]).catch((_)=>{if(!(_ instanceof Error&&_.message.includes(nh)))throw _})}async function Oc(_){let L=async()=>ih(await fn(["openclaw","plugins","inspect",un,"--runtime","--json"],{stdoutOnly:!0})),j=await L(),Y=j==="disabled"&&_;if(Y)await sh();let Z=Y?await L():j;if(Z==="loaded")return;throw Error(`${Z===void 0?`The ${un} plugin's load state could not be verified: OpenClaw's runtime inspect report was unreadable.`:Z==="disabled"?`OpenClaw reports the ${un} plugin with status "disabled"; ${xt}.`:`OpenClaw reports the ${un} plugin with status "${Z}".`} Run \`openclaw plugins inspect ${un} --runtime\` for details.`)}var mo="openclaw";function Kt(_,L){let j=ur(_,L),Y=dn(j);if(!Y)return{error:`${L} is missing from ${j}; run install --openclaw`};if(Y.isSymbolicLink()||!Y.isFile())return{error:`${j} is a symlink or not a regular file; move or remove it`};try{return{content:Dc(j,"utf-8")}}catch(Z){return{error:`Failed to read ${j}: ${Z instanceof Error?Z.message:String(Z)}`}}}function Nc(_){try{return JSON.parse(yn(_))}catch{return}}function ah(_){let L=Kt(_,qt);if("error"in L)return L.error;if(Xe(Nc(L.content),"id")===un)return;return`${ur(_,qt)} is not a valid ${un} manifest; run install --openclaw`}function lh(_){let L=Kt(_,Vt);if("error"in L)return L.error;let j=Xe(Xe(Nc(L.content),"openclaw"),"extensions");if(Array.isArray(j)&&j.includes(`./${xn}`))return;return`${ur(_,Vt)} does not point OpenClaw at ${xn}; run install --openclaw`}function $c(_){return Array.isArray(_)?_.filter((L)=>typeof L==="string"):[]}function ch(_){let L=Tc(_);if(!dn(L))return`${un} is not enabled; ${xt}`;let j=(()=>{try{return JSON.parse(yn(Dc(L,"utf-8")))}catch{return}})();if(j===void 0)return`Failed to read ${L}; fix it, then ${xt}`;let Y=Xe(j,"plugins");if(Xe(Y,"enabled")===!1)return`plugins.enabled is false in ${L}; no OpenClaw plugin loads`;let Z=Xe(Xe(Xe(Y,"entries"),un),"enabled");if($c(Xe(Y,"deny")).includes(un)||Z===!1)return`${un} is disabled in ${L}; ${xt}`;let oe=$c(Xe(Y,"allow"));if(oe.length>0&&!oe.includes(un))return`plugins.allow in ${L} does not list ${un}; add it, then ${xt}`;if(oe.includes(un)||Z===!0)return;return`${un} is not enabled; ${xt}`}function Lc(_){return/^\/\/ version:\s*(.+)$/m.exec(_)?.[1]?.trim()}function dh(_,L,j){if(j===void 0)return[];let Y=Kt(j,xn);if(!(("content"in Y)&&Lc(Y.content)===L))return[];return[xn,qt,Vt].flatMap((oe)=>{let se=Kt(_,oe),fe=Kt(j,oe);if("error"in se||"error"in fe||se.content===fe.content)return[];return[`Modified ${oe} occupies ${ur(_,oe)}; run install --openclaw to restore it`]})}function jc(_){let L=dr(_.environment),j=Br(mo,L);if(j)return j;let Y=Kt(L,xn),oe=["error"in Y?Y.error:Y.content.startsWith(fo)?void 0:`Unmanaged ${xn} occupies ${ur(L,xn)}; move or remove it`,ah(L),lh(L)].filter((Ee)=>Ee!==void 0),se="content"in Y?Lc(Y.content):void 0,fe=oe.length>0?oe:dh(L,se,Ji());if(fe.length>0)return{platform:mo,status:"n/a",configPath:L,errors:fe};let ge=se===pn()?[]:["Installed OpenClaw plugin is outdated; run install --openclaw to update"],Pe=ch(_.environment);if(Pe)return{platform:mo,status:"disabled",method:"plugin directory",configPath:L,errors:[Pe,...ge]};return{platform:mo,status:"configured",method:"plugin directory",configPath:L,errors:ge.length>0?ge:void 0}}import{existsSync as bh,readFileSync as wh}from"node:fs";import{basename as kh}from"node:path";import{existsSync as go,readFileSync as zi,rmSync as uh}from"node:fs";import{join as In}from"node:path";import{pathToFileURL as ph}from"node:url";var pr="cc-safety-net",St=`${pr}@latest`,Yi=["opencode.json","opencode.jsonc"],fh=60,mh=250,Hc="CCSafetyNetPlugin",gh={stringError:"Unterminated string in OpenCode config",bracketError:"Unmatched plugin array in OpenCode config"};function Fc(_){return In(_.env.get("XDG_CONFIG_HOME")||In(_.home,".config"),"opencode")}function Zi(_){return _.env.get("OPENCODE_CONFIG_DIR")||Fc(_)}function Xi(_){return Yi.map((L)=>In(Zi(_),L))}function Qi(_){return[...new Set([Zi(_),Fc(_)])].flatMap((L)=>Yi.map((j)=>In(L,j)))}function Mc(_){return In(_.env.get("XDG_CACHE_HOME")||In(_.home,".cache"),"opencode","packages",St)}function Uc(_){uh(Mc(_),{recursive:!0,force:!0})}async function Gc(_){let L=(await fn(["opencode","--version"],{stdoutOnly:!0})).trim(),j=/^(?:opencode\s+)?v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(L),Y=Number(j?.[1]),Z=Number(j?.[2]),oe=Number(j?.[3]);if(!j||Y!==1&&Y!==2||Y===1&&(Z<18||Z===18&&oe<29)||Y===2&&Z===0&&oe<6)throw Error(`OpenCode 1.18.29+ or 2.0.6+ is required; found ${L||"an unknown version"}.`);if(Y===2){for(let se of Xi(_)){if(!go(se))continue;let fe=ns(zi(se,"utf-8"),se);if(["plugin","plugins"].some((Pe)=>{let Ee=Xe(fe,Pe);return Array.isArray(Ee)&&Ee.some((Re)=>yo(Re)&&(typeof Re==="string"?Re:Xe(Re,"package"))!==St)}))throw Error(`Change the cc-safety-net package spec in ${se} to ${St}, preserving its options, then retry. Adding another spec would create a duplicate plugin ID.`)}return{commands:[],afterInstall:async()=>{if((await fn(["opencode","plugin","add",St],{stdoutOnly:!0})).includes("is already configured in"))await Wi(),await fn(["opencode","plugin","update",St]);let fe=await Wi();if(!/^cc-safety-net\s+\S+\s+cc-safety-net@latest\s*$/m.test(fe))throw Error("OpenCode did not load cc-safety-net from cc-safety-net@latest. Run `opencode plugin list` for details.");let ge=["--param",`location[directory]=${process.cwd()}`];await fn(["opencode","api","integration.list",...ge]);let Pe=await fn(["opencode","api","plugin.list",...ge],{stdoutOnly:!0}),Ee=es(Pe);if(Ee)throw Error(Ee);if(!Bc(Pe).some(qc))throw Error("OpenCode lists no active cc-safety-net for this directory. Run `opencode api plugin.list` for details.")}}}return Uc(_),{commands:[["opencode","plugin","-g","-f",St]],afterInstall:()=>hh(_)}}function Bc(_){return yh(_).filter((L)=>Xe(L,"id")===pr||yo(Xe(Xe(L,"source"),"target"))).map((L)=>Xe(L,"state"))}function qc(_){return Xe(_,"status")==="active"}function es(_){let L=Bc(_);if(L.some(qc))return;let j=L.find((Y)=>Xe(Y,"status")==="failed");if(!j)return;return`OpenCode reports cc-safety-net failed: ${String(Xe(j,"error")).split(`
-`)[0]}`}function yh(_){if(!_)return[];try{let L=Xe(JSON.parse(_),"data");return Array.isArray(L)?L:[]}catch{return[]}}async function Wi(_=1){let L=await fn(["opencode","plugin","list"],{stdoutOnly:!0});if(/^cc-safety-net\s|\scc-safety-net@latest\s*$/m.test(L)||_===fh)return L;return await new Promise((j)=>setTimeout(j,mh)),Wi(_+1)}async function hh(_){let L=In(Mc(_),"node_modules",pr),j=In(L,"package.json");if(!go(j))throw Error(`The OpenCode plugin cache at ${L} is missing its package, so OpenCode would load nothing and fail open. Run \`opencode plugin -g -f ${St}\` for details.`);let Y=Xe(JSON.parse(zi(j,"utf-8")),"main");if(typeof Y!=="string")throw Error(`The cached OpenCode plugin at ${L} declares no "main" entry.`);let Z=In(L,Y);if(typeof(await import(ph(Z).href))[Hc]==="function")return;throw Error(`The cached OpenCode plugin at ${Z} does not export a callable ${Hc}, so OpenCode would load nothing and fail open.`)}function ns(_,L){try{return JSON.parse(yn(_))}catch(j){if(j instanceof SyntaxError)throw Error(`Failed to parse OpenCode config ${L}: ${j.message}`);throw j}}function yo(_){let L=typeof _==="string"?_:Xe(_,"package");return typeof L==="string"&&(L===pr||L.startsWith(`${pr}@`))}function ts(_){return["plugin","plugins"].some((L)=>{let j=Xe(_,L);return Array.isArray(j)&&j.some(yo)})}function vh(_,L){let Y=["plugin","plugins"].flatMap((Z)=>{let oe=ml(_,Z,gh);if(!oe)return[];let se=[],fe=0,ge=oe.start+1,Pe=_.slice(oe.start+1,oe.end).matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|[^"\s{}[\],/]+|[{}[\],]/g);for(let Ee of Pe){if(Ee[0].startsWith("//")||Ee[0].startsWith("/*"))continue;let Re=oe.start+1+Ee.index;if(fe===0)ge=Re;if(Ee[0]==="{"||Ee[0]==="[")fe++;if(Ee[0]==="}"||Ee[0]==="]")fe--;if(fe!==0||Ee[0]===",")continue;let Le=Re+Ee[0].length;if(yo(JSON.parse(yn(_.slice(ge,Le)))))se.push({start:ge,end:Le})}return se}).sort((Z,oe)=>Z.start-oe.start).reverse().reduce((Z,oe)=>{let se=/^(?:\s|\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*,/.exec(Z.slice(oe.end));if(se?.[0].includes("/")){let fe=oe.end+se[0].length-1;return Z.slice(0,oe.start)+Z.slice(oe.end,fe)+Z.slice(fe+1)}return fl(Z,oe)},_);return ns(Y,L),Y}function Vc(_){Uc(_);let L=Qi(_),j=L.find((oe)=>go(oe)),Y=[],Z=[];for(let oe of L){if(!go(oe))continue;try{let se=zi(oe,"utf-8");if(!ts(ns(se,oe)))continue;ln(oe,vh(se,oe)),Z.push(oe)}catch(se){Y.push(se instanceof Error?se.message:String(se))}}if(Y.length>0)throw Error(Y.join(`
-`));return{path:Z[0]??j??In(Zi(_),Yi[0]),alreadyInstalled:Z.length>0}}function Jt(_){let L=[];for(let j of _.openCodeVersion?.startsWith("2.")?Xi(_.environment):Qi(_.environment))if(bh(j))try{let Y=wh(j,"utf-8"),Z=yn(Y),oe=JSON.parse(Z);if(ts(oe)){let se=es(_.openCodePluginListOutput);if(se)return{platform:"opencode",status:"disabled",method:"opencode api plugin.list",configPath:j,errors:[...L,se]};return{platform:"opencode",status:"configured",method:"plugin array",configPath:j,errors:L.length>0?L:void 0}}}catch(Y){L.push(`Failed to parse ${kh(j)}: ${Y instanceof Error?Y.message:String(Y)}`)}return{platform:"opencode",status:"n/a",errors:L.length>0?L:void 0}}import{join as Kc}from"node:path";var Wc="dist/pi/index.js",Jc=new Set([Wc,"index.js"]),Ch=/[*?[\]{}]/;function rs(_){let L=_.env.get("PI_CODING_AGENT_DIR");return Kc(L?Nn(L,_.home):Kc(_.home,".pi","agent"),"settings.json")}function os(_){if(typeof _!=="string")return!1;return _==="npm:cc-safety-net"||_.startsWith("npm:cc-safety-net@")}function xh(_){if(!Array.isArray(_)||_.length===0)return!1;if(!_.every((Y)=>typeof Y==="string"))return!1;let L=(Y)=>_.some((Z)=>Z.startsWith(Y)&&Z.slice(1).replace(/^\.[/\\]/,"")===Wc);if(L("-"))return!1;if(L("+"))return!0;let j=_.filter((Y)=>!/^[-+!]/.test(Y));return(j.length===0||j.some((Y)=>Jc.has(Y)))&&!_.some((Y)=>Y.startsWith("!")&&(Jc.has(Y.slice(1))||Ch.test(Y)))}function zc(_){let L=rs(_.environment),j=vn(L);if(j.kind==="unreadable")return{platform:"pi",status:"not-inspected"};if(j.kind==="missing")return{platform:"pi",status:"n/a"};let Y=Xe(j.value,"packages");if(!Array.isArray(Y))return{platform:"pi",status:"n/a"};let Z=Y.find((se)=>os(typeof se==="string"?se:Xe(se,"source")));if(Z===void 0)return{platform:"pi",status:"n/a"};let oe=Xe(Z,"extensions");if(oe!==void 0&&!xh(oe))return{platform:"pi",status:"disabled",method:"package config",configPath:L,errors:["npm:cc-safety-net is installed but its extension is disabled in Pi settings"]};return{platform:"pi",status:"configured",method:"package config",configPath:L}}var Sh={amp:Xa,"antigravity-cli":tl,"claude-code":al,codex:cl,"copilot-cli":Rl,cursor:Ll,"deepseek-harness":Hl,devin:Kl,droid:ec,"gemini-cli":nc,"grok-build":uc,"hermes-agent":xc,"kimi-code":po,openclaw:jc,opencode:Jt,pi:zc};function Wt(_,L,j){let Y={...j,cwd:L,environment:_};return Rr.map((Z)=>Ph(Sh[Z](Y)))}function Ph(_){if(_.status==="not-inspected")return{platform:_.platform,detected:!1,configured:!1,inspectionStatus:"not-inspected"};return{platform:_.platform,detected:_.status!=="n/a",configured:_.status==="configured",inspectionStatus:_.status!=="n/a"?"verified":_.errors&&_.errors.length>0?"failed":"not-applicable",method:_.method,configPath:_.configPath,configPaths:_.configPaths,errors:_.errors}}import{join as Eh}from"node:path";var Rh=Object.freeze([{command:"git reset --hard",description:"git reset --hard",expectBlocked:!0},{command:"rm -rf /",description:"rm -rf /",expectBlocked:!0},{command:"rm -rf ./node_modules",description:"rm in cwd (safe)",expectBlocked:!1}]),_h=Object.freeze({state:"ready",diagnostics:Object.freeze([]),ruleMetadata:Object.freeze({}),policy:Object.freeze({rules:Object.freeze([]),transparentWrappers:Object.freeze([]),commandTools:Object.freeze([]),safety:Object.freeze({level:"standard"}),worktreeMode:!1,destructiveCommandProtectionEnabled:!0,destructiveCommandRuleOverrides:Object.freeze({}),destructiveCommandAllowPaths:Object.freeze([]),secretProtection:Object.freeze({enabled:!0,disabledRules:Object.freeze([]),denyPaths:Object.freeze([]),allowPaths:Object.freeze([])})})}),Th={strict:!1,paranoidRm:!1,paranoidInterpreters:!1,worktreeMode:!1,effectiveLevel:"standard",capabilities:{fail_closed:{enabled:!1,source:"preset",sources:[]},paranoid_rm:{enabled:!1,source:"preset",sources:[]},paranoid_interpreters:{enabled:!1,source:"preset",sources:[]}}};function Yc(_){let L=Eh(_.tmpdir,"cc-safety-net-self-test"),j=Rh.map((Y)=>{let Z=H(_,l("self-test",{command:Y.command},{kind:"command",shell:"auto"},{configCwd:L,executionCwd:L},Y.command),{guard:{dependencies:{loadPolicySnapshot:()=>_h,getModes:()=>Th,findPolicyMutation:()=>null}},audit:{agent:"self-test",getSessionId:()=>{return}}}),oe=Y.expectBlocked?"blocked":"allowed",se=Z.decision.kind==="deny"?"blocked":"allowed";return{command:Y.command,description:Y.description,expected:oe,actual:se,passed:oe===se,reason:Z.decision.kind==="deny"?Z.decision.reason:void 0,ruleId:Z.decision.kind==="deny"?Z.decision.ruleId:void 0}});return{passed:j.filter((Y)=>Y.passed).length,failed:j.filter((Y)=>!Y.passed).length,total:j.length,results:j}}function is(_){let L=mn({label:"doctor",booleans:{json:["--json"],skipUpdateCheck:["--skip-update-check"]}},_);if($n(L.errors))return null;return{json:L.flags.json,skipUpdateCheck:L.flags.skipUpdateCheck}}async function Zc(_,L={}){let j=await nr(!L.json,()=>{let Y=Ah(_,L);return{ready:Y,finish:()=>Y}},()=>er(),{loadingMessage:"Checking system status…"});if(L.json)console.log(JSON.stringify(j,null,2));else Oh(j);return j.engineSelfTest.failed>0||j.findings.some((Y)=>Y.severity==="error")?1:0}async function Ah(_,L){let j=L.cwd??process.cwd(),Y=await Nr((Fe)=>Jt({environment:_,cwd:j,openCodeVersion:Fe}).status!=="n/a",void 0,j),Z=Wt(_,j,{ampPluginListOutput:Y.ampPluginListOutput,codexPluginListOutput:Y.codexPluginListOutput,copilotCliVersion:Y.versions["copilot-cli"],openCodeVersion:Y.versions.opencode,openCodePluginListOutput:Y.openCodePluginListOutput}),oe=ga(_,j),se=ya(_),fe=R(_,{cwd:j}),ge=fe.policy,Pe=P(ge,_.env),Ee=q(ge,Pe.capabilities),Re=Ar(_,7),Le=Ja(_,j),_e=[Lt(j),jt(_)].filter((Fe)=>Ih(Fe)),Te=L.skipUpdateCheck?{currentVersion:pn(),latestVersion:null,updateAvailable:!1}:await Gn(),Be={hooks:Z,engineSelfTest:Yc(_),userConfig:oe.userConfig,projectConfig:oe.projectConfig,configState:Ve(fe),effectiveRules:oe.effectiveRules,environment:se,effectiveSafety:{selectedPreset:ge.safety.level,level:Pe.effectiveLevel,capabilities:Pe.capabilities,ruleOverrides:ge.destructiveCommandRuleOverrides,weakenedRuleOverrides:Object.entries(Ee).filter(([,Fe])=>Fe.source==="rule_override"&&Fe.override==="off"&&Fe.inheritedEnabled&&Fe.changesInherited).map(([Fe])=>Fe),ruleCounts:{stored:Object.keys(ge.destructiveCommandRuleOverrides).length,effective:Object.values(Ee).filter((Fe)=>Fe.changesInherited).length},...fe.policyScopes?{policyScopes:fe.policyScopes}:{}},...Le.length>0?{v2Leftovers:Le}:{},..._e.length>0?{legacyConfigs:_e}:{},posture:Ia(_,oe.userConfig.path),activity:Re,update:Te,system:Y};return{...Be,findings:va(Be)}}function Oh(_){console.log(),console.log(wa(_.hooks)),console.log(),console.log(ka(_.engineSelfTest)),console.log(),console.log(Ca(_)),console.log(),console.log(xa(_.environment)),console.log(),console.log(Sa(_)),console.log(),console.log(Pa(_.findings)),console.log(),console.log(Ea(_.activity)),console.log(),console.log(_a(_.system)),console.log(),console.log(Ra(_.update)),console.log(Ta(_))}import{existsSync as $h}from"node:fs";var Dh=/^[A-Za-z0-9_@%+=:,./-]+$/,Xc="Usage: cc-safety-net explain [--json] [--cwd <path>] <command>";function ss(_){let L=mn({label:"explain",booleans:{json:["--json"]},values:{cwd:["--cwd"]},positionals:"tail"},_);if($n(L.errors))return console.error(Xc),console.error("Pass -- before a command that starts with dashes."),null;if(L.values.cwd!==void 0&&!$h(L.values.cwd))return console.error(`Error: --cwd path does not exist: ${L.values.cwd}`),null;let j=L.positionals.length===1?L.positionals[0]:L.positionals.map((Y)=>Dh.test(Y)?Y:`'${Y.replaceAll("'","'\\''")}'`).join(" ");if(!j)return console.error("Error: No command provided"),console.error(Xc),null;return{json:L.flags.json,cwd:L.values.cwd,command:j}}function Qc(_){if(_)return{dh:"=",dv:"|",dtl:"+",dtr:"+",dbl:"+",dbr:"+",h:"-",v:"|",tl:"+",tr:"+",bl:"+",br:"+",sh:"="};return{dh:"═",dv:"║",dtl:"╔",dtr:"╗",dbl:"╚",dbr:"╝",h:"─",v:"│",tl:"┌",tr:"┐",bl:"└",br:"┘",sh:"━"}}function ed(_,L){let Y=L-18;return[`${_.dtl}${_.dh.repeat(L)}${_.dtr}`,`${_.dv}  Command Analysis${" ".repeat(Y)}${_.dv}`,`${_.dbl}${_.dh.repeat(L)}${_.dbr}`]}function as(_){return JSON.stringify(_)}function nd(_,L=0){return`[${_.map((Y,Z)=>ba(Y,Z,L)).join(",")}]`}function fr(_,L,j=70){let Y=_.split(" "),Z=[],oe="";for(let se of Y)if(oe&&oe.length+se.length+1>j)Z.push(oe),oe=se;else oe=oe?`${oe} ${se}`:se;if(oe)Z.push(oe);return Z.map((se,fe)=>fe===0?se:`${L}${se}`)}function td(_,L,j){let Y=[];switch(_.type){case"parse":return null;case"env-strip":return Y.push(""),Y.push(`STEP ${L} ${j.h} Strip environment variables`),Y.push(`  Removed: ${_.envVars.map((Z)=>`${Z}=<redacted>`).join(", ")}`),Y.push(`  Tokens:  ${as(_.output)}`),{lines:Y,incrementStep:!0};case"leading-tokens-stripped":return Y.push(""),Y.push(`STEP ${L} ${j.h} Strip wrappers`),Y.push(`  Removed: ${_.removed.join(", ")}`),Y.push(`  Tokens:  ${as(_.output)}`),{lines:Y,incrementStep:!0};case"shell-wrapper":return Y.push(""),Y.push(`STEP ${L} ${j.h} Detect shell wrapper`),Y.push(`  Wrapper: ${_.wrapper} -c`),Y.push(`  Inner:   ${_.innerCommand}`),{lines:Y,incrementStep:!0};case"interpreter":{if(Y.push(""),Y.push(`STEP ${L} ${j.h} Detect interpreter`),Y.push(`  Interpreter: ${_.interpreter}`),Y.push(`  Code:        ${_.codeArg}`),_.paranoidBlocked)Y.push("  Result:      ✗ BLOCKED (paranoid mode)");return{lines:Y,incrementStep:!0}}case"busybox":return Y.push(""),Y.push(`STEP ${L} ${j.h} Busybox wrapper`),Y.push(`  Subcommand: ${_.subcommand}`),{lines:Y,incrementStep:!0};case"transparent-wrapper":return Y.push(""),Y.push(`STEP ${L} ${j.h} Transparent wrapper`),Y.push(`  Wrapper: ${_.wrapper}`),Y.push(`  Tokens:  ${as(_.output)}`),{lines:Y,incrementStep:!0};case"recurse":return{lines:[],incrementStep:!1};case"rule-check":{if(Y.push(""),Y.push(`STEP ${L} ${j.h} Match rules`),Y.push(`  Rule:   ${_.rule}()`),_.matched)Y.push("  Result: MATCHED");else Y.push("  Result: No match");return{lines:Y,incrementStep:!0}}case"worktree-relaxation":return Y.push(""),Y.push(`STEP ${L} ${j.h} Worktree relaxation`),Y.push(`  Mode:   ${n.worktree.name}`),Y.push(`  Git cwd: ${_.gitCwd}`),Y.push("  Result: Allowed local discard in linked worktree"),{lines:Y,incrementStep:!0};case"temp-root-relaxation":return Y.push(""),Y.push(`STEP ${L} ${j.h} Temp-root relaxation`),Y.push(`  Git cwd: ${_.gitCwd}`),Y.push("  Result: Allowed git discard in a temp-root repository"),{lines:Y,incrementStep:!0};case"tmpdir-check":return null;case"fallback-scan":{if(_.embeddedCommandFound)return Y.push(""),Y.push(`STEP ${L} ${j.h} Fallback scan`),Y.push(`  Found: ${_.embeddedCommandFound}`),{lines:Y,incrementStep:!0};return null}case"custom-rules-check":{if(_.rulesChecked){if(Y.push(""),Y.push(`STEP ${L} ${j.h} Custom rules`),_.matched)Y.push("  Result: MATCHED");else Y.push("  Result: No match");return{lines:Y,incrementStep:!0}}return null}case"cwd-change":return null;case"dangerous-text":{if(_.matched)return Y.push(""),Y.push(`STEP ${L} ${j.h} Dangerous text check`),Y.push(`  Token:  ${_.token}`),Y.push("  Result: MATCHED"),{lines:Y,incrementStep:!0};return null}case"strict-unparseable":return Y.push(""),Y.push(`STEP ${L} ${j.h} Strict mode check`),Y.push(`  Command: ${_.rawCommand}`),Y.push("  Result:  ✗ UNPARSEABLE"),{lines:Y,incrementStep:!0};case"segment-skipped":return null;case"error":return Y.push(""),Y.push(`ERROR: ${_.message}`),{lines:Y,incrementStep:!1};default:return _}}function ls(_,L){let j=Qc(L?.asciiOnly??!1),Y=58,Z=[],oe=1;Z.push(...ed(j,58)),Z.push("");let se=_.trace.steps.find((Te)=>Te.type==="error");if(se&&se.type==="error"){Z.push("ERROR"),Z.push(`  ${se.message}`),Z.push(""),Z.push("RESULT"),Z.push(`  Status: ${_.result==="blocked"?en.red("BLOCKED"):en.green("ALLOWED")}`),Z.push(""),Z.push("CONFIG");let Te=_.configSource??"none";return Z.push(`  Path: ${Te}`),Z.join(`
-`)}let fe=_.trace.steps.find((Te)=>Te.type==="parse");if(fe&&fe.type==="parse"){Z.push("INPUT"),Z.push(`  ${fe.input}`),Z.push(""),Z.push(`STEP ${oe} ${j.h} Split shell commands`),oe++;for(let Te=0;Te<fe.segments.length;Te++){let Be=fe.segments[Te];if(Be){let Fe=Math.random();Z.push(`  Segment ${Te+1}: ${nd(Be,Fe)}`)}}}let ge=_.trace.segments,Pe=ge.length>1;for(let Te of ge){if(Pe){Z.push("");let tn="";if(fe&&fe.type==="parse"){let Uo=fe.segments[Te.index];if(Uo)tn=Uo.join(" ")}let on=54,an=tn,nn=` Segment ${Te.index+1}: `,sn=" ";if(tn){if(nn.length+tn.length+sn.length>on){let af=on-nn.length-sn.length;an=`${tn.substring(0,af-1)}…`}}let Sn=tn?`${nn}${an}${sn}`:` Segment ${Te.index+1} `,of=tn?`${nn}${en.cyan(an)}${sn}`:Sn,Bs=58-Sn.length,qs=Math.floor(Bs/2),sf=Bs-qs;Z.push(`${j.sh.repeat(qs)}${of}${j.sh.repeat(sf)}`)}if(Te.steps.find((tn)=>tn.type==="segment-skipped")){Z.push(""),Z.push("  (skipped — prior segment blocked)");continue}let Fe=!1,Ze=!1;for(let tn of Te.steps){let on=td(tn,oe,j);if(on){if(Ze=!0,tn.type==="recurse"){Z.push("");let an=" RECURSING ",nn=58-an.length-4;Z.push(`  ${j.tl}${j.h}${an}${j.h.repeat(nn)}`),Z.push(`  ${j.v}`),Fe=!0;continue}for(let an of on.lines)if(Fe)Z.push(`  ${j.v} ${an}`);else Z.push(an);if(on.incrementStep)oe++}}if(Fe)Z.push(`  ${j.v}`),Z.push(`  ${j.bl}${j.h.repeat(56)}`);if(!Ze)Z.push(""),Z.push(`  ${en.green("✓")} Allowed (no matching rules)`)}if(Z.push(""),Z.push("RESULT"),_.result==="blocked"){if(Z.push(`  Status: ${en.red("BLOCKED")}`),_.customRule){if(Z.push(`  Rule: ${_.customRule.id}`),_.customRule.rulebook)Z.push(`  Rulebook: ${_.customRule.rulebook.name} ${_.customRule.rulebook.version}`);if(_.customRule.source)Z.push(`  Source: ${_.customRule.source}`);if(_.customRule.override)Z.push(`  Override: reason ${_.customRule.override.reason}`)}if(_.reason){let Te=fr(_.reason,"          ");Z.push(`  Reason: ${Te[0]}`);for(let Be=1;Be<Te.length;Be++)Z.push(Te[Be]??"")}}else Z.push(`  Status: ${en.green("ALLOWED")}`);Z.push(""),Z.push("CONFIG");let Ee=_.configSource??"none",Re=_.configValid?"":" (invalid)";Z.push(`  Path: ${Ee}${Re}`);let Le=_.safetyPresetScope;Z.push(`  Safety preset: ${_.selectedPreset??"standard"}${Le?` (${Or(Le)})`:""}`),Z.push(`  Effective capabilities: ${_.effectiveLevel}`);let _e=Object.entries(_.destructiveCommandRuleOverrides??{});if(Z.push(`  Rule customizations: ${_e.length}`),_.ruleActivation)Z.push(`  Rule activation: ${_.ruleActivation.id} — ${_.ruleActivation.enabled?"on":"off"} via ${_.ruleActivation.source}`);return Z.join(`
-`)}function cs(_){return JSON.stringify(_,null,2)}import{resolve as Fh}from"node:path";var Nh=512,rd={maxTextLength:2048,maxListLength:128,maxObjectProperties:128,maxDepth:16},Lh=["AKIA","ASIA","ghp_","gho_","ghu_","ghs_","ghr_","github_pat_","glpat-","xox","npm_","pypi-","rk_","sk-","sk_","gsk_","xai-","pplx-","bastn_","tgp_v1_","flp_","wfr_","fw_","fwp_","tp-","psk-"];function od(_){let L=0,j={allocateSegment(){return L++},getNextSegmentIndex(){return L},recordGlobal(Y){_.record({scope:"global",step:Y})},recordSegment(Y,Z=j.currentSegmentIndex){if(Z===void 0)return;_.record({scope:"segment",segmentIndex:Z,step:Y})}};return j}function id(){let _=[],L=new Set;return{record(j){if(_.length>=Nh)return;ho(j.step,L,rd),_.push({...j,step:ds(j.step,rd,L)})},finish(){return{events:_}}}}function ho(_,L,j,Y=0,Z=new WeakSet){if(typeof _==="string"){let fe=_.slice(0,j.maxTextLength);if(!rt(fe))return;for(let ge of bt(fe))for(let Pe of ge.match(/[^\s"'()$]+/g)??[])L.add(sd(Pe));return}if(!_||typeof _!=="object"||Y>=j.maxDepth||Z.has(_))return;if(Z.add(_),Array.isArray(_)){let fe=Math.min(_.length,j.maxListLength);for(let ge=0;ge<fe;ge++)ho(_[ge],L,j,Y+1,Z);return}let oe=0,se=new Set;for(let fe in _){if(!Object.hasOwn(_,fe))continue;if(oe>=j.maxObjectProperties)break;oe++,ho(fe,L,j);let ge=us(fe,j,L);if(se.has(ge))continue;se.add(ge),ho(_[fe],L,j,Y+1,Z)}}function ds(_,L,j,Y=0,Z=new WeakSet){if(typeof _==="string")return us(_,L,j);if(!_||typeof _!=="object")return _;if(Y>=L.maxDepth)return;if(Z.has(_))return;if(Z.add(_),Array.isArray(_)){let fe=[],ge=Math.min(_.length,L.maxListLength);for(let Pe=0;Pe<ge;Pe++)fe.push(ds(_[Pe],L,j,Y+1,Z));return fe}let oe={},se=0;for(let fe in _){if(!Object.hasOwn(_,fe))continue;if(se>=L.maxObjectProperties)break;se++;let ge=us(fe,L,j);if(Object.hasOwn(oe,ge))continue;Object.defineProperty(oe,ge,{value:ds(_[fe],L,j,Y+1,Z),enumerable:!0,configurable:!0,writable:!0})}return oe}function us(_,L,j){let Y=_.slice(0,L.maxTextLength),Z=rt(Y)?nt(Y):Y,oe=j.size>0?Hh(Z,j):Z;return(jh(oe)?Me(oe):oe).slice(0,L.maxTextLength)}function jh(_){return _.includes("PRIVATE KEY")||_.includes("://")||_.includes("eyJ")||_.includes(":")&&/(?:authorization|cookie|x-api-key|api-key|(?:^|\s)(?:-u|--user)(?:\s|=))/i.test(_)||_.length>=14&&Lh.some((L)=>_.includes(L))||_.length>=49&&/\b[a-f0-9]{32}\.[A-Za-z0-9]{16}\b/.test(_)}function Hh(_,L){return _.replace(/[^\s"'()$]+/g,(j)=>L.has(sd(j))?"<redacted>":j)}function sd(_){let L=2166136261,j=2166136261;for(let Y=0;Y<_.length;Y++)L=Math.imul(L^_.charCodeAt(Y),16777619),j=Math.imul(j^_.charCodeAt(_.length-Y-1),16777619);return`${L>>>0}:${j>>>0}:${_.length}`}function mr(_,L={},j){let Y=Fh(L.cwd??process.cwd()),Z=L.policySnapshot??R(j,{cwd:Y,userConfigDir:L.userConfigDir}),oe=P(Z.policy,j.env),se=qe({policySnapshot:Z,effectiveCapabilities:oe.capabilities,worktreeMode:oe.worktreeMode}),fe={effectiveLevel:se.effectiveLevel,selectedPreset:Z.policy.safety.level,...Z.policyScopes?{safetyPresetScope:Z.policyScopes.levelScope}:{},effectiveCapabilities:se.effectiveCapabilities,destructiveCommandRuleOverrides:Z.policy.destructiveCommandRuleOverrides},{configSource:ge,configValid:Pe}=Uh(j,{cwd:Y,userConfigDir:L.userConfigDir});if(!_||!_.trim())return{trace:{steps:[{type:"error",message:"No command provided"}],segments:[]},result:"allowed",configSource:ge,configValid:Pe,...fe};let Ee=y(_,"auto");if(Ee.status==="limited")throw new b;let Re=Ee.dialect==="powershell"?y(_,"posix"):Ee,Le=Rt(Re),_e=id(),Te=od(_e);Te.recordGlobal({type:"parse",input:_,segments:Le.map((Sn)=>[...Sn])});let Be=l("Bash",{command:_},{kind:"command",shell:"auto"},{configCwd:Y,executionCwd:Y},_),Fe=K(Be,{environment:j,trace:Te,dependencies:{loadPolicySnapshot:()=>Z}}),Ze=Fe.decision.kind==="deny"?Fe.decision:null;if(Ze&&(Fe.stage==="policy-protection"||Fe.stage==="secret-protection"))return{trace:{steps:[],segments:[{index:0,steps:[{type:"rule-check",rule:Mh(Ze),matched:!0,reason:Ze.reason}]}]},result:"blocked",reason:T(Ze.reason),segment:T(ad(Ze,_)),ruleId:T(Ze.ruleId),configSource:ge,configValid:Pe,...fe};let tn=Te.getNextSegmentIndex();if(Ze&&tn>0&&tn<Le.length)Te.recordSegment({type:"segment-skipped",index:tn,reason:"prior-segment-blocked"},tn);let on=_e.finish(),an=Ze?.ruleId??Gh(Be,Z,oe,j),nn=V.find((Sn)=>Sn.id===an&&Sn.activationCapability),sn=nn?se.policy.effectiveDestructiveCommandRules[nn.id]:void 0;return{trace:qh(on),result:Ze?"blocked":"allowed",reason:Ze?T(Ze.reason):void 0,segment:Ze?T(ad(Ze,_)):void 0,ruleId:Ze?T(Ze.ruleId):void 0,customRule:Bh(Vh(Ze?.ruleId,Z)),configSource:ge,configValid:Pe,...fe,...nn&&sn?{ruleActivation:{id:nn.id,...sn}}:{}}}function ad(_,L){return _.evidence?.segment??L}function Mh(_){if(_.reason===Je)return"policy-protection:findPolicyConfigMutationTargetInSemanticFacts";if(_.reason===Ke)return"policy-apply-protection:findPolicyApplyInvocationInSemanticFacts";if(_.reason===v)return"git-metadata-protection:findGitMetadataMutationTargetInSemanticFacts";return"secret-protection:findSensitiveTargetInSemanticFacts"}function Uh(_,L){let j=I(L.cwd),Y=B(_,L),Z=Q(_,{cwd:L.cwd,userConfigDir:L.userConfigDir});try{if(r(Z.projectConfigTarget)!==null){if(Un(Z.projectConfigTarget).errors.length===0)return{configSource:j,configValid:!0};return{configSource:j,configValid:!1}}}catch(oe){if(oe instanceof o)return{configSource:j,configValid:!1};throw oe}try{if(r(Z.userConfigTarget)!==null){let oe=Un(Z.userConfigTarget);return{configSource:Y,configValid:oe.errors.length===0}}return{configSource:null,configValid:!0}}catch(oe){if(oe instanceof o)return{configSource:Y,configValid:!1};throw oe}}function Gh(_,L,j,Y){let Z=L.policy,oe=Ne({...Z,destructiveCommandProtectionEnabled:!0,destructiveCommandRuleOverrides:{...Z.destructiveCommandRuleOverrides,...Object.fromEntries(V.flatMap((fe)=>fe.activationCapability?[[fe.id,"on"]]:[]))}},L.state==="degraded"?{diagnostics:L.diagnostics,reason:L.reason}:void 0),se=K(_,{environment:Y,dependencies:{loadPolicySnapshot:()=>oe,getModes:()=>({...j,strict:!0,paranoidRm:!0,paranoidInterpreters:!0,capabilities:{fail_closed:{...j.capabilities.fail_closed,enabled:!0},paranoid_rm:{...j.capabilities.paranoid_rm,enabled:!0},paranoid_interpreters:{...j.capabilities.paranoid_interpreters,enabled:!0}}}),findSensitiveTarget:()=>null}});return se.decision.kind==="deny"?se.decision.ruleId:void 0}function Bh(_){if(!_)return;return{id:T(_.id),..._.rulebook?{rulebook:{name:T(_.rulebook.name),version:T(_.rulebook.version)}}:{},..._.source?{source:T(_.source)}:{},..._.override?{override:{type:"reason",reason:T(_.override.reason)}}:{}}}function qh(_){let L=_.events.flatMap((Y)=>Y.scope==="global"?[Y.step]:[]),j=new Map;for(let Y of _.events){if(Y.scope!=="segment")continue;let Z=j.get(Y.segmentIndex)??{index:Y.segmentIndex,steps:[]};Z.steps.push(Y.step),j.set(Y.segmentIndex,Z)}return{steps:L,segments:[...j.values()]}}function Vh(_,L){let j=_?.replace(/^custom\./,"");if(!j||!L.policy.rules.some((Y)=>Y.name===j))return;return L.ruleMetadata[j]??Object.freeze({id:j})}function ld(_){return new Promise((L)=>{process.stdout.write(`${_}
-`,()=>L())})}async function cd(_,L){let j=ss(L);if(!j)return 1;try{let Y=mr(j.command,{cwd:j.cwd},_),Z=!!process.env.NO_COLOR||!process.stdout.isTTY;return await ld(j.json?cs(Y):ls(Y,{asciiOnly:Z})),0}catch(Y){let Z=Kh(Y instanceof f?Y.cause:Y);if(Z===void 0)throw Y;if(j.json)return await ld(JSON.stringify({error:Z})),1;return console.error(Z),1}}function Kh(_){if(_ instanceof b)return _.message;if(_ instanceof U)return _.message;if(_ instanceof m)return _.message;if(_ instanceof s&&a[_.kind].errorCode==="path-canonicalization-limit")return"Path canonicalization work limit exceeded.";return}var dd="2.6.12",Rn="  ",Pt="cc-safety-net";function ud(_){return _.argument?`${_.flags} ${_.argument}`:_.flags}function Jh(_){return Math.max(..._.map((L)=>ud(L).length))}function Wh(_){return Math.max(..._.map((L)=>L.usage.length))}function zh(_){return Math.max(..._.map((L)=>`${Pt} ${L.usage}`.length))}function Yh(_,L){let j=`${Pt} ${_.usage}`;return`${Rn}${j.padEnd(L+2)}${_.description}`}function An(_,L){return`${Rn}${_.padEnd(Math.max(40,_.length+2))}${L}`}function zt(_,L=console.log){let j=[];if(j.push(`${Pt} ${_.name}`),j.push(""),j.push(`${Rn}${_.description}`),j.push(""),j.push("USAGE:"),j.push(`${Rn}${Pt} ${_.usage}`),j.push(""),_.subcommands&&_.subcommands.length>0){j.push("SUBCOMMANDS:");let Y=Wh(_.subcommands);for(let Z of _.subcommands)j.push(`${Rn}${Z.usage.padEnd(Y+2)}${Z.description}`);j.push("")}if(_.options.length>0){j.push("OPTIONS:");let Y=Jh(_.options);for(let Z of _.options){let oe=ud(Z),se=Z.default?`${Z.description} (default: ${Z.default})`:Z.description;j.push(`${Rn}${oe.padEnd(Y+2)}${se}`)}j.push("")}if(_.examples&&_.examples.length>0){j.push("EXAMPLES:");for(let Y of _.examples)j.push(`${Rn}${Y}`)}L(j.join(`
-`))}function ps(){let _=zh(Tr),L=[];L.push(`${Pt} v${dd}`),L.push(""),L.push("Blocks destructive commands and secret access."),L.push(""),L.push("COMMANDS:");for(let j of Tr)L.push(Yh(j,_));L.push(""),L.push("GLOBAL OPTIONS:"),L.push(`${Rn}-h, --help       Show help (use with command for command-specific help)`),L.push(`${Rn}-V, --version    Show version`),L.push(""),L.push("HELP:"),L.push(`${Rn}${Pt} help <command>     Show help for a specific command`),L.push(`${Rn}${Pt} <command> --help   Show help for a specific command`),L.push(""),L.push("ENVIRONMENT VARIABLES:"),L.push(An(`${n.level.name}=standard|strict|paranoid`,"Set session safety level")),L.push(An(`${n.worktree.name}=1`,"Allow local git discards in linked worktrees")),L.push(An(`${n.debug.name}=1`,"Print diagnostic messages to stderr")),L.push(An(`${n.auditScope.name}=all|blocked`,"Record all command decisions, or denials only")),L.push(An(`${n.projectTightenOnly.name}=1`,"Ignore project policy settings that weaken the user policy")),L.push(An("CC_SAFETY_NET_HOME","Override rule config home directory")),L.push(""),L.push("LEGACY ENVIRONMENT VARIABLES (STILL SUPPORTED):"),L.push(An(`${n.strict.name}=1`,"Force safety.overrides.fail_closed on")),L.push(An(`${n.paranoid.name}=1`,"Force paranoid_rm and paranoid_interpreters on")),L.push(An(`${n.paranoidRm.name}=1`,"Force safety.overrides.paranoid_rm on")),L.push(An(`${n.paranoidInterpreters.name}=1`,"Force safety.overrides.paranoid_interpreters on")),L.push(""),L.push("Documentation:        https://ccsafetynet.com/docs"),console.log(L.join(`
-`))}function pd(){console.log(dd)}function gr(_,L=console.log){let j=Ir(_);if(!j)return!1;if(j.name.toLowerCase()!==_.toLowerCase())return!1;return zt(j,L),!0}import{existsSync as Po,readFileSync as vu}from"node:fs";import{join as So}from"node:path";import*as Vn from"node:readline";function Zh(_){return _==="install"?"Install":"Uninstall"}function Xh(_){return _==="install"?"Installing":"Uninstalling"}function Qh(_){return _==="install"?"into":"from"}function gd(_){return _?.available===!0}function ev(_,L){let j=new Set(L);return _.filter((Y)=>j.has(Y.target)).map((Y)=>Y.target)}function fd(_,L,j){if(_.every((Y)=>!Y.available))return L;return Array.from({length:_.length},(Y,Z)=>Z+1).map((Y)=>(L+Y*j+_.length)%_.length).find((Y)=>gd(_[Y]))}function nv(_,L,j){if(j.ctrl&&j.name==="c")return"interrupt";if(j.name==="escape"||L==="q")return"abort";if(_==="install"&&(L==="u"||L==="U"))return"update";if(j.name==="up"||L==="k")return"up";if(j.name==="down"||L==="j")return"down";if(j.name==="space"||L===" ")return"toggle";if(j.name==="return"||j.name==="enter")return"confirm";return null}function tv(_){return{cursor:_.findIndex((L)=>L.available),selected:[]}}function rv(_,L,j){if(j==="confirm"||j==="update"||j==="abort"||j==="interrupt")return{state:_,done:j};if(j==="up")return{state:{..._,cursor:fd(L,_.cursor,-1)}};if(j==="down")return{state:{..._,cursor:fd(L,_.cursor,1)}};let Y=L[_.cursor];if(!gd(Y))return{state:_};let Z=_.selected.includes(Y.target)?_.selected.filter((oe)=>oe!==Y.target):ev(L,[..._.selected,Y.target]);return{state:{..._,selected:Z}}}var yd="◉",hd="◯",vd=">",bd=" ";function ov(_,L,j){return["",`${Zh(_)} CC Safety Net ${Qh(_)}:`,"",...L.map((Y,Z)=>{let oe=j.selected.includes(Y.target),se=Z===j.cursor,fe=oe?yd:hd,ge=se?vd:bd,Pe=Y.available?"":` (${Y.unavailableReason??"not installed"})`,Ee=`${fe} ${Y.label}${Pe}`,Re=!Y.available?en.dim(Ee):oe?en.green(Ee):se?en.bold(Ee):Ee;return`${ge} ${Re}`}),"",_==="install"?"Space: select  Enter: confirm  u: update installed  Up/Down: move  q/Esc: cancel":L.some((Y)=>Y.available)?"Space: select  Enter: confirm  Up/Down: move  q/Esc: cancel":`No selectable integrations found for ${_}. q/Esc: close`].join(`
-`)}var md=["global-hook","plugin"];function iv(_,L,j={}){let Y=j.color!==!1?en.bold:(oe)=>oe;return["","Install the Kimi Code integration as:","",...[`Global hook — ${L?"already installed; selecting it reports the current state":"write the hook into ~/.kimi-code/config.toml now"}`,"Native Kimi plugin — print the steps to run inside Kimi Code"].map((oe,se)=>{let fe=se===_,ge=`${fe?yd:hd} ${oe}`;return`${fe?vd:bd} ${fe?Y(ge):ge}`}),"","Enter: confirm  Up/Down: move  q/Esc: cancel"].join(`
-`)}function wd(_){let{input:L,output:j}=_;Vn.emitKeypressEvents(L);let Y=L.isRaw===!0;L.setRawMode(!0),L.resume();let Z=0,oe=()=>{if(Z===0)return;Vn.moveCursor(j,0,-Z),Vn.cursorTo(j,0),Vn.clearScreenDown(j)},se=()=>{oe();let fe=_.render();j.write(`${fe}
-`),Z=fe.split(`
-`).length};return new Promise((fe)=>{let ge=(Ee)=>{L.off("keypress",Pe),L.setRawMode(Y),L.pause(),oe(),fe(Ee)};function Pe(Ee,Re){_.onKey(Ee,Re,{finish:ge,draw:se})}L.on("keypress",Pe),se()})}function kd(_={}){let L=0;return wd({input:_.input??process.stdin,output:_.output??process.stdout,render:()=>iv(L,_.globalHookInstalled===!0),onKey:(j,Y,Z)=>{if(Y.ctrl&&Y.name==="c"){Z.finish(null),(_.onInterrupt??(()=>process.kill(process.pid,"SIGINT")))();return}if(Y.name==="escape"||j==="q")return Z.finish(null);if(Y.name==="return"||Y.name==="enter")return Z.finish(md[L]);if(Y.name==="up"||Y.name==="down"||j==="k"||j==="j")L=(L+1)%md.length,Z.draw()}})}function fs(_=process.stdin,L=process.stdout){return Boolean(_.isTTY&&L.isTTY&&typeof _.setRawMode==="function")}function Cd(_,L,j={}){let Y=j.output??process.stdout,Z=tv(L);return wd({input:j.input??process.stdin,output:Y,render:()=>ov(_,L,Z),onKey:(oe,se,fe)=>{let ge=nv(_,oe,se);if(!ge)return;let Pe=rv(Z,L,ge);if(Z=Pe.state,Pe.done==="interrupt"){fe.finish(null),(j.onInterrupt??(()=>process.kill(process.pid,"SIGINT")))();return}if(Pe.done==="abort")return fe.finish(null);if(Pe.done==="update")return fe.finish("update");if(Pe.done==="confirm"){if(Z.selected.length===0){Y.write("\x07"),fe.draw();return}fe.finish([...Z.selected]),Y.write(`${Xh(_)} selected integrations...
-`);return}fe.draw()}})}import{existsSync as xd,lstatSync as av,mkdirSync as lv,mkdtempSync as cv,readdirSync as dv,readFileSync as Zt,rmSync as bo}from"node:fs";import{basename as uv,dirname as pv,join as Cn}from"node:path";import{fileURLToPath as fv}from"node:url";var ms="// cc-safety-net managed Amp plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --amp",_t="cc-safety-net",Tt="cc-safety-net/index.ts";import{spawn as sv}from"node:child_process";var gs=(_,L)=>{let j=Xn([..._],process.env);return new Promise((Y)=>{let Z=sv(j.cmd,j.args,{cwd:L,stdio:["ignore","pipe","pipe"]}),oe=di(Z),se=!1,fe=setTimeout(()=>{se=!0,Z.kill()},120000);Z.on("error",(ge)=>{clearTimeout(fe),Y({status:null,errorCode:ge.code,stdout:oe.stdout,stderr:[ge.message,oe.stderr].filter(Boolean).join(`
-`)})}),Z.on("close",(ge)=>{clearTimeout(fe),Y({status:se?null:ge,errorCode:se?"ETIMEDOUT":void 0,stdout:oe.stdout,stderr:oe.stderr})})})};var Yt="cc-safety-net.ts",ys=Cn("amp",Tt);function mv(_){return Cn(_.home,".config","amp","plugins","cc-safety-net.ts")}function gv(){let _=pv(fv(import.meta.url)),L=Cn(_,ys),j=Cn(_,"..",ys),Y=Cn(_,"..","..","..","dist",ys);return[L,j,Y]}function yv(_=gv()){let L=_.find((j)=>xd(j)&&av(j).isFile());if(!L)throw Error("Packaged Amp plugin artifact not found. Reinstall cc-safety-net and try again.");return L}function Sd(_){try{return JSON.parse(_)}catch{return}}function wo(_){return _.subarray(0,Buffer.byteLength(ms)).toString("utf-8")===ms}async function yr(_,L,j){let Y=await _(L,j);if(Y.status===0)return Y;throw Error([`Failed to run ${L.join(" ")}${Y.status===null?"":` (exit ${Y.status})`}.`,[Y.stdout,Y.stderr].filter(Boolean).join(`
+`}function cr(P){return[{name:"__init__.py",content:My(P)},{name:"plugin.yaml",content:Hy(P)}]}import{mkdirSync as Uy,readdirSync as By,readFileSync as yc,rmSync as Li}from"node:fs";import{basename as Gy,dirname as qy,join as Fn}from"node:path";var Vy="__pycache__",Ky=/^[a-z0-9][a-z0-9_-]{0,63}$/;function Jy(P){try{return yc(P,"utf-8").trim()}catch{return}}function ji(P){let L=P.env.get("HERMES_HOME")?.trim();if(L&&Gy(qy(L))==="profiles")return L;let H=L||Fn(P.home,".hermes"),Y=Fn(H,"active_profile"),Z=Jy(Y),oe=Z?.toLowerCase();if(!oe||oe==="default")return H;if(!Ky.test(oe))throw Error(`Invalid Hermes profile name "${Z}" in ${Y}; run \`hermes profile use <name>\` with a valid profile.`);return Fn(H,"profiles",oe)}function Fi(P){return Fn(ji(P),"plugins",Sn)}function Hi(P){return P.startsWith(Ni)}function Mi(P,L){let H=Fi(P),Y=dn(H);if(Y&&(Y.isSymbolicLink()||!Y.isDirectory()))throw Error(`Refusing to ${L} ${H}: not a regular directory. Move or remove it and rerun ${L==="install"?"install":"uninstall"} --hermes-agent.`);return H}function hc(P,L){let H=dn(P);if(!H)return;if(H.isSymbolicLink()||!H.isFile())throw Error(`Refusing to ${L} ${P}: not a regular file. Move or remove it.`);let Y=yc(P,"utf-8");if(!Hi(Y))throw Error(`Refusing to ${L} unmanaged file at ${P}. Move or remove it.`);return Y}function vc(P){let L=Mi(P,"install"),H=cr(pn());if(H.map((Z)=>hc(Fn(L,Z.name),"overwrite")).every((Z,oe)=>Z===H[oe]?.content))return{path:L,alreadyInstalled:!0};return Uy(L,{recursive:!0}),H.forEach((Z)=>{an(Fn(L,Z.name),Z.content)}),{path:L,alreadyInstalled:!1}}function Ui(P){let L=Mi(P,"remove");if(!dn(L))return[];return cr(pn()).filter((H)=>hc(Fn(L,H.name),"remove")!==void 0)}function bc(P){let L=Mi(P,"remove");if(!dn(L))return{path:L,alreadyInstalled:!1};let H=Ui(P);if(H.forEach((Y)=>{Li(Fn(L,Y.name))}),Li(Fn(L,Vy),{recursive:!0,force:!0}),By(L).length===0)Li(L,{recursive:!0});return{path:L,alreadyInstalled:H.length>0}}var dr="hermes-agent",wc=/^([^\s#][^:]*):/,zy=/^\s+([A-Za-z_][\w-]*):/,kc=/^\s+-\s*(.*)$/;function Wy(P){return P.trim().replace(/^(["'])(.*)\1$/,"$2")}function Yy(P){let L=P.split(/\r?\n/),H=L.findIndex((oe)=>wc.exec(oe)?.[1]?.trim()==="plugins");if(H===-1)return[];let Y=L.slice(H+1),Z=Y.findIndex((oe)=>wc.test(oe));return Z===-1?Y:Y.slice(0,Z)}function Cc(P,L){let H=Yy(P),Y=H.findIndex((se)=>zy.exec(se)?.[1]===L);if(Y===-1)return[];let Z=H.slice(Y+1),oe=Z.findIndex((se)=>!kc.test(se));return(oe===-1?Z:Z.slice(0,oe)).map((se)=>Wy(kc.exec(se)?.[1]??""))}function Zy(P){try{return xc(Pc(ji(P),"config.yaml"),"utf-8")}catch{return}}function Bi(P){let L=Zy(P)??"";return Cc(L,"enabled").includes(Sn)&&!Cc(L,"disabled").includes(Sn)}function Sc(P){return/^# version:\s*(.+)$/m.exec(P)?.[1]?.trim()}function Xy(P,L){let H=dn(P);if(!H)return{error:`${L.name} is missing from ${P}; run install --hermes-agent`};if(H.isSymbolicLink()||!H.isFile())return{error:`${P} is a symlink or not a regular file; move or remove it`};try{let Y=xc(P,"utf-8");if(!Hi(Y))return{error:`Unmanaged ${L.name} occupies ${P}; move or remove it`};if(Sc(Y)===pn()&&Y!==L.content)return{error:`Modified ${L.name} occupies ${P}; run install --hermes-agent to restore it`};return{content:Y}}catch(Y){return{error:`Failed to read ${P}: ${Y instanceof Error?Y.message:String(Y)}`}}}function Qy(P){try{return{path:Fi(P)}}catch(L){return{error:L instanceof Error?L.message:String(L)}}}function Rc(P){let L=Qy(P.environment);if("error"in L)return{platform:dr,status:"n/a",errors:[L.error]};let H=L.path,Y=Gr(dr,H);if(Y)return Y;let Z=cr(pn()).map((he)=>Xy(Pc(H,he.name),he)),oe=Z.flatMap((he)=>("error"in he)?[he.error]:[]);if(oe.length>0)return{platform:dr,status:"n/a",configPath:H,errors:oe};let se=Z.some((he)=>("content"in he)&&Sc(he.content)!==pn()),me=se?["Installed Hermes Agent plugin is outdated; run install --hermes-agent to update"]:[];if(!Bi(P.environment))return{platform:dr,status:"disabled",method:"plugin directory",configPath:H,errors:[`${Sn} is not enabled in Hermes; run \`hermes plugins enable ${Sn}\``,...me]};return{platform:dr,status:"configured",method:"plugin directory",configPath:H,errors:se?me:void 0}}import{existsSync as eh,readFileSync as nh}from"node:fs";import{join as Vi}from"node:path";var th=/cc-safety-net\s+hook\s+(?:[^\s]+\s+)*--kimi-code(\s|["']|$)/,Gi="cc-safety-net",uo="plugin config",rh=new Set(["event","matcher","command","timeout"]),oh=new Set(["PreToolUse","PostToolUse","PostToolUseFailure","PermissionRequest","PermissionResult","UserPromptSubmit","UserPromptQueued","TurnStarted","Stop","StopFailure","Interrupt","SessionStart","SessionEnd","SessionHeartbeat","SubagentStart","SubagentStop","TaskStarted","PreCompact","PostCompact","Notification"]);function Ec(P){return P.env.get("KIMI_CODE_HOME")||Vi(P.home,".kimi-code")}function co(P,L){let H=[""],Y="",Z=0;for(let oe=0;oe<P.length;oe++){let se=P[oe];if(Y!==""){let me=Y==='"'&&se==="\\"?P[++oe]??"":"";if(H[H.length-1]+=se+me,me===""&&se===Y)Y="";continue}if(se==="#"){let me=P.indexOf(`
+`,oe);oe=(me===-1?P.length:me)-1;continue}if(se===L&&Z===0){H.push("");continue}if(se==='"'||se==="'")Y=se;if(se==="["||se==="{")Z++;if(se==="]"||se==="}")Z--;H[H.length-1]+=se}return H.map((oe)=>oe.trim()).filter((oe)=>oe!=="")}function Tc(P){let L=/^(?:"([^"]*)"|'([^']*)'|([^\s="']+))\s*=\s*([\s\S]+)$/.exec(P);return L?{key:L[1]??L[2]??L[3]??"",value:L[4]??""}:void 0}function qi(P){return P===void 0?void 0:/^("""|'''|"|')([\s\S]*)\1$/.exec(P)?.[2]}function ih(P){let L=P.split(/(?=^\s*\[)/m),H=L.filter((Y)=>!/^\s*\[/.test(Y)).flatMap((Y)=>co(Y,`
+`)).map(Tc).find((Y)=>Y?.key==="hooks")?.value;if(H!==void 0)return co(H.slice(1,-1),",").map((Y)=>co(Y.slice(1,-1),","));return L.filter((Y)=>/^\s*\[\[hooks]]/.test(Y)).map((Y)=>co(Y.replace(/^\s*\[\[hooks]]/,""),`
+`))}function sh(P){let L=P.map(Tc),H=P.find((Pe,Te)=>L[Te]===void 0),Y=L.find((Pe)=>Pe!==void 0&&!rh.has(Pe.key))?.key,Z=L.find((Pe,Te)=>Pe!==void 0&&L.findIndex((_e)=>_e?.key===Pe.key)<Te)?.key,oe=(Pe)=>L.find((Te)=>Te?.key===Pe)?.value,se=oe("matcher"),me=oe("timeout"),he=Number(me?.replace(/(?<=[\da-f])_(?=[\da-f])/gi,""));return[[H!==void 0,`"${H}" is not a key = value pair`],[Y!==void 0,`unknown key "${Y}"`],[Z!==void 0,`duplicate key "${Z}"`],[!oh.has(qi(oe("event"))??""),'"event" is not a Kimi Code hook event'],[se!==void 0&&qi(se)===void 0,'"matcher" is not a string'],[!qi(oe("command")),'"command" is missing or empty'],[me!==void 0&&!(Number.isInteger(he)&&he>=1&&he<=600),'"timeout" is not an integer from 1 to 600']].find(([Pe])=>Pe)?.[1]}function ah(P){let L=Vi(Ec(P),"plugins","installed.json"),H=vn(L);if(H.kind==="missing")return;let Y=H.kind==="ok"?Xe(H.value,"plugins"):void 0;if(!Array.isArray(Y))return{platform:"kimi-code",status:"n/a",configPath:L,errors:[`Cannot read ${L}, so doctor cannot tell whether the Kimi Code plugin is installed`]};let Z=Y.find((oe)=>Xe(oe,"id")===Gi);if(Z===void 0)return;if(Xe(Z,"enabled")!==!0)return{platform:"kimi-code",status:"disabled",method:uo,configPath:L,errors:[`${Gi} is installed but not enabled in Kimi Code; run /plugins enable ${Gi}`]};return{platform:"kimi-code",status:"configured",method:uo,configPath:L}}function po(P){let L=Vi(Ec(P.environment),"config.toml"),H=()=>ah(P.environment)??{platform:"kimi-code",status:"n/a",configPath:L};if(!eh(L))return H();let Y;try{Y=nh(L,"utf-8")}catch(se){return{platform:"kimi-code",status:"n/a",configPath:L,errors:[`Failed to read ${L}: ${se instanceof Error?se.message:String(se)}`]}}if(!th.test(Y))return H();let oe=(/"""|'''/.test(Y)?[]:ih(Y)).flatMap((se,me)=>{let he=sh(se);return he===void 0?[]:[`Kimi Code ignores every hook because hooks entry ${me+1} is invalid (${he}); fix it in ${L}`]});return{platform:"kimi-code",status:oe.length>0?"disabled":"configured",method:"hook config",configPath:L,errors:oe.length>0?oe:void 0}}import{readFileSync as jc}from"node:fs";import{join as pr}from"node:path";var un="cc-safety-net",xn="index.js",qt="openclaw.plugin.json",Vt="package.json";var fo="// cc-safety-net managed OpenClaw plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --openclaw";import{existsSync as lh,lstatSync as ch,readdirSync as dh,readFileSync as uh}from"node:fs";import{dirname as Ac,join as qn}from"node:path";import{fileURLToPath as ph}from"node:url";var Ki=qn("openclaw",un),bt=`run \`openclaw plugins enable ${un}\``,fh="config reload superseded by a newer runtime config source",mh=[xn,qt,Vt];function _c(P){let L=P.env.get("OPENCLAW_HOME")?.trim();return L?Nn(L,P.home):P.home}function Ic(P){let L=_c(P),H=P.env.get("OPENCLAW_STATE_DIR")?.trim();if(H)return Nn(H,L);let Y=P.env.get("OPENCLAW_CONFIG_PATH")?.trim();return Y?Ac(Nn(Y,L)):qn(L,".openclaw")}function Oc(P){let L=P.env.get("OPENCLAW_CONFIG_PATH")?.trim();return L?Nn(L,_c(P)):qn(Ic(P),"openclaw.json")}function ur(P){return qn(Ic(P),"extensions",un)}function gh(P){let L=dh(P);if(L.length===0)return!0;if(L.some((Z)=>!mh.includes(Z)))return!1;let H=qn(P,xn),Y=dn(H);return Y!==void 0&&!Y.isSymbolicLink()&&Y.isFile()&&uh(H,"utf-8").startsWith(fo)}function Ji(P){let L=ur(P),H=dn(L);if(!H)return;if(!H.isSymbolicLink()&&H.isDirectory()&&gh(L))return;throw Error(`Refusing to modify ${L}: it does not hold a cc-safety-net managed OpenClaw plugin. Move or remove it, then run the command again.`)}function $c(){let P=Ac(ph(import.meta.url));return[qn(P,Ki),qn(P,"..",Ki),qn(P,"..","..","..","dist",Ki)]}function zi(P=$c()){return P.find((L)=>lh(L)&&ch(L).isDirectory())}function yh(P=$c()){let L=zi(P);if(!L)throw Error("Packaged OpenClaw plugin directory not found. Reinstall cc-safety-net and try again.");return L}function Dc(P=yh()){return[["openclaw","plugins","install",P,"--force","--accept-capabilities"]]}function hh(P){let L=(()=>{try{return JSON.parse(P)}catch{return}})(),H=Xe(Xe(L,"plugin"),"status");return typeof H==="string"?H:void 0}async function vh(){await fn(["openclaw","plugins","enable",un]).catch((P)=>{if(!(P instanceof Error&&P.message.includes(fh)))throw P})}async function Nc(P){let L=async()=>hh(await fn(["openclaw","plugins","inspect",un,"--runtime","--json"],{stdoutOnly:!0})),H=await L(),Y=H==="disabled"&&P;if(Y)await vh();let Z=Y?await L():H;if(Z==="loaded")return;throw Error(`${Z===void 0?`The ${un} plugin's load state could not be verified: OpenClaw's runtime inspect report was unreadable.`:Z==="disabled"?`OpenClaw reports the ${un} plugin with status "disabled"; ${bt}.`:`OpenClaw reports the ${un} plugin with status "${Z}".`} Run \`openclaw plugins inspect ${un} --runtime\` for details.`)}var mo="openclaw";function Kt(P,L){let H=pr(P,L),Y=dn(H);if(!Y)return{error:`${L} is missing from ${H}; run install --openclaw`};if(Y.isSymbolicLink()||!Y.isFile())return{error:`${H} is a symlink or not a regular file; move or remove it`};try{return{content:jc(H,"utf-8")}}catch(Z){return{error:`Failed to read ${H}: ${Z instanceof Error?Z.message:String(Z)}`}}}function Fc(P){try{return JSON.parse(yn(P))}catch{return}}function bh(P){let L=Kt(P,qt);if("error"in L)return L.error;if(Xe(Fc(L.content),"id")===un)return;return`${pr(P,qt)} is not a valid ${un} manifest; run install --openclaw`}function wh(P){let L=Kt(P,Vt);if("error"in L)return L.error;let H=Xe(Xe(Fc(L.content),"openclaw"),"extensions");if(Array.isArray(H)&&H.includes(`./${xn}`))return;return`${pr(P,Vt)} does not point OpenClaw at ${xn}; run install --openclaw`}function Lc(P){return Array.isArray(P)?P.filter((L)=>typeof L==="string"):[]}function kh(P){let L=Oc(P);if(!dn(L))return`${un} is not enabled; ${bt}`;let H=(()=>{try{return JSON.parse(yn(jc(L,"utf-8")))}catch{return}})();if(H===void 0)return`Failed to read ${L}; fix it, then ${bt}`;let Y=Xe(H,"plugins");if(Xe(Y,"enabled")===!1)return`plugins.enabled is false in ${L}; no OpenClaw plugin loads`;let Z=Xe(Xe(Xe(Y,"entries"),un),"enabled");if(Lc(Xe(Y,"deny")).includes(un)||Z===!1)return`${un} is disabled in ${L}; ${bt}`;let oe=Lc(Xe(Y,"allow"));if(oe.length>0&&!oe.includes(un))return`plugins.allow in ${L} does not list ${un}; add it, then ${bt}`;if(oe.includes(un)||Z===!0)return;return`${un} is not enabled; ${bt}`}function Hc(P){return/^\/\/ version:\s*(.+)$/m.exec(P)?.[1]?.trim()}function Ch(P,L,H){if(H===void 0)return[];let Y=Kt(H,xn);if(!(("content"in Y)&&Hc(Y.content)===L))return[];return[xn,qt,Vt].flatMap((oe)=>{let se=Kt(P,oe),me=Kt(H,oe);if("error"in se||"error"in me||se.content===me.content)return[];return[`Modified ${oe} occupies ${pr(P,oe)}; run install --openclaw to restore it`]})}function Mc(P){let L=ur(P.environment),H=Gr(mo,L);if(H)return H;let Y=Kt(L,xn),oe=["error"in Y?Y.error:Y.content.startsWith(fo)?void 0:`Unmanaged ${xn} occupies ${pr(L,xn)}; move or remove it`,bh(L),wh(L)].filter((Pe)=>Pe!==void 0),se="content"in Y?Hc(Y.content):void 0,me=oe.length>0?oe:Ch(L,se,zi());if(me.length>0)return{platform:mo,status:"n/a",configPath:L,errors:me};let he=se===pn()?[]:["Installed OpenClaw plugin is outdated; run install --openclaw to update"],ke=kh(P.environment);if(ke)return{platform:mo,status:"disabled",method:"plugin directory",configPath:L,errors:[ke,...he]};return{platform:mo,status:"configured",method:"plugin directory",configPath:L,errors:he.length>0?he:void 0}}import{existsSync as Ih,readFileSync as Oh}from"node:fs";import{basename as $h}from"node:path";import{existsSync as go,readFileSync as Yi,rmSync as xh}from"node:fs";import{join as _n}from"node:path";import{pathToFileURL as Ph}from"node:url";var fr="cc-safety-net",Pt=`${fr}@latest`,Zi=["opencode.json","opencode.jsonc"],Sh=60,Rh=250,Uc="CCSafetyNetPlugin",Eh={stringError:"Unterminated string in OpenCode config",bracketError:"Unmatched plugin array in OpenCode config"};function Bc(P){return _n(P.env.get("XDG_CONFIG_HOME")||_n(P.home,".config"),"opencode")}function Xi(P){return P.env.get("OPENCODE_CONFIG_DIR")||Bc(P)}function Qi(P){return Zi.map((L)=>_n(Xi(P),L))}function es(P){return[...new Set([Xi(P),Bc(P)])].flatMap((L)=>Zi.map((H)=>_n(L,H)))}function Gc(P){return _n(P.env.get("XDG_CACHE_HOME")||_n(P.home,".cache"),"opencode","packages",Pt)}function qc(P){xh(Gc(P),{recursive:!0,force:!0})}async function Vc(P){let L=(await fn(["opencode","--version"],{stdoutOnly:!0})).trim(),H=/^(?:opencode\s+)?v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(L),Y=Number(H?.[1]),Z=Number(H?.[2]),oe=Number(H?.[3]);if(!H||Y!==1&&Y!==2||Y===1&&(Z<18||Z===18&&oe<29)||Y===2&&Z===0&&oe<6)throw Error(`OpenCode 1.18.29+ or 2.0.6+ is required; found ${L||"an unknown version"}.`);if(Y===2){for(let se of Qi(P)){if(!go(se))continue;let me=ts(Yi(se,"utf-8"),se);if(["plugin","plugins"].some((ke)=>{let Pe=Xe(me,ke);return Array.isArray(Pe)&&Pe.some((Te)=>yo(Te)&&(typeof Te==="string"?Te:Xe(Te,"package"))!==Pt)}))throw Error(`Change the cc-safety-net package spec in ${se} to ${Pt}, preserving its options, then retry. Adding another spec would create a duplicate plugin ID.`)}return{commands:[],afterInstall:async()=>{if((await fn(["opencode","plugin","add",Pt],{stdoutOnly:!0})).includes("is already configured in"))await Wi(),await fn(["opencode","plugin","update",Pt]);let me=await Wi();if(!/^cc-safety-net\s+\S+\s+cc-safety-net@latest\s*$/m.test(me))throw Error("OpenCode did not load cc-safety-net from cc-safety-net@latest. Run `opencode plugin list` for details.");let he=["--param",`location[directory]=${process.cwd()}`];await fn(["opencode","api","integration.list",...he]);let ke=await fn(["opencode","api","plugin.list",...he],{stdoutOnly:!0}),Pe=ns(ke);if(Pe)throw Error(Pe);if(!Kc(ke).some(Jc))throw Error("OpenCode lists no active cc-safety-net for this directory. Run `opencode api plugin.list` for details.")}}}return qc(P),{commands:[["opencode","plugin","-g","-f",Pt]],afterInstall:()=>Ah(P)}}function Kc(P){return Th(P).filter((L)=>Xe(L,"id")===fr||yo(Xe(Xe(L,"source"),"target"))).map((L)=>Xe(L,"state"))}function Jc(P){return Xe(P,"status")==="active"}function ns(P){let L=Kc(P);if(L.some(Jc))return;let H=L.find((Y)=>Xe(Y,"status")==="failed");if(!H)return;return`OpenCode reports cc-safety-net failed: ${String(Xe(H,"error")).split(`
+`)[0]}`}function Th(P){if(!P)return[];try{let L=Xe(JSON.parse(P),"data");return Array.isArray(L)?L:[]}catch{return[]}}async function Wi(P=1){let L=await fn(["opencode","plugin","list"],{stdoutOnly:!0});if(/^cc-safety-net\s|\scc-safety-net@latest\s*$/m.test(L)||P===Sh)return L;return await new Promise((H)=>setTimeout(H,Rh)),Wi(P+1)}async function Ah(P){let L=_n(Gc(P),"node_modules",fr),H=_n(L,"package.json");if(!go(H))throw Error(`The OpenCode plugin cache at ${L} is missing its package, so OpenCode would load nothing and fail open. Run \`opencode plugin -g -f ${Pt}\` for details.`);let Y=Xe(JSON.parse(Yi(H,"utf-8")),"main");if(typeof Y!=="string")throw Error(`The cached OpenCode plugin at ${L} declares no "main" entry.`);let Z=_n(L,Y);if(typeof(await import(Ph(Z).href))[Uc]==="function")return;throw Error(`The cached OpenCode plugin at ${Z} does not export a callable ${Uc}, so OpenCode would load nothing and fail open.`)}function ts(P,L){try{return JSON.parse(yn(P))}catch(H){if(H instanceof SyntaxError)throw Error(`Failed to parse OpenCode config ${L}: ${H.message}`);throw H}}function yo(P){let L=typeof P==="string"?P:Xe(P,"package");return typeof L==="string"&&(L===fr||L.startsWith(`${fr}@`))}function rs(P){return["plugin","plugins"].some((L)=>{let H=Xe(P,L);return Array.isArray(H)&&H.some(yo)})}function _h(P,L){let Y=["plugin","plugins"].flatMap((Z)=>{let oe=hl(P,Z,Eh);if(!oe)return[];let se=[],me=0,he=oe.start+1,ke=P.slice(oe.start+1,oe.end).matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|[^"\s{}[\],/]+|[{}[\],]/g);for(let Pe of ke){if(Pe[0].startsWith("//")||Pe[0].startsWith("/*"))continue;let Te=oe.start+1+Pe.index;if(me===0)he=Te;if(Pe[0]==="{"||Pe[0]==="[")me++;if(Pe[0]==="}"||Pe[0]==="]")me--;if(me!==0||Pe[0]===",")continue;let _e=Te+Pe[0].length;if(yo(JSON.parse(yn(P.slice(he,_e)))))se.push({start:he,end:_e})}return se}).sort((Z,oe)=>Z.start-oe.start).reverse().reduce((Z,oe)=>{let se=/^(?:\s|\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*,/.exec(Z.slice(oe.end));if(se?.[0].includes("/")){let me=oe.end+se[0].length-1;return Z.slice(0,oe.start)+Z.slice(oe.end,me)+Z.slice(me+1)}return yl(Z,oe)},P);return ts(Y,L),Y}function zc(P){qc(P);let L=es(P),H=L.find((oe)=>go(oe)),Y=[],Z=[];for(let oe of L){if(!go(oe))continue;try{let se=Yi(oe,"utf-8");if(!rs(ts(se,oe)))continue;an(oe,_h(se,oe)),Z.push(oe)}catch(se){Y.push(se instanceof Error?se.message:String(se))}}if(Y.length>0)throw Error(Y.join(`
+`));return{path:Z[0]??H??_n(Xi(P),Zi[0]),alreadyInstalled:Z.length>0}}function Jt(P){let L=[];for(let H of P.openCodeVersion?.startsWith("2.")?Qi(P.environment):es(P.environment))if(Ih(H))try{let Y=Oh(H,"utf-8"),Z=yn(Y),oe=JSON.parse(Z);if(rs(oe)){let se=ns(P.openCodePluginListOutput);if(se)return{platform:"opencode",status:"disabled",method:"opencode api plugin.list",configPath:H,errors:[...L,se]};return{platform:"opencode",status:"configured",method:"plugin array",configPath:H,errors:L.length>0?L:void 0}}}catch(Y){L.push(`Failed to parse ${$h(H)}: ${Y instanceof Error?Y.message:String(Y)}`)}return{platform:"opencode",status:"n/a",errors:L.length>0?L:void 0}}import{join as Wc}from"node:path";var Zc="dist/pi/index.js",Yc=new Set([Zc,"index.js"]),Dh=/[*?[\]{}]/;function os(P){let L=P.env.get("PI_CODING_AGENT_DIR");return Wc(L?Nn(L,P.home):Wc(P.home,".pi","agent"),"settings.json")}function is(P){if(typeof P!=="string")return!1;return P==="npm:cc-safety-net"||P.startsWith("npm:cc-safety-net@")}function Nh(P){if(!Array.isArray(P)||P.length===0)return!1;if(!P.every((Y)=>typeof Y==="string"))return!1;let L=(Y)=>P.some((Z)=>Z.startsWith(Y)&&Z.slice(1).replace(/^\.[/\\]/,"")===Zc);if(L("-"))return!1;if(L("+"))return!0;let H=P.filter((Y)=>!/^[-+!]/.test(Y));return(H.length===0||H.some((Y)=>Yc.has(Y)))&&!P.some((Y)=>Y.startsWith("!")&&(Yc.has(Y.slice(1))||Dh.test(Y)))}function Xc(P){let L=os(P.environment),H=vn(L);if(H.kind==="unreadable")return{platform:"pi",status:"not-inspected"};if(H.kind==="missing")return{platform:"pi",status:"n/a"};let Y=Xe(H.value,"packages");if(!Array.isArray(Y))return{platform:"pi",status:"n/a"};let Z=Y.find((se)=>is(typeof se==="string"?se:Xe(se,"source")));if(Z===void 0)return{platform:"pi",status:"n/a"};let oe=Xe(Z,"extensions");if(oe!==void 0&&!Nh(oe))return{platform:"pi",status:"disabled",method:"package config",configPath:L,errors:["npm:cc-safety-net is installed but its extension is disabled in Pi settings"]};return{platform:"pi",status:"configured",method:"package config",configPath:L}}var Lh={amp:nl,"antigravity-cli":il,"claude-code":dl,codex:pl,"copilot-cli":_l,cursor:Hl,"deepseek-harness":Ul,devin:Wl,droid:rc,"gemini-cli":oc,"grok-build":mc,"hermes-agent":Rc,"kimi-code":po,openclaw:Mc,opencode:Jt,pi:Xc};function zt(P,L,H){let Y={...H,cwd:L,environment:P};return Er.map((Z)=>jh(Lh[Z](Y)))}function jh(P){if(P.status==="not-inspected")return{platform:P.platform,detected:!1,configured:!1,inspectionStatus:"not-inspected"};return{platform:P.platform,detected:P.status!=="n/a",configured:P.status==="configured",inspectionStatus:P.status!=="n/a"?"verified":P.errors&&P.errors.length>0?"failed":"not-applicable",method:P.method,configPath:P.configPath,configPaths:P.configPaths,errors:P.errors}}import{join as Fh}from"node:path";var Hh=Object.freeze([{command:"git reset --hard",description:"git reset --hard",expectBlocked:!0},{command:"rm -rf /",description:"rm -rf /",expectBlocked:!0},{command:"rm -rf ./node_modules",description:"rm in cwd (safe)",expectBlocked:!1}]),Mh=Object.freeze({state:"ready",diagnostics:Object.freeze([]),ruleMetadata:Object.freeze({}),policy:Object.freeze({rules:Object.freeze([]),transparentWrappers:Object.freeze([]),commandTools:Object.freeze([]),safety:Object.freeze({level:"standard"}),worktreeMode:!1,destructiveCommandProtectionEnabled:!0,destructiveCommandRuleOverrides:Object.freeze({}),destructiveCommandAllowPaths:Object.freeze([]),secretProtection:Object.freeze({enabled:!0,disabledRules:Object.freeze([]),denyPaths:Object.freeze([]),allowPaths:Object.freeze([])})})}),Uh={strict:!1,paranoidRm:!1,paranoidInterpreters:!1,worktreeMode:!1,effectiveLevel:"standard",capabilities:{fail_closed:{enabled:!1,source:"preset",sources:[]},paranoid_rm:{enabled:!1,source:"preset",sources:[]},paranoid_interpreters:{enabled:!1,source:"preset",sources:[]}}};function Qc(P){let L=Fh(P.tmpdir,"cc-safety-net-self-test"),H=Hh.map((Y)=>{let Z=B(P,l("self-test",{command:Y.command},{kind:"command",shell:"auto"},{configCwd:L,executionCwd:L},Y.command),{guard:{dependencies:{loadPolicySnapshot:()=>Mh,getModes:()=>Uh,findPolicyMutation:()=>null}},audit:{agent:"self-test",getSessionId:()=>{return}}}),oe=Y.expectBlocked?"blocked":"allowed",se=Z.decision.kind==="deny"?"blocked":"allowed";return{command:Y.command,description:Y.description,expected:oe,actual:se,passed:oe===se,reason:Z.decision.kind==="deny"?Z.decision.reason:void 0,ruleId:Z.decision.kind==="deny"?Z.decision.ruleId:void 0}});return{passed:H.filter((Y)=>Y.passed).length,failed:H.filter((Y)=>!Y.passed).length,total:H.length,results:H}}function ss(P){let L=mn({label:"doctor",booleans:{json:["--json"],skipUpdateCheck:["--skip-update-check"]}},P);if($n(L.errors))return null;return{json:L.flags.json,skipUpdateCheck:L.flags.skipUpdateCheck}}async function ed(P,L={}){let H=await tr(!L.json,()=>{let Y=Gh(P,L);return{ready:Y,finish:()=>Y}},()=>nr(),{loadingMessage:"Checking system status…"});if(L.json)console.log(JSON.stringify(H,null,2));else qh(H);return H.engineSelfTest.failed>0||H.findings.some((Y)=>Y.severity==="error")?1:0}async function Gh(P,L){let H=L.cwd??process.cwd(),Y=await Nr((Fe)=>Jt({environment:P,cwd:H,openCodeVersion:Fe}).status!=="n/a",void 0,H),Z=zt(P,H,{ampPluginListOutput:Y.ampPluginListOutput,codexPluginListOutput:Y.codexPluginListOutput,copilotCliVersion:Y.versions["copilot-cli"],openCodeVersion:Y.versions.opencode,openCodePluginListOutput:Y.openCodePluginListOutput}),oe=va(P,H),se=ba(P),me=R(P,{cwd:H}),he=me.policy,ke=_(he,P.env),Pe=K(he,ke.capabilities),Te=Ir(P,7),_e=Ya(P,H),Ae=[Lt(H),jt(P)].filter((Fe)=>Bh(Fe)),Le=L.skipUpdateCheck?{currentVersion:pn(),latestVersion:null,updateAvailable:!1}:await Bn(),We={hooks:Z,engineSelfTest:Qc(P),userConfig:oe.userConfig,projectConfig:oe.projectConfig,configState:Ve(me),effectiveRules:oe.effectiveRules,environment:se,effectiveSafety:{selectedPreset:he.safety.level,level:ke.effectiveLevel,capabilities:ke.capabilities,ruleOverrides:he.destructiveCommandRuleOverrides,weakenedRuleOverrides:Object.entries(Pe).filter(([,Fe])=>Fe.source==="rule_override"&&Fe.override==="off"&&Fe.inheritedEnabled&&Fe.changesInherited).map(([Fe])=>Fe),ruleCounts:{stored:Object.keys(he.destructiveCommandRuleOverrides).length,effective:Object.values(Pe).filter((Fe)=>Fe.changesInherited).length},...me.policyScopes?{policyScopes:me.policyScopes}:{}},..._e.length>0?{v2Leftovers:_e}:{},...Ae.length>0?{legacyConfigs:Ae}:{},posture:$a(P,oe.userConfig.path),activity:Te,update:Le,system:Y};return{...We,findings:ka(We)}}function qh(P){console.log(),console.log(xa(P.hooks)),console.log(),console.log(Pa(P.engineSelfTest)),console.log(),console.log(Sa(P)),console.log(),console.log(Ra(P.environment)),console.log(),console.log(Ea(P)),console.log(),console.log(Ta(P.findings)),console.log(),console.log(Aa(P.activity)),console.log(),console.log(Ia(P.system)),console.log(),console.log(_a(P.update)),console.log(Oa(P))}import{existsSync as Vh}from"node:fs";var Kh=/^[A-Za-z0-9_@%+=:,./-]+$/,nd="Usage: cc-safety-net explain [--json] [--cwd <path>] <command>";function as(P){let L=mn({label:"explain",booleans:{json:["--json"]},values:{cwd:["--cwd"]},positionals:"tail"},P);if($n(L.errors))return console.error(nd),console.error("Pass -- before a command that starts with dashes."),null;if(L.values.cwd!==void 0&&!Vh(L.values.cwd))return console.error(`Error: --cwd path does not exist: ${L.values.cwd}`),null;let H=L.positionals.length===1?L.positionals[0]:L.positionals.map((Y)=>Kh.test(Y)?Y:`'${Y.replaceAll("'","'\\''")}'`).join(" ");if(!H)return console.error("Error: No command provided"),console.error(nd),null;return{json:L.flags.json,cwd:L.values.cwd,command:H}}function td(P){if(P)return{dh:"=",dv:"|",dtl:"+",dtr:"+",dbl:"+",dbr:"+",h:"-",v:"|",tl:"+",tr:"+",bl:"+",br:"+",sh:"="};return{dh:"═",dv:"║",dtl:"╔",dtr:"╗",dbl:"╚",dbr:"╝",h:"─",v:"│",tl:"┌",tr:"┐",bl:"└",br:"┘",sh:"━"}}function rd(P,L){let Y=L-18;return[`${P.dtl}${P.dh.repeat(L)}${P.dtr}`,`${P.dv}  Command Analysis${" ".repeat(Y)}${P.dv}`,`${P.dbl}${P.dh.repeat(L)}${P.dbr}`]}function ls(P){return JSON.stringify(P)}function od(P,L=0){return`[${P.map((Y,Z)=>Ca(Y,Z,L)).join(",")}]`}function mr(P,L,H=70){let Y=P.split(" "),Z=[],oe="";for(let se of Y)if(oe&&oe.length+se.length+1>H)Z.push(oe),oe=se;else oe=oe?`${oe} ${se}`:se;if(oe)Z.push(oe);return Z.map((se,me)=>me===0?se:`${L}${se}`)}function id(P,L,H){let Y=[];switch(P.type){case"parse":return null;case"env-strip":return Y.push(""),Y.push(`STEP ${L} ${H.h} Strip environment variables`),Y.push(`  Removed: ${P.envVars.map((Z)=>`${Z}=<redacted>`).join(", ")}`),Y.push(`  Tokens:  ${ls(P.output)}`),{lines:Y,incrementStep:!0};case"leading-tokens-stripped":return Y.push(""),Y.push(`STEP ${L} ${H.h} Strip wrappers`),Y.push(`  Removed: ${P.removed.join(", ")}`),Y.push(`  Tokens:  ${ls(P.output)}`),{lines:Y,incrementStep:!0};case"shell-wrapper":return Y.push(""),Y.push(`STEP ${L} ${H.h} Detect shell wrapper`),Y.push(`  Wrapper: ${P.wrapper} -c`),Y.push(`  Inner:   ${P.innerCommand}`),{lines:Y,incrementStep:!0};case"interpreter":{if(Y.push(""),Y.push(`STEP ${L} ${H.h} Detect interpreter`),Y.push(`  Interpreter: ${P.interpreter}`),Y.push(`  Code:        ${P.codeArg}`),P.paranoidBlocked)Y.push("  Result:      ✗ BLOCKED (paranoid mode)");return{lines:Y,incrementStep:!0}}case"busybox":return Y.push(""),Y.push(`STEP ${L} ${H.h} Busybox wrapper`),Y.push(`  Subcommand: ${P.subcommand}`),{lines:Y,incrementStep:!0};case"transparent-wrapper":return Y.push(""),Y.push(`STEP ${L} ${H.h} Transparent wrapper`),Y.push(`  Wrapper: ${P.wrapper}`),Y.push(`  Tokens:  ${ls(P.output)}`),{lines:Y,incrementStep:!0};case"recurse":return{lines:[],incrementStep:!1};case"rule-check":{if(Y.push(""),Y.push(`STEP ${L} ${H.h} Match rules`),Y.push(`  Rule:   ${P.rule}()`),P.matched)Y.push("  Result: MATCHED");else Y.push("  Result: No match");return{lines:Y,incrementStep:!0}}case"worktree-relaxation":return Y.push(""),Y.push(`STEP ${L} ${H.h} Worktree relaxation`),Y.push(`  Mode:   ${n.worktree.name}`),Y.push(`  Git cwd: ${P.gitCwd}`),Y.push("  Result: Allowed local discard in linked worktree"),{lines:Y,incrementStep:!0};case"temp-root-relaxation":return Y.push(""),Y.push(`STEP ${L} ${H.h} Temp-root relaxation`),Y.push(`  Git cwd: ${P.gitCwd}`),Y.push("  Result: Allowed git discard in a temp-root repository"),{lines:Y,incrementStep:!0};case"tmpdir-check":return null;case"fallback-scan":{if(P.embeddedCommandFound)return Y.push(""),Y.push(`STEP ${L} ${H.h} Fallback scan`),Y.push(`  Found: ${P.embeddedCommandFound}`),{lines:Y,incrementStep:!0};return null}case"custom-rules-check":{if(P.rulesChecked){if(Y.push(""),Y.push(`STEP ${L} ${H.h} Custom rules`),P.matched)Y.push("  Result: MATCHED");else Y.push("  Result: No match");return{lines:Y,incrementStep:!0}}return null}case"cwd-change":return null;case"dangerous-text":{if(P.matched)return Y.push(""),Y.push(`STEP ${L} ${H.h} Dangerous text check`),Y.push(`  Token:  ${P.token}`),Y.push("  Result: MATCHED"),{lines:Y,incrementStep:!0};return null}case"strict-unparseable":return Y.push(""),Y.push(`STEP ${L} ${H.h} Strict mode check`),Y.push(`  Command: ${P.rawCommand}`),Y.push("  Result:  ✗ UNPARSEABLE"),{lines:Y,incrementStep:!0};case"segment-skipped":return null;case"error":return Y.push(""),Y.push(`ERROR: ${P.message}`),{lines:Y,incrementStep:!1};default:return P}}function cs(P,L){let H=td(L?.asciiOnly??!1),Y=58,Z=[],oe=1;Z.push(...rd(H,58)),Z.push("");let se=P.trace.steps.find((Le)=>Le.type==="error");if(se&&se.type==="error"){Z.push("ERROR"),Z.push(`  ${se.message}`),Z.push(""),Z.push("RESULT"),Z.push(`  Status: ${P.result==="blocked"?en.red("BLOCKED"):en.green("ALLOWED")}`),Z.push(""),Z.push("CONFIG");let Le=P.configSource??"none";return Z.push(`  Path: ${Le}`),Z.join(`
+`)}let me=P.trace.steps.find((Le)=>Le.type==="parse");if(me&&me.type==="parse"){Z.push("INPUT"),Z.push(`  ${me.input}`),Z.push(""),Z.push(`STEP ${oe} ${H.h} Split shell commands`),oe++;for(let Le=0;Le<me.segments.length;Le++){let We=me.segments[Le];if(We){let Fe=Math.random();Z.push(`  Segment ${Le+1}: ${od(We,Fe)}`)}}}let he=P.trace.segments,ke=he.length>1;for(let Le of he){if(ke){Z.push("");let tn="";if(me&&me.type==="parse"){let Bo=me.segments[Le.index];if(Bo)tn=Bo.join(" ")}let on=54,ln=tn,nn=` Segment ${Le.index+1}: `,sn=" ";if(tn){if(nn.length+tn.length+sn.length>on){let bf=on-nn.length-sn.length;ln=`${tn.substring(0,bf-1)}…`}}let Pn=tn?`${nn}${ln}${sn}`:` Segment ${Le.index+1} `,hf=tn?`${nn}${en.cyan(ln)}${sn}`:Pn,Ks=58-Pn.length,Js=Math.floor(Ks/2),vf=Ks-Js;Z.push(`${H.sh.repeat(Js)}${hf}${H.sh.repeat(vf)}`)}if(Le.steps.find((tn)=>tn.type==="segment-skipped")){Z.push(""),Z.push("  (skipped — prior segment blocked)");continue}let Fe=!1,Ze=!1;for(let tn of Le.steps){let on=id(tn,oe,H);if(on){if(Ze=!0,tn.type==="recurse"){Z.push("");let ln=" RECURSING ",nn=58-ln.length-4;Z.push(`  ${H.tl}${H.h}${ln}${H.h.repeat(nn)}`),Z.push(`  ${H.v}`),Fe=!0;continue}for(let ln of on.lines)if(Fe)Z.push(`  ${H.v} ${ln}`);else Z.push(ln);if(on.incrementStep)oe++}}if(Fe)Z.push(`  ${H.v}`),Z.push(`  ${H.bl}${H.h.repeat(56)}`);if(!Ze)Z.push(""),Z.push(`  ${en.green("✓")} Allowed (no matching rules)`)}if(Z.push(""),Z.push("RESULT"),P.result==="blocked"){if(Z.push(`  Status: ${en.red("BLOCKED")}`),P.customRule){if(Z.push(`  Rule: ${P.customRule.id}`),P.customRule.rulebook)Z.push(`  Rulebook: ${P.customRule.rulebook.name} ${P.customRule.rulebook.version}`);if(P.customRule.source)Z.push(`  Source: ${P.customRule.source}`);if(P.customRule.override)Z.push(`  Override: reason ${P.customRule.override.reason}`)}if(P.reason){let Le=mr(P.reason,"          ");Z.push(`  Reason: ${Le[0]}`);for(let We=1;We<Le.length;We++)Z.push(Le[We]??"")}}else Z.push(`  Status: ${en.green("ALLOWED")}`);Z.push(""),Z.push("CONFIG");let Pe=P.configSource??"none",Te=P.configValid?"":" (invalid)";Z.push(`  Path: ${Pe}${Te}`);let _e=P.safetyPresetScope;Z.push(`  Safety preset: ${P.selectedPreset??"standard"}${_e?` (${Or(_e)})`:""}`),Z.push(`  Effective capabilities: ${P.effectiveLevel}`);let Ae=Object.entries(P.destructiveCommandRuleOverrides??{});if(Z.push(`  Rule customizations: ${Ae.length}`),P.ruleActivation)Z.push(`  Rule activation: ${P.ruleActivation.id} — ${P.ruleActivation.enabled?"on":"off"} via ${P.ruleActivation.source}`);return Z.join(`
+`)}function ds(P){return JSON.stringify(P,null,2)}import{resolve as Yh}from"node:path";var sd=512,ad={maxTextLength:2048,maxListLength:128,maxObjectProperties:128,maxDepth:16},Jh=["AKIA","ASIA","ghp_","gho_","ghu_","ghs_","ghr_","github_pat_","glpat-","xox","npm_","pypi-","rk_","sk-","sk_","gsk_","xai-","pplx-","bastn_","tgp_v1_","flp_","wfr_","fw_","fwp_","tp-","psk-"];function fs(P){let L=0,H={allocateSegment(){return L++},getNextSegmentIndex(){return L},branch(){let Y=P.fork(),Z=fs(Y);return{trace:Z,adopt(){P.replaceSegmentEvents(Y.finish().events),L=Z.getNextSegmentIndex()}}},recordGlobal(Y){P.record({scope:"global",step:Y})},recordSegment(Y,Z=H.currentSegmentIndex){if(Z===void 0)return;P.record({scope:"segment",segmentIndex:Z,step:Y})}};return H}function ms(P=new Set){let L=[];return{record(H){if(L.length>=sd)return;ho(H.step,P,ad),L.push({...H,step:us(H.step,ad,P)})},fork(){return ms(P)},replaceSegmentEvents(H){L.splice(0,L.length,...[...L.filter((Y)=>Y.scope==="global"),...H].slice(0,sd))},finish(){return{events:L}}}}function ho(P,L,H,Y=0,Z=new WeakSet){if(typeof P==="string"){let me=P.slice(0,H.maxTextLength);if(!rt(me))return;for(let he of vt(me))for(let ke of he.match(/[^\s"'()$]+/g)??[])L.add(ld(ke));return}if(!P||typeof P!=="object"||Y>=H.maxDepth||Z.has(P))return;if(Z.add(P),Array.isArray(P)){let me=Math.min(P.length,H.maxListLength);for(let he=0;he<me;he++)ho(P[he],L,H,Y+1,Z);return}let oe=0,se=new Set;for(let me in P){if(!Object.hasOwn(P,me))continue;if(oe>=H.maxObjectProperties)break;oe++,ho(me,L,H);let he=ps(me,H,L);if(se.has(he))continue;se.add(he),ho(P[me],L,H,Y+1,Z)}}function us(P,L,H,Y=0,Z=new WeakSet){if(typeof P==="string")return ps(P,L,H);if(!P||typeof P!=="object")return P;if(Y>=L.maxDepth)return;if(Z.has(P))return;if(Z.add(P),Array.isArray(P)){let me=[],he=Math.min(P.length,L.maxListLength);for(let ke=0;ke<he;ke++)me.push(us(P[ke],L,H,Y+1,Z));return me}let oe={},se=0;for(let me in P){if(!Object.hasOwn(P,me))continue;if(se>=L.maxObjectProperties)break;se++;let he=ps(me,L,H);if(Object.hasOwn(oe,he))continue;Object.defineProperty(oe,he,{value:us(P[me],L,H,Y+1,Z),enumerable:!0,configurable:!0,writable:!0})}return oe}function ps(P,L,H){let Y=P.slice(0,L.maxTextLength),Z=rt(Y)?nt(Y):Y,oe=H.size>0?Wh(Z,H):Z;return(zh(oe)?Me(oe):oe).slice(0,L.maxTextLength)}function zh(P){return P.includes("PRIVATE KEY")||P.includes("://")||P.includes("eyJ")||P.includes(":")&&/(?:authorization|cookie|x-api-key|api-key|(?:^|\s)(?:-u|--user)(?:\s|=))/i.test(P)||P.length>=14&&Jh.some((L)=>P.includes(L))||P.length>=49&&/\b[a-f0-9]{32}\.[A-Za-z0-9]{16}\b/.test(P)}function Wh(P,L){return P.replace(/[^\s"'()$]+/g,(H)=>L.has(ld(H))?"<redacted>":H)}function ld(P){let L=2166136261,H=2166136261;for(let Y=0;Y<P.length;Y++)L=Math.imul(L^P.charCodeAt(Y),16777619),H=Math.imul(H^P.charCodeAt(P.length-Y-1),16777619);return`${L>>>0}:${H>>>0}:${P.length}`}function gr(P,L={},H){let Y=Yh(L.cwd??process.cwd()),Z=L.policySnapshot??R(H,{cwd:Y,userConfigDir:L.userConfigDir}),oe=_(Z.policy,H.env),se=qe({policySnapshot:Z,effectiveCapabilities:oe.capabilities,worktreeMode:oe.worktreeMode}),me={effectiveLevel:se.effectiveLevel,selectedPreset:Z.policy.safety.level,...Z.policyScopes?{safetyPresetScope:Z.policyScopes.levelScope}:{},effectiveCapabilities:se.effectiveCapabilities,destructiveCommandRuleOverrides:Z.policy.destructiveCommandRuleOverrides},{configSource:he,configValid:ke}=Xh(H,{cwd:Y,userConfigDir:L.userConfigDir});if(!P||!P.trim())return{trace:{steps:[{type:"error",message:"No command provided"}],segments:[]},result:"allowed",configSource:he,configValid:ke,...me};let Pe=v(P,"auto");if(Pe.status==="limited")throw new b;let Te=Pe.dialect==="powershell"?v(P,"posix"):Pe,_e=Rt(Te),Ae=ms(),Le=fs(Ae);Le.recordGlobal({type:"parse",input:P,segments:_e.map((Pn)=>[...Pn])});let We=l("Bash",{command:P},{kind:"command",shell:"auto"},{configCwd:Y,executionCwd:Y},P),Fe=U(We,{environment:H,trace:Le,dependencies:{loadPolicySnapshot:()=>Z}}),Ze=Fe.decision.kind==="deny"?Fe.decision:null;if(Ze&&(Fe.stage==="policy-protection"||Fe.stage==="secret-protection"))return{trace:{steps:[],segments:[{index:0,steps:[{type:"rule-check",rule:Zh(Ze),matched:!0,reason:Ze.reason}]}]},result:"blocked",reason:T(Ze.reason),segment:T(cd(Ze,P)),ruleId:T(Ze.ruleId),configSource:he,configValid:ke,...me};let tn=Le.getNextSegmentIndex();if(Ze&&tn>0&&tn<_e.length)Le.recordSegment({type:"segment-skipped",index:tn,reason:"prior-segment-blocked"},tn);let on=Ae.finish(),ln=Ze?.ruleId??Qh(We,Z,oe,H),nn=q.find((Pn)=>Pn.id===ln&&Pn.activationCapability),sn=nn?se.policy.effectiveDestructiveCommandRules[nn.id]:void 0;return{trace:nv(on),result:Ze?"blocked":"allowed",reason:Ze?T(Ze.reason):void 0,segment:Ze?T(cd(Ze,P)):void 0,ruleId:Ze?T(Ze.ruleId):void 0,customRule:ev(tv(Ze?.ruleId,Z)),configSource:he,configValid:ke,...me,...nn&&sn?{ruleActivation:{id:nn.id,...sn}}:{}}}function cd(P,L){return P.evidence?.segment??L}function Zh(P){if(P.reason===Je)return"policy-protection:findPolicyConfigMutationTargetInSemanticFacts";if(P.reason===Ke)return"policy-apply-protection:findPolicyApplyInvocationInSemanticFacts";if(P.reason===g)return"git-metadata-protection:findGitMetadataMutationTargetInSemanticFacts";return"secret-protection:findSensitiveTargetInSemanticFacts"}function Xh(P,L){let H=A(L.cwd),Y=z(P,L),Z=Q(P,{cwd:L.cwd,userConfigDir:L.userConfigDir});try{if(r(Z.projectConfigTarget)!==null){if(Un(Z.projectConfigTarget).errors.length===0)return{configSource:H,configValid:!0};return{configSource:H,configValid:!1}}}catch(oe){if(oe instanceof o)return{configSource:H,configValid:!1};throw oe}try{if(r(Z.userConfigTarget)!==null){let oe=Un(Z.userConfigTarget);return{configSource:Y,configValid:oe.errors.length===0}}return{configSource:null,configValid:!0}}catch(oe){if(oe instanceof o)return{configSource:Y,configValid:!1};throw oe}}function Qh(P,L,H,Y){let Z=L.policy,oe=Ne({...Z,destructiveCommandProtectionEnabled:!0,destructiveCommandRuleOverrides:{...Z.destructiveCommandRuleOverrides,...Object.fromEntries(q.flatMap((me)=>me.activationCapability?[[me.id,"on"]]:[]))}},L.state==="degraded"?{diagnostics:L.diagnostics,reason:L.reason}:void 0),se=U(P,{environment:Y,dependencies:{loadPolicySnapshot:()=>oe,getModes:()=>({...H,strict:!0,paranoidRm:!0,paranoidInterpreters:!0,capabilities:{fail_closed:{...H.capabilities.fail_closed,enabled:!0},paranoid_rm:{...H.capabilities.paranoid_rm,enabled:!0},paranoid_interpreters:{...H.capabilities.paranoid_interpreters,enabled:!0}}}),findSensitiveTarget:()=>null}});return se.decision.kind==="deny"?se.decision.ruleId:void 0}function ev(P){if(!P)return;return{id:T(P.id),...P.rulebook?{rulebook:{name:T(P.rulebook.name),version:T(P.rulebook.version)}}:{},...P.source?{source:T(P.source)}:{},...P.override?{override:{type:"reason",reason:T(P.override.reason)}}:{}}}function nv(P){let L=P.events.flatMap((Y)=>Y.scope==="global"?[Y.step]:[]),H=new Map;for(let Y of P.events){if(Y.scope!=="segment")continue;let Z=H.get(Y.segmentIndex)??{index:Y.segmentIndex,steps:[]};Z.steps.push(Y.step),H.set(Y.segmentIndex,Z)}return{steps:L,segments:[...H.values()]}}function tv(P,L){let H=P?.replace(/^custom\./,"");if(!H||!L.policy.rules.some((Y)=>Y.name===H))return;return L.ruleMetadata[H]??Object.freeze({id:H})}function dd(P){return new Promise((L)=>{process.stdout.write(`${P}
+`,()=>L())})}async function ud(P,L){let H=as(L);if(!H)return 1;try{let Y=gr(H.command,{cwd:H.cwd},P),Z=!!process.env.NO_COLOR||!process.stdout.isTTY;return await dd(H.json?ds(Y):cs(Y,{asciiOnly:Z})),0}catch(Y){let Z=rv(Y instanceof f?Y.cause:Y);if(Z===void 0)throw Y;if(H.json)return await dd(JSON.stringify({error:Z})),1;return console.error(Z),1}}function rv(P){if(P instanceof b)return P.message;if(P instanceof j)return P.message;if(P instanceof m)return P.message;if(P instanceof s&&a[P.kind].errorCode==="path-canonicalization-limit")return"Path canonicalization work limit exceeded.";return}var pd="2.6.16",En="  ",St="cc-safety-net";function fd(P){return P.argument?`${P.flags} ${P.argument}`:P.flags}function ov(P){return Math.max(...P.map((L)=>fd(L).length))}function iv(P){return Math.max(...P.map((L)=>L.usage.length))}function sv(P){return Math.max(...P.map((L)=>`${St} ${L.usage}`.length))}function av(P,L){let H=`${St} ${P.usage}`;return`${En}${H.padEnd(L+2)}${P.description}`}function In(P,L){return`${En}${P.padEnd(Math.max(40,P.length+2))}${L}`}function Wt(P,L=console.log){let H=[];if(H.push(`${St} ${P.name}`),H.push(""),H.push(`${En}${P.description}`),H.push(""),H.push("USAGE:"),H.push(`${En}${St} ${P.usage}`),H.push(""),P.subcommands&&P.subcommands.length>0){H.push("SUBCOMMANDS:");let Y=iv(P.subcommands);for(let Z of P.subcommands)H.push(`${En}${Z.usage.padEnd(Y+2)}${Z.description}`);H.push("")}if(P.options.length>0){H.push("OPTIONS:");let Y=ov(P.options);for(let Z of P.options){let oe=fd(Z),se=Z.default?`${Z.description} (default: ${Z.default})`:Z.description;H.push(`${En}${oe.padEnd(Y+2)}${se}`)}H.push("")}if(P.examples&&P.examples.length>0){H.push("EXAMPLES:");for(let Y of P.examples)H.push(`${En}${Y}`)}L(H.join(`
+`))}function gs(){let P=sv(Ar),L=[];L.push(`${St} v${pd}`),L.push(""),L.push("Blocks destructive commands and secret access."),L.push(""),L.push("COMMANDS:");for(let H of Ar)L.push(av(H,P));L.push(""),L.push("GLOBAL OPTIONS:"),L.push(`${En}-h, --help       Show help (use with command for command-specific help)`),L.push(`${En}-V, --version    Show version`),L.push(""),L.push("HELP:"),L.push(`${En}${St} help <command>     Show help for a specific command`),L.push(`${En}${St} <command> --help   Show help for a specific command`),L.push(""),L.push("ENVIRONMENT VARIABLES:"),L.push(In(`${n.level.name}=standard|strict|paranoid`,"Set session safety level")),L.push(In(`${n.worktree.name}=1`,"Allow local git discards in linked worktrees")),L.push(In(`${n.debug.name}=1`,"Print diagnostic messages to stderr")),L.push(In(`${n.auditScope.name}=all|blocked`,"Record all command decisions, or denials only")),L.push(In(`${n.projectTightenOnly.name}=1`,"Ignore project policy settings that weaken the user policy")),L.push(In("CC_SAFETY_NET_HOME","Override rule config home directory")),L.push(""),L.push("LEGACY ENVIRONMENT VARIABLES (STILL SUPPORTED):"),L.push(In(`${n.strict.name}=1`,"Force safety.overrides.fail_closed on")),L.push(In(`${n.paranoid.name}=1`,"Force paranoid_rm and paranoid_interpreters on")),L.push(In(`${n.paranoidRm.name}=1`,"Force safety.overrides.paranoid_rm on")),L.push(In(`${n.paranoidInterpreters.name}=1`,"Force safety.overrides.paranoid_interpreters on")),L.push(""),L.push("Documentation:        https://ccsafetynet.com/docs"),console.log(L.join(`
+`))}function md(){console.log(pd)}function yr(P,L=console.log){let H=_r(P);if(!H)return!1;if(H.name.toLowerCase()!==P.toLowerCase())return!1;return Wt(H,L),!0}import{existsSync as So,readFileSync as wu}from"node:fs";import{join as Po}from"node:path";import*as Vn from"node:readline";function lv(P){return P==="install"?"Install":"Uninstall"}function cv(P){return P==="install"?"Installing":"Uninstalling"}function dv(P){return P==="install"?"into":"from"}function hd(P){return P?.available===!0}function uv(P,L){let H=new Set(L);return P.filter((Y)=>H.has(Y.target)).map((Y)=>Y.target)}function gd(P,L,H){if(P.every((Y)=>!Y.available))return L;return Array.from({length:P.length},(Y,Z)=>Z+1).map((Y)=>(L+Y*H+P.length)%P.length).find((Y)=>hd(P[Y]))}function pv(P,L,H){if(H.ctrl&&H.name==="c")return"interrupt";if(H.name==="escape"||L==="q")return"abort";if(P==="install"&&(L==="u"||L==="U"))return"update";if(H.name==="up"||L==="k")return"up";if(H.name==="down"||L==="j")return"down";if(H.name==="space"||L===" ")return"toggle";if(H.name==="return"||H.name==="enter")return"confirm";return null}function fv(P){return{cursor:P.findIndex((L)=>L.available),selected:[]}}function mv(P,L,H){if(H==="confirm"||H==="update"||H==="abort"||H==="interrupt")return{state:P,done:H};if(H==="up")return{state:{...P,cursor:gd(L,P.cursor,-1)}};if(H==="down")return{state:{...P,cursor:gd(L,P.cursor,1)}};let Y=L[P.cursor];if(!hd(Y))return{state:P};let Z=P.selected.includes(Y.target)?P.selected.filter((oe)=>oe!==Y.target):uv(L,[...P.selected,Y.target]);return{state:{...P,selected:Z}}}var vd="◉",bd="◯",wd=">",kd=" ";function gv(P,L,H){return["",`${lv(P)} CC Safety Net ${dv(P)}:`,"",...L.map((Y,Z)=>{let oe=H.selected.includes(Y.target),se=Z===H.cursor,me=oe?vd:bd,he=se?wd:kd,ke=Y.available?"":` (${Y.unavailableReason??"not installed"})`,Pe=`${me} ${Y.label}${ke}`,Te=!Y.available?en.dim(Pe):oe?en.green(Pe):se?en.bold(Pe):Pe;return`${he} ${Te}`}),"",P==="install"?"Space: select  Enter: confirm  u: update installed  Up/Down: move  q/Esc: cancel":L.some((Y)=>Y.available)?"Space: select  Enter: confirm  Up/Down: move  q/Esc: cancel":`No selectable integrations found for ${P}. q/Esc: close`].join(`
+`)}var yd=["global-hook","plugin"];function yv(P,L,H={}){let Y=H.color!==!1?en.bold:(oe)=>oe;return["","Install the Kimi Code integration as:","",...[`Global hook — ${L?"already installed; selecting it reports the current state":"write the hook into ~/.kimi-code/config.toml now"}`,"Native Kimi plugin — print the steps to run inside Kimi Code"].map((oe,se)=>{let me=se===P,he=`${me?vd:bd} ${oe}`;return`${me?wd:kd} ${me?Y(he):he}`}),"","Enter: confirm  Up/Down: move  q/Esc: cancel"].join(`
+`)}function Cd(P){let{input:L,output:H}=P;Vn.emitKeypressEvents(L);let Y=L.isRaw===!0;L.setRawMode(!0),L.resume();let Z=0,oe=()=>{if(Z===0)return;Vn.moveCursor(H,0,-Z),Vn.cursorTo(H,0),Vn.clearScreenDown(H)},se=()=>{oe();let me=P.render();H.write(`${me}
+`),Z=me.split(`
+`).length};return new Promise((me)=>{let he=(Pe)=>{L.off("keypress",ke),L.setRawMode(Y),L.pause(),oe(),me(Pe)};function ke(Pe,Te){P.onKey(Pe,Te,{finish:he,draw:se})}L.on("keypress",ke),se()})}function xd(P={}){let L=0;return Cd({input:P.input??process.stdin,output:P.output??process.stdout,render:()=>yv(L,P.globalHookInstalled===!0),onKey:(H,Y,Z)=>{if(Y.ctrl&&Y.name==="c"){Z.finish(null),(P.onInterrupt??(()=>process.kill(process.pid,"SIGINT")))();return}if(Y.name==="escape"||H==="q")return Z.finish(null);if(Y.name==="return"||Y.name==="enter")return Z.finish(yd[L]);if(Y.name==="up"||Y.name==="down"||H==="k"||H==="j")L=(L+1)%yd.length,Z.draw()}})}function ys(P=process.stdin,L=process.stdout){return Boolean(P.isTTY&&L.isTTY&&typeof P.setRawMode==="function")}function Pd(P,L,H={}){let Y=H.output??process.stdout,Z=fv(L);return Cd({input:H.input??process.stdin,output:Y,render:()=>gv(P,L,Z),onKey:(oe,se,me)=>{let he=pv(P,oe,se);if(!he)return;let ke=mv(Z,L,he);if(Z=ke.state,ke.done==="interrupt"){me.finish(null),(H.onInterrupt??(()=>process.kill(process.pid,"SIGINT")))();return}if(ke.done==="abort")return me.finish(null);if(ke.done==="update")return me.finish("update");if(ke.done==="confirm"){if(Z.selected.length===0){Y.write("\x07"),me.draw();return}me.finish([...Z.selected]),Y.write(`${cv(P)} selected integrations...
+`);return}me.draw()}})}import{existsSync as Sd,lstatSync as vv,mkdirSync as bv,mkdtempSync as wv,readdirSync as kv,readFileSync as Zt,rmSync as bo}from"node:fs";import{basename as Cv,dirname as xv,join as Cn}from"node:path";import{fileURLToPath as Pv}from"node:url";var hs="// cc-safety-net managed Amp plugin. Do not edit. Reinstall with: npx -y cc-safety-net install --amp",Tt="cc-safety-net",At="cc-safety-net/index.ts";import{spawn as hv}from"node:child_process";var vs=(P,L)=>{let H=Xn([...P],process.env);return new Promise((Y)=>{let Z=hv(H.cmd,H.args,{cwd:L,stdio:["ignore","pipe","pipe"]}),oe=ui(Z),se=!1,me=setTimeout(()=>{se=!0,Z.kill()},120000);Z.on("error",(he)=>{clearTimeout(me),Y({status:null,errorCode:he.code,stdout:oe.stdout,stderr:[he.message,oe.stderr].filter(Boolean).join(`
+`)})}),Z.on("close",(he)=>{clearTimeout(me),Y({status:se?null:he,errorCode:se?"ETIMEDOUT":void 0,stdout:oe.stdout,stderr:oe.stderr})})})};var Yt="cc-safety-net.ts",bs=Cn("amp",At);function Sv(P){return Cn(P.home,".config","amp","plugins","cc-safety-net.ts")}function Rv(){let P=xv(Pv(import.meta.url)),L=Cn(P,bs),H=Cn(P,"..",bs),Y=Cn(P,"..","..","..","dist",bs);return[L,H,Y]}function Ev(P=Rv()){let L=P.find((H)=>Sd(H)&&vv(H).isFile());if(!L)throw Error("Packaged Amp plugin artifact not found. Reinstall cc-safety-net and try again.");return L}function Rd(P){try{return JSON.parse(P)}catch{return}}function wo(P){return P.subarray(0,Buffer.byteLength(hs)).toString("utf-8")===hs}async function hr(P,L,H){let Y=await P(L,H);if(Y.status===0)return Y;throw Error([`Failed to run ${L.join(" ")}${Y.status===null?"":` (exit ${Y.status})`}.`,[Y.stdout,Y.stderr].filter(Boolean).join(`
 `).trim()].filter(Boolean).join(`
-`))}async function Pd(_){let L=await _(["amp","plugins","repositories","--json"]);if(L.status===null)throw Error(`${L.errorCode==="ENOENT"?'Amp CLI not found. Install the amp CLI, sign in with "amp login", and rerun install --amp.':`amp plugins repositories --json did not finish (${L.errorCode??"terminated"}). Check that the amp CLI responds and rerun install --amp.`}
+`))}async function Ed(P){let L=await P(["amp","plugins","repositories","--json"]);if(L.status===null)throw Error(`${L.errorCode==="ENOENT"?'Amp CLI not found. Install the amp CLI, sign in with "amp login", and rerun install --amp.':`amp plugins repositories --json did not finish (${L.errorCode??"terminated"}). Check that the amp CLI responds and rerun install --amp.`}
 ${L.stderr}`.trim());if(L.status!==0)throw Error(`Failed to run amp plugins repositories --json (exit ${L.status}). Sign in with "amp login" and rerun install --amp.
 ${[L.stdout,L.stderr].filter(Boolean).join(`
-`)}`.trim());let j=Sd(L.stdout),Y=(Array.isArray(j)?j:[]).filter((Z)=>Xe(Z,"scope")==="user"&&Xe(Z,"exists")===!0&&Xe(Z,"viewerCanWrite")===!0).map((Z)=>Xe(Z,"cloneRef")).find((Z)=>typeof Z==="string"&&Z.length>0);if(!Y)throw Error('Your Amp account has no writable Personal Plugins repository. Sign in with "amp login", open Amp once to create it, and rerun install --amp.');return Y}async function Ed(_,L,j){let Y=cv(Cn(L.tmpdir,"cc-safety-net-amp-"));try{return await yr(_,["amp","clone","user-plugins",Y]),await j(Y)}finally{bo(Y,{recursive:!0,force:!0})}}function hs(_){return`rerun ${_==="overwrite"?"install":"uninstall"} --amp`}function Rd(_,L,j){let Y=Cn(_,L),Z=dn(Y);if(!Z)return;if(Z.isSymbolicLink()||!Z.isFile())throw Error(`Refusing to ${j} ${L} in your Amp personal plugins repository: not a regular file. Remove it there and ${hs(j)}.`);let oe=Zt(Y);if(wo(oe))return oe;throw Error(`Refusing to ${j} unmanaged file ${L} in your Amp personal plugins repository. Remove it there and ${hs(j)}.`)}function _d(_,L){let j=Cn(_,_t),Y=dn(j);if(!Y)return;if(Y.isSymbolicLink()||!Y.isDirectory())throw Error(`Refusing to ${L} ${_t} in your Amp personal plugins repository: not a regular directory. Remove it there and ${hs(L)}.`);return Rd(_,Tt,L)}function hv(_){let L=Cn(_,Yt),j=dn(L);if(!j||j.isSymbolicLink()||!j.isFile())return;let Y=Zt(L);return wo(Y)?Y:void 0}async function Td(_,L,j,Y){if(await yr(_,j,L),(await yr(_,["git","status","--porcelain"],L)).stdout.trim()==="")return!1;return await yr(_,["git","-c","commit.gpgsign=false","-c","user.name=cc-safety-net","-c","user.email=cc-safety-net@localhost","commit","-m",Y],L),await yr(_,["git","push","origin","HEAD"],L),!0}function vo(_,L){vv(_,L),bv(_,L)}function Id(_,L){if(L==="keep")return;throw Error(`Local Amp plugin ${_} is not a managed copy and masks the personal plugin. Remove it and rerun install --amp.`)}function vv(_,L){let j=mv(_),Y=dn(j);if(!Y)return;if(!Y.isSymbolicLink()&&Y.isFile()&&wo(Zt(j))){bo(j);return}Id(j,L)}function bv(_,L){let j=Cn(_.home,".config","amp","plugins",_t),Y=dn(j);if(!Y)return;if(!Y.isSymbolicLink()&&Y.isDirectory()&&wv(j)){bo(j,{recursive:!0});return}Id(j,L)}function wv(_){let L=uv(Tt);if(dv(_).join("\x00")!==L)return!1;let j=Cn(_,L),Y=dn(j);return!!Y&&!Y.isSymbolicLink()&&Y.isFile()&&wo(Zt(j))}function kv(_){let L=u(_);if(!xd(L))return"";let j=Sd(Zt(L,"utf-8"));if(!j||typeof j!=="object"||Array.isArray(j))return"";return`;globalThis.__CC_SAFETY_NET_EMBEDDED_POLICY__ = ${JSON.stringify(k(j,_.home))};
-`}async function Ad(_,L=yv(),j=gs){let Y=Buffer.concat([Zt(L),Buffer.from(kv(_),"utf-8")]),Z=await Pd(j);return Ed(j,_,async(oe)=>{let se=`${Z}/${_t}`,fe=_d(oe,"overwrite"),ge=Rd(oe,Yt,"overwrite");if(fe?.equals(Y)&&!ge)return vo(_,"fail"),{path:se,alreadyInstalled:!0};if(lv(Cn(oe,_t),{recursive:!0}),ln(Cn(oe,Tt),Y),ge)bo(Cn(oe,Yt));let Pe=await Td(j,oe,["git","add","--",Tt,...ge?[Yt]:[]],`chore: update cc-safety-net plugin to v${pn()}`);return vo(_,"fail"),{path:se,alreadyInstalled:!Pe}})}async function Od(_,L=gs){let j=await Pd(L);return Ed(L,_,async(Y)=>{let Z=_d(Y,"remove"),oe=hv(Y),se=`${j}/${oe&&!Z?Yt:_t}`;if(!Z&&!oe)return vo(_,"keep"),{path:se,alreadyInstalled:!1};return await Td(L,Y,["git","rm","--",...Z?[Tt]:[],...oe?[Yt]:[]],`chore: remove cc-safety-net plugin v${pn()}`),vo(_,"keep"),{path:se,alreadyInstalled:!0}})}import{existsSync as $d,mkdirSync as Cv,readFileSync as xv}from"node:fs";import{dirname as Sv}from"node:path";var vs=kn["antigravity-cli"],It="cc-safety-net";function At(_){return Boolean(_)&&typeof _==="object"&&!Array.isArray(_)}function Co(){return{PreToolUse:[{hooks:[{type:"command",command:vs,timeout:30}]}]}}function Dd(_){try{let L=JSON.parse(xv(_,"utf-8"));if(!L||typeof L!=="object"||Array.isArray(L))throw Error("Antigravity hooks config must be a JSON object");return L}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Antigravity hooks config ${_}: ${L.message}`);throw L}}function Nd(_){let L=_[It];if(L===void 0){let Y=Co();return _[It]=Y,{definition:Y,preToolUse:Y.PreToolUse??[]}}if(!At(L))throw Error(`Antigravity hooks config entry "${It}" must be an object`);let j=Array.isArray(L.PreToolUse)?L.PreToolUse:[];return L.PreToolUse=j,{definition:L,preToolUse:j}}function Ld(_){if(!Array.isArray(_.PreToolUse))return!1;return _.PreToolUse.some((L)=>At(L)&&Array.isArray(L.hooks)&&L.hooks.some((j)=>At(j)&&j.command===vs))}function Pv(_){return Object.values(_).some((L)=>At(L)&&L.enabled!==!1&&Ld(L))}function Ev(_){if(_[It]===void 0)return!1;let L=Nd(_);if(L.definition.enabled!==!1||!Ld(L.definition))return!1;return L.definition.enabled=!0,!0}function Rv(_){if(_[It]===void 0){_[It]=Co();return}let L=Nd(_);L.definition.enabled=!0,L.preToolUse.push(Co().PreToolUse?.[0]??{hooks:[]})}function _v(_){let L=!1;for(let j of Object.values(_)){if(!At(j)||!Array.isArray(j.PreToolUse))continue;j.PreToolUse=j.PreToolUse.flatMap((Y)=>{if(!At(Y)||!Array.isArray(Y.hooks))return[Y];let Z=Y.hooks.filter((oe)=>!At(oe)||oe.command!==vs);if(Z.length!==Y.hooks.length)L=!0;return Z.length===0?[]:[{...Y,hooks:Z}]})}return L}function ko(_,L){ln(_,`${JSON.stringify(L,null,2)}
-`)}function jd(_){let L=tr(_.home);if(Cv(Sv(L),{recursive:!0}),!$d(L))return ko(L,{[It]:Co()}),{path:L,alreadyInstalled:!1};let j=Dd(L);if(Pv(j))return{path:L,alreadyInstalled:!0};if(Ev(j))return ko(L,j),{path:L,alreadyInstalled:!1};return Rv(j),ko(L,j),{path:L,alreadyInstalled:!1}}function Hd(_){let L=tr(_.home);if(!$d(L))return{path:L,alreadyInstalled:!1};let j=Dd(L);if(!_v(j))return{path:L,alreadyInstalled:!1};return ko(L,j),{path:L,alreadyInstalled:!0}}import{existsSync as ks,readlinkSync as Av}from"node:fs";import{join as Kn}from"node:path";import{spawn as Tv}from"node:child_process";var On=En.map((_)=>({target:_.id,flag:_.flag,label:cn(_.id),probeCommand:_.probeCommand}));function bs(_){let L=new Set(_);return On.map((j)=>j.target).filter((j)=>L.has(j))}async function Fd(_,L){for(let j of _)await L(j)}var Iv=5000;function hr(_,L=Iv){return new Promise((j)=>{let Y=Xn([..._],process.env),Z=Tv(Y.cmd,Y.args,{env:process.env,stdio:"ignore"}),oe=!1,se=(ge)=>{if(oe)return;oe=!0,clearTimeout(fe),j(ge)},fe=setTimeout(()=>{Z.kill(),se(!1)},L);Z.on("error",()=>se(!1)),Z.on("close",(ge)=>se(ge===0))})}function Md(_=hr,L={}){let j=new Set(L.configuredTargets??[]);return Promise.all(On.map(async(Y)=>({target:Y.target,flag:Y.flag,label:Y.label,...Gd(L.action,await _(Y.probeCommand)||Y.target==="cursor"&&await _(ta),j.has(Y.target))})))}function Ud(_,L){let j=new Set(L.configuredTargets??[]);return _.map((Y)=>({...Y,...Gd(L.action,Y.available,j.has(Y.target))}))}function Gd(_,L,j){if(_==="uninstall")return j?{available:!0}:{available:!1,unavailableReason:"not installed"};if(_==="install"&&j)return{available:!1,unavailableReason:"already installed"};if(!L)return{available:!1,unavailableReason:"CLI not installed"};return{available:!0}}var Jn="cc-safety-net",Kd=["npx","-y","@deepseek-ai/dsh"],Bd="DeepSeek Harness",qd=["@deepseek-ai","dsh-desktop"],Jd="Quit DeepSeek Harness Desktop, then run this command again: Desktop plugins can only change while it is closed.",ws=(_)=>`DeepSeek Harness Desktop is not in its default location, so ${_} ${Jn} from its Plugins page.`,Wd=(_,L)=>ks(Kn(wi(_),L,"package.json"));function Cs(_,L){let j=L.platform??process.platform,Y=Wd(_,"desktop"),Z=j==="darwin"?[Kn(_.home,"Applications"),L.systemApplications??"/Applications"].map((oe)=>Kn(oe,`${Bd}.app`,"Contents","Resources","runtime","cli","bin","dsh")):j==="win32"?[Kn(_.env.get("LOCALAPPDATA")||Kn(_.home,"AppData","Local"),"Programs",Bd,"resources","runtime","cli","bin","dsh.cmd")]:[];return{profile:Y,cli:Y?Z.find((oe)=>ks(oe)):void 0}}function zd(_,L=process.platform){if(L==="win32")return ks(Kn(_.env.get("APPDATA")||Kn(_.home,"AppData","Roaming"),...qd,"lockfile"));let j=Ov(Kn(_.home,"Library","Application Support",...qd,"SingletonLock")),Y=Number(/-(\d+)$/.exec(j??"")?.[1]);return Number.isInteger(Y)&&Y>0&&$v(Y)}function Ov(_){try{return Av(_)}catch{return}}function $v(_){try{return process.kill(_,0),!0}catch(L){return L.code==="EPERM"}}async function Yd(_,L={}){let j=Cs(_,L);if(j.cli&&zd(_,L.platform))throw Error(Jd);let Y=!j.cli||Wd(_,"web")||await(L.probe??hr)(Bo),Z=[...j.cli?[{profile:"desktop",label:"Desktop",dsh:[j.cli]}]:[],...Y?[{profile:"web",label:"web",dsh:Kd}]:[]];return{commands:Z.map((oe)=>[...oe.dsh,"plugin","--profile",oe.profile,"add",`${Jn}@${pn()}`]),afterInstall:async()=>{let oe=new Set(ki(_).filter((fe)=>fe.enabled).map((fe)=>fe.name)),se=Z.filter((fe)=>!oe.has(fe.profile));if(se.length>0)throw Error(`DeepSeek Harness installed ${Jn} in the ${Vd(se)} but did not enable it. Enable it from the Plugins page.`)},message:[`Added ${Jn} to the DeepSeek Harness ${Vd(Z)}.`,...j.profile&&!j.cli?[ws("add")]:[]].join(`
-`)}}function Vd(_){return`${_.map((L)=>L.label).join(" and ")} profile${_.length>1?"s":""}`}function Zd(_,L={}){let j=new Set(ki(_).map((oe)=>oe.name));if(!j.has("desktop")&&!j.has("web"))throw Error(`${Jn} is not installed in the DeepSeek Harness web or Desktop profile`);let Y=j.has("desktop")?Cs(_,L).cli:void 0,Z=j.has("desktop")&&!Y;if(Z&&!j.has("web"))throw Error(ws("remove"));if(Y&&zd(_,L.platform))throw Error(Jd);return{commands:[...Y?[[Y,"plugin","--profile","desktop","remove",Jn]]:[],...j.has("web")?[[...Kd,"plugin","--profile","web","remove",Jn]]:[]],...Z?{afterUninstall:()=>{throw Error(`Removed ${Jn} from the DeepSeek Harness web profile, but ${ws("remove")}`)}}:{}}}function Xd(_,L,j={}){let Y=Cs(L,j).cli!==void 0;return _.map((Z)=>Z.target==="deepseek-harness"&&Y?{...Z,available:!0,unavailableReason:void 0}:Z)}import{existsSync as Dv,readdirSync as Nv,rmSync as Lv}from"node:fs";import{join as jv}from"node:path";function Qd(_,L=process.platform,j){if(!Dv(_))return;let Y=L==="win32"?/^bunx-\d+-cc-safety-net@/:new RegExp(`^bunx-${process.getuid?.()??0}-cc-safety-net@`);Nv(_).filter((Z)=>Z!==j&&Y.test(Z)).forEach((Z)=>{Lv(jv(_,Z),{recursive:!0,force:!0})})}import{existsSync as eu,readdirSync as Hv,rmSync as Fv}from"node:fs";import{join as Xt}from"node:path";function xo(_,L=process.platform){let j=Xt(_.env.get("npm_config_cache")||(L==="win32"?Xt(_.env.get("LOCALAPPDATA")||Xt(_.home,"AppData","Local"),"npm-cache"):Xt(_.home,".npm")),"_npx");if(!eu(j))return;Hv(j).filter((Y)=>eu(Xt(j,Y,"node_modules","cc-safety-net"))).forEach((Y)=>{Fv(Xt(j,Y),{recursive:!0,force:!0})})}import{existsSync as su,mkdirSync as Uv,readFileSync as au}from"node:fs";import{dirname as Gv,join as iu}from"node:path";function Mv(_,L){if(_[L]!=="#")return L;let j=_.indexOf(`
-`,L+1);return j===-1?_.length:j+1}function xs(_,L,j){let Y=new RegExp(`^(\\s*)${L}\\s*=\\s*\\[`),Z=0;for(let oe of _.split(`
-`)){if(/^\s*\[/.test(oe))return;let se=Y.exec(oe);if(se){let fe=Z+se[0].lastIndexOf("[");return{start:fe,end:ai(_,fe,{skipComment:Mv,...j})}}Z+=oe.length+1}return}function nu(_,L,j){let Y=_.slice(0,L.end).trimEnd(),Z=pl(_,L.end),oe=Z===""?"     ":`${Z}  `,se=!Y.endsWith("[")&&!Y.endsWith(",");return`${Y}${se?",":""}
-${oe}${j}${_.slice(L.end)}`}function tu(_,L,j){let Y=_.indexOf(j,L.start);if(Y===-1||Y>L.end)return _;return`${_.slice(0,Y)}${_.slice(Y+j.length).replace(/^\s*,/,"")}`}function ru(_,L){let j=new RegExp(`^\\s*${L}\\s*=\\s*\\[\\s*]\\s*(?:#.*)?$`),Y=_.split(`
-`),Z=Y.findIndex((fe)=>/^\s*\[/.test(fe)),oe=Z===-1?Y:Y.slice(0,Z),se=Z===-1?[]:Y.slice(Z);return[...oe.filter((fe)=>!j.test(fe)),...se].join(`
-`)}function ou(_,L,j){let Y=new RegExp(`^\\s*\\[\\[${L}]]\\s*$`,"m");return _.split(/(?=^\s*\[)/m).filter((Z)=>!Y.test(Z)||!Z.includes(j)).join("").trimEnd()}var vr=kn["kimi-code"],Ss=`[[hooks]]
+`)}`.trim());let H=Rd(L.stdout),Y=(Array.isArray(H)?H:[]).filter((Z)=>Xe(Z,"scope")==="user"&&Xe(Z,"exists")===!0&&Xe(Z,"viewerCanWrite")===!0).map((Z)=>Xe(Z,"cloneRef")).find((Z)=>typeof Z==="string"&&Z.length>0);if(!Y)throw Error('Your Amp account has no writable Personal Plugins repository. Sign in with "amp login", open Amp once to create it, and rerun install --amp.');return Y}async function Td(P,L,H){let Y=wv(Cn(L.tmpdir,"cc-safety-net-amp-"));try{return await hr(P,["amp","clone","user-plugins",Y]),await H(Y)}finally{bo(Y,{recursive:!0,force:!0})}}function ws(P){return`rerun ${P==="overwrite"?"install":"uninstall"} --amp`}function Ad(P,L,H){let Y=Cn(P,L),Z=dn(Y);if(!Z)return;if(Z.isSymbolicLink()||!Z.isFile())throw Error(`Refusing to ${H} ${L} in your Amp personal plugins repository: not a regular file. Remove it there and ${ws(H)}.`);let oe=Zt(Y);if(wo(oe))return oe;throw Error(`Refusing to ${H} unmanaged file ${L} in your Amp personal plugins repository. Remove it there and ${ws(H)}.`)}function _d(P,L){let H=Cn(P,Tt),Y=dn(H);if(!Y)return;if(Y.isSymbolicLink()||!Y.isDirectory())throw Error(`Refusing to ${L} ${Tt} in your Amp personal plugins repository: not a regular directory. Remove it there and ${ws(L)}.`);return Ad(P,At,L)}function Tv(P){let L=Cn(P,Yt),H=dn(L);if(!H||H.isSymbolicLink()||!H.isFile())return;let Y=Zt(L);return wo(Y)?Y:void 0}async function Id(P,L,H,Y){if(await hr(P,H,L),(await hr(P,["git","status","--porcelain"],L)).stdout.trim()==="")return!1;return await hr(P,["git","-c","commit.gpgsign=false","-c","user.name=cc-safety-net","-c","user.email=cc-safety-net@localhost","commit","-m",Y],L),await hr(P,["git","push","origin","HEAD"],L),!0}function vo(P,L){Av(P,L),_v(P,L)}function Od(P,L){if(L==="keep")return;throw Error(`Local Amp plugin ${P} is not a managed copy and masks the personal plugin. Remove it and rerun install --amp.`)}function Av(P,L){let H=Sv(P),Y=dn(H);if(!Y)return;if(!Y.isSymbolicLink()&&Y.isFile()&&wo(Zt(H))){bo(H);return}Od(H,L)}function _v(P,L){let H=Cn(P.home,".config","amp","plugins",Tt),Y=dn(H);if(!Y)return;if(!Y.isSymbolicLink()&&Y.isDirectory()&&Iv(H)){bo(H,{recursive:!0});return}Od(H,L)}function Iv(P){let L=Cv(At);if(kv(P).join("\x00")!==L)return!1;let H=Cn(P,L),Y=dn(H);return!!Y&&!Y.isSymbolicLink()&&Y.isFile()&&wo(Zt(H))}function Ov(P){let L=u(P);if(!Sd(L))return"";let H=Rd(Zt(L,"utf-8"));if(!H||typeof H!=="object"||Array.isArray(H))return"";return`;globalThis.__CC_SAFETY_NET_EMBEDDED_POLICY__ = ${JSON.stringify(k(H,P.home))};
+`}async function $d(P,L=Ev(),H=vs){let Y=Buffer.concat([Zt(L),Buffer.from(Ov(P),"utf-8")]),Z=await Ed(H);return Td(H,P,async(oe)=>{let se=`${Z}/${Tt}`,me=_d(oe,"overwrite"),he=Ad(oe,Yt,"overwrite");if(me?.equals(Y)&&!he)return vo(P,"fail"),{path:se,alreadyInstalled:!0};if(bv(Cn(oe,Tt),{recursive:!0}),an(Cn(oe,At),Y),he)bo(Cn(oe,Yt));let ke=await Id(H,oe,["git","add","--",At,...he?[Yt]:[]],`chore: update cc-safety-net plugin to v${pn()}`);return vo(P,"fail"),{path:se,alreadyInstalled:!ke}})}async function Dd(P,L=vs){let H=await Ed(L);return Td(L,P,async(Y)=>{let Z=_d(Y,"remove"),oe=Tv(Y),se=`${H}/${oe&&!Z?Yt:Tt}`;if(!Z&&!oe)return vo(P,"keep"),{path:se,alreadyInstalled:!1};return await Id(L,Y,["git","rm","--",...Z?[At]:[],...oe?[Yt]:[]],`chore: remove cc-safety-net plugin v${pn()}`),vo(P,"keep"),{path:se,alreadyInstalled:!0}})}import{existsSync as Nd,mkdirSync as $v,readFileSync as Dv}from"node:fs";import{dirname as Nv}from"node:path";var ks=kn["antigravity-cli"],_t="cc-safety-net";function It(P){return Boolean(P)&&typeof P==="object"&&!Array.isArray(P)}function Co(){return{PreToolUse:[{hooks:[{type:"command",command:ks,timeout:30}]}]}}function Ld(P){try{let L=JSON.parse(Dv(P,"utf-8"));if(!L||typeof L!=="object"||Array.isArray(L))throw Error("Antigravity hooks config must be a JSON object");return L}catch(L){if(L instanceof SyntaxError)throw Error(`Failed to parse Antigravity hooks config ${P}: ${L.message}`);throw L}}function jd(P){let L=P[_t];if(L===void 0){let Y=Co();return P[_t]=Y,{definition:Y,preToolUse:Y.PreToolUse??[]}}if(!It(L))throw Error(`Antigravity hooks config entry "${_t}" must be an object`);let H=Array.isArray(L.PreToolUse)?L.PreToolUse:[];return L.PreToolUse=H,{definition:L,preToolUse:H}}function Fd(P){if(!Array.isArray(P.PreToolUse))return!1;return P.PreToolUse.some((L)=>It(L)&&Array.isArray(L.hooks)&&L.hooks.some((H)=>It(H)&&H.command===ks))}function Lv(P){return Object.values(P).some((L)=>It(L)&&L.enabled!==!1&&Fd(L))}function jv(P){if(P[_t]===void 0)return!1;let L=jd(P);if(L.definition.enabled!==!1||!Fd(L.definition))return!1;return L.definition.enabled=!0,!0}function Fv(P){if(P[_t]===void 0){P[_t]=Co();return}let L=jd(P);L.definition.enabled=!0,L.preToolUse.push(Co().PreToolUse?.[0]??{hooks:[]})}function Hv(P){let L=!1;for(let H of Object.values(P)){if(!It(H)||!Array.isArray(H.PreToolUse))continue;H.PreToolUse=H.PreToolUse.flatMap((Y)=>{if(!It(Y)||!Array.isArray(Y.hooks))return[Y];let Z=Y.hooks.filter((oe)=>!It(oe)||oe.command!==ks);if(Z.length!==Y.hooks.length)L=!0;return Z.length===0?[]:[{...Y,hooks:Z}]})}return L}function ko(P,L){an(P,`${JSON.stringify(L,null,2)}
+`)}function Hd(P){let L=rr(P.home);if($v(Nv(L),{recursive:!0}),!Nd(L))return ko(L,{[_t]:Co()}),{path:L,alreadyInstalled:!1};let H=Ld(L);if(Lv(H))return{path:L,alreadyInstalled:!0};if(jv(H))return ko(L,H),{path:L,alreadyInstalled:!1};return Fv(H),ko(L,H),{path:L,alreadyInstalled:!1}}function Md(P){let L=rr(P.home);if(!Nd(L))return{path:L,alreadyInstalled:!1};let H=Ld(L);if(!Hv(H))return{path:L,alreadyInstalled:!1};return ko(L,H),{path:L,alreadyInstalled:!0}}import{existsSync as Ps,readlinkSync as Bv}from"node:fs";import{join as Kn}from"node:path";import{spawn as Mv}from"node:child_process";var On=Rn.map((P)=>({target:P.id,flag:P.flag,label:cn(P.id),probeCommand:P.probeCommand}));function Cs(P){let L=new Set(P);return On.map((H)=>H.target).filter((H)=>L.has(H))}async function Ud(P,L){for(let H of P)await L(H)}var Uv=5000;function vr(P,L=Uv){return new Promise((H)=>{let Y=Xn([...P],process.env),Z=Mv(Y.cmd,Y.args,{env:process.env,stdio:"ignore"}),oe=!1,se=(he)=>{if(oe)return;oe=!0,clearTimeout(me),H(he)},me=setTimeout(()=>{Z.kill(),se(!1)},L);Z.on("error",()=>se(!1)),Z.on("close",(he)=>se(he===0))})}function Bd(P=vr,L={}){let H=new Set(L.configuredTargets??[]);return Promise.all(On.map(async(Y)=>({target:Y.target,flag:Y.flag,label:Y.label,...qd(L.action,await P(Y.probeCommand)||Y.target==="cursor"&&await P(ia),H.has(Y.target))})))}function Gd(P,L){let H=new Set(L.configuredTargets??[]);return P.map((Y)=>({...Y,...qd(L.action,Y.available,H.has(Y.target))}))}function qd(P,L,H){if(P==="uninstall")return H?{available:!0}:{available:!1,unavailableReason:"not installed"};if(P==="install"&&H)return{available:!1,unavailableReason:"already installed"};if(!L)return{available:!1,unavailableReason:"CLI not installed"};return{available:!0}}var Jn="cc-safety-net",zd=["npx","-y","@deepseek-ai/dsh"],Vd="DeepSeek Harness",Kd=["@deepseek-ai","dsh-desktop"],Wd="Quit DeepSeek Harness Desktop, then run this command again: Desktop plugins can only change while it is closed.",xs=(P)=>`DeepSeek Harness Desktop is not in its default location, so ${P} ${Jn} from its Plugins page.`,Yd=(P,L)=>Ps(Kn(ki(P),L,"package.json"));function Ss(P,L){let H=L.platform??process.platform,Y=Yd(P,"desktop"),Z=H==="darwin"?[Kn(P.home,"Applications"),L.systemApplications??"/Applications"].map((oe)=>Kn(oe,`${Vd}.app`,"Contents","Resources","runtime","cli","bin","dsh")):H==="win32"?[Kn(P.env.get("LOCALAPPDATA")||Kn(P.home,"AppData","Local"),"Programs",Vd,"resources","runtime","cli","bin","dsh.cmd")]:[];return{profile:Y,cli:Y?Z.find((oe)=>Ps(oe)):void 0}}function Zd(P,L=process.platform){if(L==="win32")return Ps(Kn(P.env.get("APPDATA")||Kn(P.home,"AppData","Roaming"),...Kd,"lockfile"));let H=Gv(Kn(P.home,"Library","Application Support",...Kd,"SingletonLock")),Y=Number(/-(\d+)$/.exec(H??"")?.[1]);return Number.isInteger(Y)&&Y>0&&qv(Y)}function Gv(P){try{return Bv(P)}catch{return}}function qv(P){try{return process.kill(P,0),!0}catch(L){return L.code==="EPERM"}}async function Xd(P,L={}){let H=Ss(P,L);if(H.cli&&Zd(P,L.platform))throw Error(Wd);let Y=!H.cli||Yd(P,"web")||await(L.probe??vr)(qo),Z=[...H.cli?[{profile:"desktop",label:"Desktop",dsh:[H.cli]}]:[],...Y?[{profile:"web",label:"web",dsh:zd}]:[]];return{commands:Z.map((oe)=>[...oe.dsh,"plugin","--profile",oe.profile,"add",`${Jn}@${pn()}`]),afterInstall:async()=>{let oe=new Set(Ci(P).filter((me)=>me.enabled).map((me)=>me.name)),se=Z.filter((me)=>!oe.has(me.profile));if(se.length>0)throw Error(`DeepSeek Harness installed ${Jn} in the ${Jd(se)} but did not enable it. Enable it from the Plugins page.`)},message:[`Added ${Jn} to the DeepSeek Harness ${Jd(Z)}.`,...H.profile&&!H.cli?[xs("add")]:[]].join(`
+`)}}function Jd(P){return`${P.map((L)=>L.label).join(" and ")} profile${P.length>1?"s":""}`}function Qd(P,L={}){let H=new Set(Ci(P).map((oe)=>oe.name));if(!H.has("desktop")&&!H.has("web"))throw Error(`${Jn} is not installed in the DeepSeek Harness web or Desktop profile`);let Y=H.has("desktop")?Ss(P,L).cli:void 0,Z=H.has("desktop")&&!Y;if(Z&&!H.has("web"))throw Error(xs("remove"));if(Y&&Zd(P,L.platform))throw Error(Wd);return{commands:[...Y?[[Y,"plugin","--profile","desktop","remove",Jn]]:[],...H.has("web")?[[...zd,"plugin","--profile","web","remove",Jn]]:[]],...Z?{afterUninstall:()=>{throw Error(`Removed ${Jn} from the DeepSeek Harness web profile, but ${xs("remove")}`)}}:{}}}function eu(P,L,H={}){let Y=Ss(L,H).cli!==void 0;return P.map((Z)=>Z.target==="deepseek-harness"&&Y?{...Z,available:!0,unavailableReason:void 0}:Z)}import{existsSync as Vv,readdirSync as Kv,rmSync as Jv}from"node:fs";import{join as zv}from"node:path";function nu(P,L=process.platform,H){if(!Vv(P))return;let Y=L==="win32"?/^bunx-\d+-cc-safety-net@/:new RegExp(`^bunx-${process.getuid?.()??0}-cc-safety-net@`);Kv(P).filter((Z)=>Z!==H&&Y.test(Z)).forEach((Z)=>{Jv(zv(P,Z),{recursive:!0,force:!0})})}import{existsSync as tu,readdirSync as Wv,rmSync as Yv}from"node:fs";import{join as Xt}from"node:path";function xo(P,L=process.platform){let H=Xt(P.env.get("npm_config_cache")||(L==="win32"?Xt(P.env.get("LOCALAPPDATA")||Xt(P.home,"AppData","Local"),"npm-cache"):Xt(P.home,".npm")),"_npx");if(!tu(H))return;Wv(H).filter((Y)=>tu(Xt(H,Y,"node_modules","cc-safety-net"))).forEach((Y)=>{Yv(Xt(H,Y),{recursive:!0,force:!0})})}import{existsSync as lu,mkdirSync as Xv,readFileSync as cu}from"node:fs";import{dirname as Qv,join as au}from"node:path";function Zv(P,L){if(P[L]!=="#")return L;let H=P.indexOf(`
+`,L+1);return H===-1?P.length:H+1}function Rs(P,L,H){let Y=new RegExp(`^(\\s*)${L}\\s*=\\s*\\[`),Z=0;for(let oe of P.split(`
+`)){if(/^\s*\[/.test(oe))return;let se=Y.exec(oe);if(se){let me=Z+se[0].lastIndexOf("[");return{start:me,end:li(P,me,{skipComment:Zv,...H})}}Z+=oe.length+1}return}function ru(P,L,H){let Y=P.slice(0,L.end).trimEnd(),Z=gl(P,L.end),oe=Z===""?"     ":`${Z}  `,se=!Y.endsWith("[")&&!Y.endsWith(",");return`${Y}${se?",":""}
+${oe}${H}${P.slice(L.end)}`}function ou(P,L,H){let Y=P.indexOf(H,L.start);if(Y===-1||Y>L.end)return P;return`${P.slice(0,Y)}${P.slice(Y+H.length).replace(/^\s*,/,"")}`}function iu(P,L){let H=new RegExp(`^\\s*${L}\\s*=\\s*\\[\\s*]\\s*(?:#.*)?$`),Y=P.split(`
+`),Z=Y.findIndex((me)=>/^\s*\[/.test(me)),oe=Z===-1?Y:Y.slice(0,Z),se=Z===-1?[]:Y.slice(Z);return[...oe.filter((me)=>!H.test(me)),...se].join(`
+`)}function su(P,L,H){let Y=new RegExp(`^\\s*\\[\\[${L}]]\\s*$`,"m");return P.split(/(?=^\s*\[)/m).filter((Z)=>!Y.test(Z)||!Z.includes(H)).join("").trimEnd()}var br=kn["kimi-code"],Es=`[[hooks]]
 event = "PreToolUse"
-command = "${vr}"`,lu=`{ event = "PreToolUse", command = "${vr}" }`,cu={stringError:"Unterminated string in Kimi Code config",bracketError:"Unmatched hooks array in Kimi Code config"};function du(_){return iu(_.env.get("KIMI_CODE_HOME")??iu(_.home,".kimi-code"),"config.toml")}function Bv(_){let L=xs(_,"hooks",cu);if(L&&_.slice(L.start+1,L.end).trim())return nu(_,L,lu);let j=ru(_,"hooks").trimEnd();if(j==="")return`${Ss}
-`;return`${j}
+command = "${br}"`,du=`{ event = "PreToolUse", command = "${br}" }`,uu={stringError:"Unterminated string in Kimi Code config",bracketError:"Unmatched hooks array in Kimi Code config"};function pu(P){return au(P.env.get("KIMI_CODE_HOME")??au(P.home,".kimi-code"),"config.toml")}function eb(P){let L=Rs(P,"hooks",uu);if(L&&P.slice(L.start+1,L.end).trim())return ru(P,L,du);let H=iu(P,"hooks").trimEnd();if(H==="")return`${Es}
+`;return`${H}
 
-${Ss}
-`}function uu(_){let L=du(_);if(Uv(Gv(L),{recursive:!0}),!su(L))return ln(L,`${Ss}
-`),{path:L,alreadyInstalled:!1};let j=au(L,"utf-8");if(j.includes(vr))return{path:L,alreadyInstalled:!0};return ln(L,Bv(j)),{path:L,alreadyInstalled:!1}}function pu(_){let L=du(_);if(!su(L))return{path:L,alreadyInstalled:!1};let j=au(L,"utf-8");if(!j.includes(vr))return{path:L,alreadyInstalled:!1};let Y=xs(j,"hooks",cu),Z=Y?tu(j,Y,lu):`${ou(j,"hooks",vr)}
-`;return ln(L,Z),{path:L,alreadyInstalled:!0}}var Ps="safety-net@cc-marketplace",fu=new Set(["claude-code","codex","copilot-cli","gemini-cli","hermes-agent","openclaw","opencode","pi"]),mu=new Set(["antigravity-cli","cursor","devin","droid","grok-build","hermes-agent","kimi-code"]);function Es(_){return/^\s*safety-net@cc-marketplace[^a-z0-9-][^\n]*installed,/m.test(_??"")}function bu(_){return/^\s*cc-safety-net[^a-z0-9-][^\n]*installed,/m.test(_??"")}function qv(_){return/^Marketplace `cc-marketplace`\s*$/m.test(_??"")}var wu={"claude-code":{installCommands:(_)=>{let L=Kr(_,"cc-safety-net@cc-marketplace");return{commands:[...L?[["claude","plugin","marketplace","update","cc-marketplace"],["claude","plugin","update","cc-safety-net@cc-marketplace"]]:[["claude","plugin","marketplace","add","kenryu42/cc-marketplace"],["claude","plugin","marketplace","update","cc-marketplace"],["claude","plugin","install","cc-safety-net@cc-marketplace"]],...ii(_).status==="disabled"?[["claude","plugin","enable","cc-safety-net@cc-marketplace"]]:[]],cleanupCommands:Kr(_,Ps)?[["claude","plugin","uninstall",Ps]]:[],update:L}},uninstallCommands:[["claude","plugin","uninstall","cc-safety-net@cc-marketplace"],["claude","plugin","marketplace","remove","cc-marketplace"]]},codex:{installCommands:async(_,L)=>{let j=L??await fn(["codex","plugin","list"]),Y=bu(j);return{commands:[Y||qv(j)?["codex","plugin","marketplace","upgrade","cc-marketplace"]:["codex","plugin","marketplace","add","kenryu42/cc-marketplace"],["codex","plugin","add","cc-safety-net@cc-marketplace"]],cleanupCommands:Es(j)?[["codex","plugin","remove","safety-net@cc-marketplace"]]:[],update:Y}},uninstallCommands:[["codex","plugin","remove","cc-safety-net@cc-marketplace"],["codex","plugin","marketplace","remove","cc-marketplace"]],postInstallMessage:ll},"copilot-cli":{installCommands:async()=>{let _=await fn(["copilot","plugin","list"]),L=[...wl(_)?[["copilot","plugin","uninstall","copilot-safety-net"]]:[],...kl(_)?[["copilot","plugin","uninstall",hl]]:[]];if(vl(_))return{commands:[["copilot","plugin","marketplace","update","cc-marketplace"],["copilot","plugin","update",Tn]],cleanupCommands:L,update:!0};return{commands:[bl(await fn(["copilot","plugin","marketplace","list"]))?["copilot","plugin","marketplace","update","cc-marketplace"]:["copilot","plugin","marketplace","add","kenryu42/cc-marketplace"],["copilot","plugin","install",Tn]],cleanupCommands:L}},uninstallCommands:[["copilot","plugin","uninstall","cc-safety-net@cc-marketplace"],["copilot","plugin","marketplace","remove","cc-marketplace"]]},"gemini-cli":{installCommands:(_)=>{let L=Ai(_);if(L.status==="configured")return{commands:[["gemini","extensions","update","gemini-safety-net"]],update:!0};if(L.status==="disabled")return{commands:[["gemini","extensions","update","gemini-safety-net"],["gemini","extensions","enable","gemini-safety-net"]],update:!0};return{commands:[["gemini","extensions","install","https://github.com/kenryu42/gemini-safety-net","--consent"]]}},uninstallCommands:[["gemini","extensions","uninstall","gemini-safety-net"]]},openclaw:{beforeInstall:Ki,installCommands:(_)=>{let L=!Po(So(dr(_),xn));return{commands:Ac(),afterInstall:()=>Oc(L)}},uninstallCommands:[["openclaw","plugins","uninstall",un,"--force"]],postInstallMessage:["Restart the OpenClaw Gateway to apply the change.","If plugins.allow is set in openclaw.json, it must also list cc-safety-net."].join(`
-`)},opencode:{installCommands:Gc},pi:{installCommands:[["pi","install","npm:cc-safety-net"]],uninstallCommands:[["pi","uninstall","npm:cc-safety-net"]]},"deepseek-harness":{installCommands:(_)=>Yd(_),uninstallCommands:(_)=>Zd(_)}};function ku(_,L=(j)=>j){try{let j=JSON.parse(L(vu(_,"utf-8")));if(!j||typeof j!=="object"||Array.isArray(j))throw Error(`Settings file ${_} must be a JSON object`);return j}catch(j){if(j instanceof SyntaxError)throw Error(`Failed to parse ${_}: ${j.message}`);throw j}}function Vv(_){let L=So(ir(_),"settings.json");if(!Po(L))return;let j=ku(L,yn),Y=j.enabledPlugins;if(!Y||typeof Y!=="object"||Array.isArray(Y))return;if(Y[Tn]!==!1)return;let Z=vu(L,"utf-8"),oe=Z.replace(new RegExp(`("${Tn}"\\s*:\\s*)false`),"$1true");return Y[Tn]=!0,ln(L,oe!==Z?oe:`${JSON.stringify(j,null,2)}
-`),`Enabled ${Tn} plugin in ${L}`}function Kv(_){let L=rs(_);if(!Po(L))return;let j=ku(L);if(!Array.isArray(j.packages))return;let Y=j.packages.find((Z)=>!!Z&&typeof Z==="object"&&!Array.isArray(Z)&&os(Z.source)&&("extensions"in Z));if(!Y)return;return delete Y.extensions,ln(L,`${JSON.stringify(j,null,2)}
-`),`Enabled npm:cc-safety-net extensions in ${L}`}function gu(_,L){let j=mn({label:L,booleans:Object.fromEntries(On.map((oe)=>[oe.target,[oe.flag]]))},_),Y=j.errors[0];if(Y)throw Error(Y);let Z=On.filter((oe)=>j.flags[oe.target]).map((oe)=>oe.target);if(Z.length!==1)throw Error(`Choose exactly one ${L} target: ${On.map((oe)=>oe.flag).join(", ")}`);return Z[0]}async function Cu(_,L=Ht){let[j,Y,Z]=await Promise.all([L(["amp","plugins","list"],30000),L(["codex","plugin","list"],30000),L(["copilot","--binary-version"])]);return{codexPluginListOutput:Y,hooks:Wt(_,process.cwd(),{ampPluginListOutput:j,codexPluginListOutput:Y,copilotCliVersion:Z})}}async function Jv(_,L,j=Ht){let Y=await Cu(_,j);return Y.hooks.filter((Z)=>L==="install"?Z.configured:Z.detected&&Z.method!==eo||Z.inspectionStatus==="not-inspected").filter((Z)=>!Pu(Z)).filter((Z)=>Z.platform!=="codex"||!Es(Y.codexPluginListOutput)||bu(Y.codexPluginListOutput)).map((Z)=>Z.platform)}function Wv(_,L,j,Y){if(j.length>0)return{finish:async()=>[gu(j,L)]};if(!Y.selectTargets&&!fs(Y.input,Y.output))return{finish:async()=>[gu(j,L)]};let Z=Y.detectConfiguredTargets??(()=>Jv(_,L,Y.fetchVersion)),oe=Promise.all([Md(Y.probeTargets).then((se)=>Xd(se,_)),Z()]);return{ready:oe,finish:async()=>{let[se,fe]=await oe,ge=Ud(se,{action:L,configuredTargets:fe}),Pe=Y.selectTargets?await Y.selectTargets(L,hu(L,ge)):await Cd(L,hu(L,ge),{input:Y.input,output:Y.output});if(Pe==="update")return Pe;if(!Pe||Pe.length===0)return null;return bs(Pe)}}}async function zv(_,L,j=!1,Y){let Z=wu[_];Z.beforeInstall?.(L);let oe=typeof Z.installCommands==="function"?await Z.installCommands(L,Y):{commands:Z.installCommands};return await ui(oe.commands),await _l(oe.cleanupCommands??[]),await oe.afterInstall?.(),[`${oe.update||j?"Updated":"Installed"} ${cn(_)} integration`,oe.message??Z.postInstallMessage].filter(Boolean).join(`
-`)}async function Yv(_,L){let j=wu[_];if(!j.uninstallCommands)throw Error(`${cn(_)} uninstall is not supported`);let Y=typeof j.uninstallCommands==="function"?j.uninstallCommands(L):{commands:j.uninstallCommands};return await ui(Y.commands),Y.afterUninstall?.(),`Uninstalled ${cn(_)} integration`}function Zv(_){let L=Vc(_);return L.alreadyInstalled?`Uninstalled OpenCode plugin from ${L.path}`:`OpenCode plugin not installed in ${L.path}`}var xu={"antigravity-cli":{install:jd,uninstall:Hd},cursor:{install:Dl,uninstall:Nl},devin:{install:ql,uninstall:Vl},droid:{install:Xl,uninstall:Ql},"grok-build":{install:ac,uninstall:lc},"kimi-code":{install:uu,uninstall:pu}};function Xv(_,L,j,Y=!1){if(_==="install"&&!Y)xo(j);let Z=xu[L][_](j),oe=cn(L),se=_!=="install"?"Uninstalled":Y?"Updated":"Installed";return _==="install"&&Z.alreadyInstalled?Y?`${oe} hook up to date in ${Z.path}`:`${oe} hook already installed in ${Z.path}`:_==="uninstall"&&!Z.alreadyInstalled?`${oe} hook not installed in ${Z.path}`:`${se} ${oe} hook ${_==="install"?"in":"from"} ${Z.path}`}var Su={amp:{install:Ad,uninstall:Od,restartNote:'Amp personal plugins apply to every Amp session, including Orb threads. Restart Amp or run "plugins: reload" to apply the change.'},"hermes-agent":{install:gc,uninstall:yc,afterInstall:async(_)=>{let L=Ui(_);return await fn(["hermes","plugins","enable",Pn,"--no-allow-tool-override"]),!L},beforeUninstall:async(_)=>{Mi(_);try{await fn(["hermes","plugins","disable",Pn])}catch(L){console.warn(`${L instanceof Error?L.message:String(L)}
-Removing the plugin files anyway; ${Pn} may still be listed in the Hermes config.`)}},restartNote:"Restart Hermes to apply the change."}};async function Qv(_,L,j,Y=!1){let Z=Su[L];if(_==="uninstall")await Z.beforeUninstall?.(j);let oe=_==="install"?await Z.install(j):await Z.uninstall(j),se=_==="install"&&await Z.afterInstall?.(j),fe=cn(L),ge=!se&&(_==="install"&&oe.alreadyInstalled||_==="uninstall"&&!oe.alreadyInstalled);return[ge?_==="install"?`${fe} plugin ${Y?"up to date":"already installed"} at ${oe.path}`:`${fe} plugin not installed at ${oe.path}`:`${_!=="install"?"Uninstalled":Y?"Updated":"Installed"} ${fe} plugin ${_==="install"?"at":"from"} ${oe.path}`,ge?void 0:Z.restartNote].filter(Boolean).join(`
-`)}var eb={"copilot-cli":{afterInstall:Vv},cursor:{afterUninstall:Il},"hermes-agent":{beforeInstall:(_,L)=>{if(!L)xo(_)}},openclaw:{beforeUninstall:Ki},pi:{afterInstall:Kv}};function nb(_){return _ in xu}function tb(_){return _ in Su}var yu=["Install CC Safety Net as a native Kimi Code plugin:","","  1. Start Kimi Code and run: /plugins install https://github.com/kenryu42/cc-safety-net/tree/plugin","     Confirm the trust prompt; it defaults to cancel.","  2. Run /reload, or start a new session.","","Note: Kimi Code hooks are fail-open. When the hook process cannot start, crashes, or times","out, Kimi Code allows the tool call."].join(`
-`);function Pu(_){return _.platform==="kimi-code"&&_.method===uo}function Eu(_){return po({environment:_,cwd:process.cwd()}).method==="hook config"}function rb(_){if(!Eu(_))return yu;return[yu,"",en.red(["CAUTION: the global Kimi Code hook is installed and will run alongside the plugin.","After the plugin is active, remove it with: cc-safety-net uninstall --kimi-code"].join(`
+${Es}
+`}function fu(P){let L=pu(P);if(Xv(Qv(L),{recursive:!0}),!lu(L))return an(L,`${Es}
+`),{path:L,alreadyInstalled:!1};let H=cu(L,"utf-8");if(H.includes(br))return{path:L,alreadyInstalled:!0};return an(L,eb(H)),{path:L,alreadyInstalled:!1}}function mu(P){let L=pu(P);if(!lu(L))return{path:L,alreadyInstalled:!1};let H=cu(L,"utf-8");if(!H.includes(br))return{path:L,alreadyInstalled:!1};let Y=Rs(H,"hooks",uu),Z=Y?ou(H,Y,du):`${su(H,"hooks",br)}
+`;return an(L,Z),{path:L,alreadyInstalled:!0}}var Ts="safety-net@cc-marketplace",gu=new Set(["claude-code","codex","copilot-cli","gemini-cli","hermes-agent","openclaw","opencode","pi"]),yu=new Set(["antigravity-cli","cursor","devin","droid","grok-build","hermes-agent","kimi-code"]);function As(P){return/^\s*safety-net@cc-marketplace[^a-z0-9-][^\n]*installed,/m.test(P??"")}function ku(P){return/^\s*cc-safety-net[^a-z0-9-][^\n]*installed,/m.test(P??"")}function nb(P){return/^Marketplace `cc-marketplace`\s*$/m.test(P??"")}var Cu={"claude-code":{installCommands:(P)=>{let L=Kr(P,"cc-safety-net@cc-marketplace");return{commands:[...L?[["claude","plugin","marketplace","update","cc-marketplace"],["claude","plugin","update","cc-safety-net@cc-marketplace"]]:[["claude","plugin","marketplace","add","kenryu42/cc-marketplace"],["claude","plugin","marketplace","update","cc-marketplace"],["claude","plugin","install","cc-safety-net@cc-marketplace"]],...si(P).status==="disabled"?[["claude","plugin","enable","cc-safety-net@cc-marketplace"]]:[]],cleanupCommands:Kr(P,Ts)?[["claude","plugin","uninstall",Ts]]:[],update:L}},uninstallCommands:[["claude","plugin","uninstall","cc-safety-net@cc-marketplace"],["claude","plugin","marketplace","remove","cc-marketplace"]]},codex:{installCommands:async(P,L)=>{let H=L??await fn(["codex","plugin","list"]),Y=ku(H);return{commands:[Y||nb(H)?["codex","plugin","marketplace","upgrade","cc-marketplace"]:["codex","plugin","marketplace","add","kenryu42/cc-marketplace"],["codex","plugin","add","cc-safety-net@cc-marketplace"]],cleanupCommands:As(H)?[["codex","plugin","remove","safety-net@cc-marketplace"]]:[],update:Y}},uninstallCommands:[["codex","plugin","remove","cc-safety-net@cc-marketplace"],["codex","plugin","marketplace","remove","cc-marketplace"]],postInstallMessage:ul},"copilot-cli":{installCommands:async()=>{let P=await fn(["copilot","plugin","list"]),L=[...xl(P)?[["copilot","plugin","uninstall","copilot-safety-net"]]:[],...Pl(P)?[["copilot","plugin","uninstall",wl]]:[]];if(kl(P))return{commands:[["copilot","plugin","marketplace","update","cc-marketplace"],["copilot","plugin","update",An]],cleanupCommands:L,update:!0};return{commands:[Cl(await fn(["copilot","plugin","marketplace","list"]))?["copilot","plugin","marketplace","update","cc-marketplace"]:["copilot","plugin","marketplace","add","kenryu42/cc-marketplace"],["copilot","plugin","install",An]],cleanupCommands:L}},uninstallCommands:[["copilot","plugin","uninstall","cc-safety-net@cc-marketplace"],["copilot","plugin","marketplace","remove","cc-marketplace"]]},"gemini-cli":{installCommands:(P)=>{let L=Oi(P);if(L.status==="configured")return{commands:[["gemini","extensions","update","gemini-safety-net"]],update:!0};if(L.status==="disabled")return{commands:[["gemini","extensions","update","gemini-safety-net"],["gemini","extensions","enable","gemini-safety-net"]],update:!0};return{commands:[["gemini","extensions","install","https://github.com/kenryu42/gemini-safety-net","--consent"]]}},uninstallCommands:[["gemini","extensions","uninstall","gemini-safety-net"]]},openclaw:{beforeInstall:Ji,installCommands:(P)=>{let L=!So(Po(ur(P),xn));return{commands:Dc(),afterInstall:()=>Nc(L)}},uninstallCommands:[["openclaw","plugins","uninstall",un,"--force"]],postInstallMessage:["Restart the OpenClaw Gateway to apply the change.","If plugins.allow is set in openclaw.json, it must also list cc-safety-net."].join(`
+`)},opencode:{installCommands:Vc},pi:{installCommands:[["pi","install","npm:cc-safety-net"]],uninstallCommands:[["pi","uninstall","npm:cc-safety-net"]]},"deepseek-harness":{installCommands:(P)=>Xd(P),uninstallCommands:(P)=>Qd(P)}};function xu(P,L=(H)=>H){try{let H=JSON.parse(L(wu(P,"utf-8")));if(!H||typeof H!=="object"||Array.isArray(H))throw Error(`Settings file ${P} must be a JSON object`);return H}catch(H){if(H instanceof SyntaxError)throw Error(`Failed to parse ${P}: ${H.message}`);throw H}}function tb(P){let L=Po(sr(P),"settings.json");if(!So(L))return;let H=xu(L,yn),Y=H.enabledPlugins;if(!Y||typeof Y!=="object"||Array.isArray(Y))return;if(Y[An]!==!1)return;let Z=wu(L,"utf-8"),oe=Z.replace(new RegExp(`("${An}"\\s*:\\s*)false`),"$1true");return Y[An]=!0,an(L,oe!==Z?oe:`${JSON.stringify(H,null,2)}
+`),`Enabled ${An} plugin in ${L}`}function rb(P){let L=os(P);if(!So(L))return;let H=xu(L);if(!Array.isArray(H.packages))return;let Y=H.packages.find((Z)=>!!Z&&typeof Z==="object"&&!Array.isArray(Z)&&is(Z.source)&&("extensions"in Z));if(!Y)return;return delete Y.extensions,an(L,`${JSON.stringify(H,null,2)}
+`),`Enabled npm:cc-safety-net extensions in ${L}`}function hu(P,L){let H=mn({label:L,booleans:Object.fromEntries(On.map((oe)=>[oe.target,[oe.flag]]))},P),Y=H.errors[0];if(Y)throw Error(Y);let Z=On.filter((oe)=>H.flags[oe.target]).map((oe)=>oe.target);if(Z.length!==1)throw Error(`Choose exactly one ${L} target: ${On.map((oe)=>oe.flag).join(", ")}`);return Z[0]}async function Pu(P,L=Ft){let[H,Y,Z]=await Promise.all([L(["amp","plugins","list"],30000),L(["codex","plugin","list"],30000),L(["copilot","--binary-version"])]);return{codexPluginListOutput:Y,hooks:zt(P,process.cwd(),{ampPluginListOutput:H,codexPluginListOutput:Y,copilotCliVersion:Z})}}async function ob(P,L,H=Ft){let Y=await Pu(P,H);return Y.hooks.filter((Z)=>L==="install"?Z.configured:Z.detected&&Z.method!==eo||Z.inspectionStatus==="not-inspected").filter((Z)=>!Eu(Z)).filter((Z)=>Z.platform!=="codex"||!As(Y.codexPluginListOutput)||ku(Y.codexPluginListOutput)).map((Z)=>Z.platform)}function ib(P,L,H,Y){if(H.length>0)return{finish:async()=>[hu(H,L)]};if(!Y.selectTargets&&!ys(Y.input,Y.output))return{finish:async()=>[hu(H,L)]};let Z=Y.detectConfiguredTargets??(()=>ob(P,L,Y.fetchVersion)),oe=Promise.all([Bd(Y.probeTargets).then((se)=>eu(se,P)),Z()]);return{ready:oe,finish:async()=>{let[se,me]=await oe,he=Gd(se,{action:L,configuredTargets:me}),ke=Y.selectTargets?await Y.selectTargets(L,bu(L,he)):await Pd(L,bu(L,he),{input:Y.input,output:Y.output});if(ke==="update")return ke;if(!ke||ke.length===0)return null;return Cs(ke)}}}async function sb(P,L,H=!1,Y){let Z=Cu[P];Z.beforeInstall?.(L);let oe=typeof Z.installCommands==="function"?await Z.installCommands(L,Y):{commands:Z.installCommands};return await pi(oe.commands),await Il(oe.cleanupCommands??[]),await oe.afterInstall?.(),[`${oe.update||H?"Updated":"Installed"} ${cn(P)} integration`,oe.message??Z.postInstallMessage].filter(Boolean).join(`
+`)}async function ab(P,L){let H=Cu[P];if(!H.uninstallCommands)throw Error(`${cn(P)} uninstall is not supported`);let Y=typeof H.uninstallCommands==="function"?H.uninstallCommands(L):{commands:H.uninstallCommands};return await pi(Y.commands),Y.afterUninstall?.(),`Uninstalled ${cn(P)} integration`}function lb(P){let L=zc(P);return L.alreadyInstalled?`Uninstalled OpenCode plugin from ${L.path}`:`OpenCode plugin not installed in ${L.path}`}var Su={"antigravity-cli":{install:Hd,uninstall:Md},cursor:{install:jl,uninstall:Fl},devin:{install:Jl,uninstall:zl},droid:{install:nc,uninstall:tc},"grok-build":{install:dc,uninstall:uc},"kimi-code":{install:fu,uninstall:mu}};function cb(P,L,H,Y=!1){if(P==="install"&&!Y)xo(H);let Z=Su[L][P](H),oe=cn(L),se=P!=="install"?"Uninstalled":Y?"Updated":"Installed";return P==="install"&&Z.alreadyInstalled?Y?`${oe} hook up to date in ${Z.path}`:`${oe} hook already installed in ${Z.path}`:P==="uninstall"&&!Z.alreadyInstalled?`${oe} hook not installed in ${Z.path}`:`${se} ${oe} hook ${P==="install"?"in":"from"} ${Z.path}`}var Ru={amp:{install:$d,uninstall:Dd,restartNote:'Amp personal plugins apply to every Amp session, including Orb threads. Restart Amp or run "plugins: reload" to apply the change.'},"hermes-agent":{install:vc,uninstall:bc,afterInstall:async(P)=>{let L=Bi(P);return await fn(["hermes","plugins","enable",Sn,"--no-allow-tool-override"]),!L},beforeUninstall:async(P)=>{Ui(P);try{await fn(["hermes","plugins","disable",Sn])}catch(L){console.warn(`${L instanceof Error?L.message:String(L)}
+Removing the plugin files anyway; ${Sn} may still be listed in the Hermes config.`)}},restartNote:"Restart Hermes to apply the change."}};async function db(P,L,H,Y=!1){let Z=Ru[L];if(P==="uninstall")await Z.beforeUninstall?.(H);let oe=P==="install"?await Z.install(H):await Z.uninstall(H),se=P==="install"&&await Z.afterInstall?.(H),me=cn(L),he=!se&&(P==="install"&&oe.alreadyInstalled||P==="uninstall"&&!oe.alreadyInstalled);return[he?P==="install"?`${me} plugin ${Y?"up to date":"already installed"} at ${oe.path}`:`${me} plugin not installed at ${oe.path}`:`${P!=="install"?"Uninstalled":Y?"Updated":"Installed"} ${me} plugin ${P==="install"?"at":"from"} ${oe.path}`,he?void 0:Z.restartNote].filter(Boolean).join(`
+`)}var ub={"copilot-cli":{afterInstall:tb},cursor:{afterUninstall:$l},"hermes-agent":{beforeInstall:(P,L)=>{if(!L)xo(P)}},openclaw:{beforeUninstall:Ji},pi:{afterInstall:rb}};function pb(P){return P in Su}function fb(P){return P in Ru}var vu=["Install CC Safety Net as a native Kimi Code plugin:","","  1. Start Kimi Code and run: /plugins install https://github.com/kenryu42/cc-safety-net/tree/plugin","     Confirm the trust prompt; it defaults to cancel.","  2. Run /reload, or start a new session.","","Note: Kimi Code hooks are fail-open. When the hook process cannot start, crashes, or times","out, Kimi Code allows the tool call."].join(`
+`);function Eu(P){return P.platform==="kimi-code"&&P.method===uo}function Tu(P){return po({environment:P,cwd:process.cwd()}).method==="hook config"}function mb(P){if(!Tu(P))return vu;return[vu,"",en.red(["CAUTION: the global Kimi Code hook is installed and will run alongside the plugin.","After the plugin is active, remove it with: cc-safety-net uninstall --kimi-code"].join(`
 `))].join(`
-`)}function hu(_,L){return L.map((j)=>_==="install"&&j.target==="kimi-code"&&j.unavailableReason==="already installed"?{...j,available:!0,unavailableReason:void 0,label:`${j.label} (global hook installed)`}:j)}function ob(_,L){if(_.selectKimiInstallMethod)return _.selectKimiInstallMethod();if(!fs(_.input,_.output))return Promise.resolve("global-hook");return kd({input:_.input,output:_.output,globalHookInstalled:Eu(L)})}async function Ru(_,L,j,Y=!1,Z){let oe=eb[L];if(_==="install")oe?.beforeInstall?.(j,Y);if(_==="uninstall")oe?.beforeUninstall?.(j);if(nb(L))return[Xv(_,L,j,Y),_==="uninstall"?await oe?.afterUninstall?.(j):void 0].filter(Boolean).join(`
-`);if(tb(L))return Qv(_,L,j,Y);if(_==="uninstall")return L==="opencode"?Zv(j):Yv(L,j);return[await zv(L,j,Y,Z),await oe?.afterInstall?.(j)].filter(Boolean).join(`
-`)}function ib(_){let L=mn({label:"update"},_).errors[0];if(L)throw Error(L)}async function sb(_,L=Ht){let j=await Cu(_,L),Y=So(ir(_),"installed-plugins");return{targets:bs([...j.hooks.filter((oe)=>oe.platform!=="copilot-cli"&&oe.detected&&oe.method!==eo&&oe.method!==hi).map((oe)=>oe.platform),...[Jr,yl,gl].flatMap((oe)=>Po(So(Y,...oe))?["copilot-cli"]:[]),...Kr(_,Ps)?["claude-code"]:[],...Es(j.codexPluginListOutput)?["codex"]:[]]),codexPluginListOutput:j.codexPluginListOutput,kimiPlugin:j.hooks.some(Pu)}}async function ab(_){let L=c(),j=_.output??process.stdout,Y=(_.scriptPath??process.argv[1]??"").split(/[\\/]/),Z=Y.find((_e)=>/^bunx-\d+-/.test(_e)),oe=Z!==void 0||Y.includes("_npx")?null:(_.checkLatestVersion??Gn)(),se=async()=>{let _e=oe&&await oe;if(_e?.updateAvailable)j.write(`
-Update available: cc-safety-net ${_e.currentVersion} → ${_e.latestVersion}. Update this CLI with your package manager, e.g. \`npm i -g cc-safety-net@latest\` for a global install.
-`)},fe=sb(L,_.fetchVersion??Ht).then(async(_e)=>{let Te=new Set(_e.targets);return{targets:_e.targets,codexPluginListOutput:_e.codexPluginListOutput,kimiPlugin:_e.kimiPlugin,available:new Map(await Promise.all(On.filter((Be)=>Te.has(Be.target)&&fu.has(Be.target)).map(async(Be)=>[Be.target,await hr(Be.probeCommand)])))}}),ge=await nr(_.showBanner??!0,()=>({ready:fe,finish:()=>fe}),()=>er({input:_.input??process.stdin,output:j}),{loadingMessage:"Checking installed integrations…",output:j}),Pe=await Promise.resolve().then(()=>(Qd(L.tmpdir,process.platform,Z),null)).catch((_e)=>br(_e));if(ge.targets.length===0){if(j.write("No installed integrations found. Run `cc-safety-net install` to set one up.\n"),Pe!==null)console.error(Pe);return await se(),Pe===null?0:1}let Ee=ge.targets.some((_e)=>mu.has(_e))?await Promise.resolve().then(()=>(xo(L),null)).catch((_e)=>br(_e)):null,Re=await Hr(Promise.all(ge.targets.map((_e)=>{if(_e==="kimi-code"&&ge.kimiPlugin)return Promise.resolve({message:"Kimi Code plugin skipped: update it in Kimi Code from /plugins (Installed tab, select cc-safety-net, press Enter)",failed:!1});if(fu.has(_e)&&!ge.available.get(_e))return Promise.resolve({message:`${cn(_e)} not found; skipped`,failed:!1});if(Ee!==null&&mu.has(_e))return Promise.resolve({message:Ee,failed:!0});return Ru("install",_e,L,!0,ge.codexPluginListOutput).then((Te)=>({message:Te,failed:!1}),(Te)=>({message:br(Te),failed:!0}))})),{loadingMessage:`Updating ${ge.targets.length} integration${ge.targets.length===1?"":"s"}…`,output:j}),Le=Pe===null?Re:[...Re,{message:Pe,failed:!0}];return Le.forEach((_e)=>_e.failed?console.error(_e.message):j.write(`${_e.message}
-`)),await se(),Le.some((_e)=>_e.failed)?1:0}function Rs(_,L={}){return Promise.resolve().then(()=>ib(_)).then(()=>ab(L)).catch((j)=>(console.error(br(j)),1))}async function wr(_,L,j={}){try{let Y=c(),Z=await nr(!0,()=>Wv(Y,_,L,j),()=>er({input:j.input??process.stdin,output:j.output??process.stdout}),{loadingMessage:_==="install"?"Checking available integrations…":"Checking installed integrations…",output:j.output??process.stdout});if(!Z)return(j.output??process.stdout).write(`Cancelled: nothing was ${_}ed.
-`),0;if(Z==="update")return(j.runUpdate??(()=>Rs([],{fetchVersion:j.fetchVersion,input:j.input,output:j.output,showBanner:!1})))();let oe=j.output??process.stdout;return await Fd(Z,async(se)=>{if(se==="kimi-code"&&_==="install"){let ge=await ob(j,Y);if(ge===null){oe.write(`Cancelled: Kimi Code integration was not installed.
-`);return}if(ge==="plugin"){oe.write(`${rb(Y)}
-`);return}}let fe=await Hr(Ru(_,se,Y),{loadingMessage:`${_==="install"?"Installing":"Uninstalling"} ${cn(se)} integration…`,output:oe});oe.write(`${fe}
-`)}),0}catch(Y){return console.error(br(Y)),1}}function br(_){let L=_ instanceof Error?_.message:String(_),j=typeof _==="object"&&_!==null&&"code"in _?_.code:null;if(j==="EACCES"||j==="EPERM")return`${L}
-Check file permissions for the target config file and parent directory.`;if(j==="ENOENT")return`${L}
-Check that the target config path and parent directory exist.`;if(j==="ENOTDIR")return`${L}
-Check that every parent path component is a directory.`;return L}import{mkdirSync as fb}from"node:fs";import{dirname as mb}from"node:path";import{createInterface as gb}from"node:readline";import{existsSync as Tu,readFileSync as lb}from"node:fs";function Ot(_,L){let j=ft(_,L);return{policy:j.policy,errors:ue(ut(j.issues,pt,(Y)=>Y.kind==="custom")," "," ")}}function kr(_,L){return Ot(_,L).errors}function _u(_,L){return{"safety.level":_.safety.level,..._s("safety.overrides",_.safety.overrides),"workflow.worktree_mode":String(_.workflow.worktree_mode),"destructive_command_protection.enabled":String(_.destructive_command_protection.enabled),..._s("destructive_command_protection.overrides",_.destructive_command_protection.overrides),"destructive_command_protection.allow_paths":Ts(_.destructive_command_protection.allow_paths),"secret_protection.enabled":String(_.secret_protection.enabled),..._s("secret_protection.overrides",_.secret_protection.overrides),"secret_protection.deny_paths":Ts(_.secret_protection.deny_paths),"secret_protection.allow_paths":Ts(_.secret_protection.allow_paths),...L?{"audit.retention_days":String(_.audit.retention_days)}:{}}}function Eo(_,L,j){let Y=_u(_,j),Z=_u(L,j);return[...new Set([...Object.keys(Y),...Object.keys(Z)])].flatMap((oe)=>Y[oe]===Z[oe]?[]:[{field:oe,before:Y[oe],after:Z[oe]}])}function Cr(_,L){let j=u(_,L);if(!Tu(j))return{baseline:k(globalThis.__CC_SAFETY_NET_EMBEDDED_POLICY__,_.home),diagnostics:[]};let Y=$t(j),Z=Ot(Y.value,_.home);return{baseline:Z.policy,diagnostics:Y.errors.length>0?Y.errors:Z.errors}}function $t(_){if(!Tu(_))return{errors:[`${_}: file not found`]};try{return{value:JSON.parse(lb(_,"utf-8")),errors:[]}}catch(L){let j=L instanceof Error?L.message:String(L);return{errors:[`${_}: ${L instanceof SyntaxError?`Invalid JSON: ${j}`:j}`]}}}function Ro(_,L){let j=cb(_)?_:{};return{version:L.version,...Object.fromEntries(["safety","workflow","destructive_command_protection","secret_protection"].filter((Y)=>j[Y]!==void 0).map((Y)=>[Y,j[Y]]))}}function _s(_,L){return Object.fromEntries(Object.entries(L).flatMap(([j,Y])=>Y===void 0?[]:[[`${_}.${j}`,String(Y)]]))}function Ts(_){return _.length===0?"(none)":_.join(", ")}function cb(_){return!!_&&typeof _==="object"&&!Array.isArray(_)}import{chmodSync as db,existsSync as Iu,mkdirSync as ub,readFileSync as Au}from"node:fs";import{dirname as pb}from"node:path";function Ou(_,L={}){let j=u(_,L);if(!Iu(j))return{path:j,exists:!1,raw:"",policy:A(),errors:[]};let Y=Au(j,"utf-8");if(!Y.trim())return{path:j,exists:!0,raw:Y,policy:A(),errors:["Config file is empty"]};try{let Z=Ot(JSON.parse(Y),_.home);return{path:j,exists:!0,raw:Y,policy:Z.policy,errors:Z.errors}}catch(Z){return{path:j,exists:!0,raw:Y,policy:A(),errors:[`Invalid JSON: ${Z instanceof Error?Z.message:String(Z)}`]}}}function Fn(_,L,j={}){let Y=u(_,j),Z=Ot(L,_.home);if(Z.errors.length>0)return{path:Y,policy:A(),errors:Z.errors};let oe=Z.policy;return ub(pb(Y),{recursive:!0,mode:448}),g(ae(Y),`${JSON.stringify(oe,null,2)}
-`,384),db(Y,384),{path:Y,policy:oe,errors:[]}}function $u(_,L){let j=Ot(L,_.home);if(j.errors.length>0)return{errors:j.errors};return{preview:We(j.policy,_.env),errors:[]}}function Du(_,L={}){let j=u(_,L);if(!Iu(j))return Fn(_,ne,L);let Y=Au(j,"utf-8");if(!Y.trim())return Fn(_,ne,L);try{return Fn(_,k(JSON.parse(Y),_.home),L)}catch{return Fn(_,ne,L)}}var Nu=new Set(["check","apply"]),Lu="(unset)";async function Hu(_,L,j={}){let Y=mn({label:"policy",booleans:{global:["-g","--global"]},positionals:"list"},L),Z=Y.positionals[0],oe=[...Y.errors,...Z&&!Nu.has(Z)?[`Unknown policy subcommand: ${Z}`]:[],...Z&&Nu.has(Z)&&!Y.positionals[1]?[`policy ${Z} requires a file`]:[],...Y.positionals.slice(2).map((Be)=>`Unexpected policy argument: ${Be}`)];if(oe.length>0){for(let Be of oe)console.error(Be);return 1}let se=Y.positionals[1];if(!Z||!se)return zt(_r,console.error),1;let fe=j.cwd??process.cwd(),ge=Y.flags.global?u(_):h(fe);if(!Y.flags.global&&O(_,{cwd:fe}))return console.error(`${ge} is the user policy, not a project policy; use --global for the user scope, or run from a project directory`),1;let Pe=$t(se),Ee=[...Pe.errors,...kr(Pe.value,_.home).map((Be)=>`${se}: ${Be}`),...!Y.flags.global&&vb(Pe.value)&&Pe.value.audit!==void 0?[`${se}: audit settings are user scope only; remove the audit section from a project proposal`]:[]];if(Ee.length>0){for(let Be of Ee)console.error(Be);return 1}let Re=k(Pe.value,_.home);if(console.log(`Scope: ${Y.flags.global?"user":"project"} (${ge})`),console.log(`Proposal: ${se}`),Y.flags.global)ju(k($t(ge).value,_.home),Re,!0);if(!Y.flags.global){let Be=Cr(_).baseline;console.log("Effective policy (user + project merged):"),ju(te(Be,pe($t(ge).value,_.home).policy).policy,te(Be,pe(Pe.value,_.home).policy).policy,!1)}if(Z==="check")return 0;let Le=j.input??process.stdin,_e=j.output??process.stdout;if(!Le.isTTY||!_e.isTTY)return console.error("policy apply confirms interactively; run this yourself in a terminal:"),console.error(`  cc-safety-net policy apply ${se}${Y.flags.global?" --global":""}`),1;if(!await yb(`Apply this policy to ${ge}? [y/N] `,Le,_e))return console.log("Cancelled; nothing was written."),0;return hb(_,ge,Pe.value,Re,Y.flags.global),console.log(`Policy applied: ${ge}`),0}function yb(_,L,j){let Y=gb({input:L,output:j,terminal:!1});return new Promise((Z)=>{Y.once("close",()=>Z(!1)),Y.question(_,(oe)=>{Z(/^y(es)?$/i.test(oe.trim())),Y.close()})})}function hb(_,L,j,Y,Z){if(Z){Fn(_,Y);return}fb(mb(L),{recursive:!0}),bn(L,Ro(j,Y))}function ju(_,L,j){let Y=Eo(_,L,j);if(Y.length===0){console.log("No changes.");return}console.log(`Changes (${Y.length}):`);for(let Z of Y)console.log(`  ${Z.field}: ${Z.before??Lu} -> ${Z.after??Lu}`)}function vb(_){return!!_&&typeof _==="object"&&!Array.isArray(_)}import{join as Ow}from"node:path";var Fu="# Custom Rules Reference\n\nAgent reference for generating CC Safety Net rulebook configuration.\n\n## Config Locations\n\n| Scope | Config path | Rulebook path | Priority |\n|-------|-------------|---------------|----------|\n| User | `~/.cc-safety-net/rules/rule.json` | `~/.cc-safety-net/rules/<rulebook-name>/rulebook.json` | First |\n| Project | `.cc-safety-net/rules/rule.json` | `.cc-safety-net/rules/<rulebook-name>/rulebook.json` | Second |\n| GitHub source | Listed in a local `rule.json` | Vendored into the consumer's `<rulebook-name>/rulebook.json` by `rule add` | Source order |\n\nEvery rulebook is a live file: the runtime reads it on each tool call, so an edit applies to the next command with no publishing step.\n\nUser scope is evaluated before project scope; within a scope, sources apply in `rules` array order. A duplicate active rulebook name keeps the first claim and ignores the later rulebook with a warning, so a user-scoped name shadows a project-scoped one.\n\nUse `cc-safety-net rule init` to create an inert local config. Use `--global` for user scope. Use `cc-safety-net rule init --example` to also create an inactive example rulebook. `CC_SAFETY_NET_HOME` overrides the `~/.cc-safety-net` user root.\n\nLegacy inline `.safety-net.json` and `~/.cc-safety-net/config.json` files are not loaded at runtime. Convert them with `cc-safety-net rule migrate`.\n\n## rule.json Schema\n\n```json\n{\n  \"version\": 1,\n  \"rules\": [\"project-rules\", \"owner/repo#main/team-rules\"],\n  \"overrides\": {\n    \"project-rules/block-docker-system-prune\": {\n      \"reason\": \"Use targeted Docker cleanup commands.\"\n    },\n    \"team-rules/block-npm-global\": \"off\"\n  },\n  \"transparent_wrappers\": [\"rtk\"]\n}\n```\n\n- `version`: Required. Must be `1`.\n- `$schema`: Optional. `cc-safety-net rule verify` inserts it into a valid `rule.json` that lacks it.\n- `rules`: Optional array of rulebook source strings. Missing `rules` is treated as `[]`.\n- `overrides`: Optional object keyed by `<rulebook-name>/<rule-name>`.\n- `overrides` values are either `\"off\"` to disable a rule or an object with a required `reason` (replacement block reason) and an optional `intent` (one of `hard_stop`, `use_alternative`, `scope_down`, `manual_only`, `stop_and_explain`).\n- A project override cannot target a user-scoped rule: only that override is ignored, the user rule keeps its configured state, and `rule verify` reports the diagnostic as a failure.\n- `transparent_wrappers`: Optional array of command names that transparently execute a visible child command.\n- `caffeinate`, `exec`, `nice`, `nohup`, `setsid`, `stdbuf`, `time`, and `timeout` are built-in transparent wrappers and need no configuration. Configure only other wrappers you intentionally trust, such as `\"rtk\"`.\n- Use `cc-safety-net rule wrapper add rtk` to configure RTK without manually editing `rule.json`.\n- `command_tools`: Optional array of shell tools that a plugin adds to an agent and that CC Safety Net does not know. Each entry is a tool name such as `\"ops_bash\"`, or `{ \"name\": \"ops_run_background\", \"cwd\": \"cwd\" }` when the tool takes its working directory in a named argument (otherwise `workdir`, `cwd`, or `working_directory` is read). A call to a declared tool with a non-empty string `command` is analyzed like a built-in shell command. User and project lists merge; the user entry wins a name declared in both.\n- Built-in shell and file tools are already analyzed and cannot be declared; `rule verify` reports one declared by hand.\n- Use `cc-safety-net rule tool add ops_bash ops_run_background` to declare tools in the user config, or add `--project` for the project config.\n\n## Rulebook Sources\n\n- Local sources are bare rulebook names such as `project-rules`; the rulebook file is `.cc-safety-net/rules/project-rules/rulebook.json`.\n- Run `cc-safety-net rule add owner/repo` to add every rulebook currently present on the repository's default branch.\n- Use `--only` to select one or more rulebooks while preserving their order: `cc-safety-net rule add owner/repo --only aws gcloud`.\n- Use `--ref` to select a branch, tag, or commit instead of the default branch: `cc-safety-net rule add owner/repo --ref v2 --only aws`.\n- GitHub sources are stored in canonical form as `owner/repo#ref/<rulebook-name>`. That form remains valid in `rule.json` and as direct CLI input.\n- GitHub refs may contain `/`-separated path segments, such as `feature/rulebook-v2`.\n- The GitHub source name, the repository directory name, and the rulebook `name` must match exactly.\n- Rulebook source strings must be unique in a config.\n\n## rulebook.json Schema\n\n```json\n{\n  \"rulebook_version\": 1,\n  \"name\": \"project-rules\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Project-specific CC Safety Net rules.\",\n  \"author\": \"project\",\n  \"allowed_commands\": [\"docker\"],\n  \"rules\": [\n    {\n      \"name\": \"block-docker-system-prune\",\n      \"command\": \"docker\",\n      \"subcommand\": \"system\",\n      \"block_args\": [\"prune\"],\n      \"reason\": \"Use targeted cleanup instead.\"\n    }\n  ],\n  \"tests\": [\n    {\n      \"command\": \"docker system prune\",\n      \"expect\": \"blocked\",\n      \"rule\": \"block-docker-system-prune\"\n    },\n    {\n      \"command\": \"docker ps\",\n      \"expect\": \"allowed\"\n    }\n  ]\n}\n```\n\n### Rulebook Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `rulebook_version` | Yes | Must be `1` or `2` |\n| `name` | Yes | `^[a-zA-Z][a-zA-Z0-9_-]{0,63}$` |\n| `version` | Yes | Non-empty string |\n| `description` | No | Free text; not type-checked at runtime |\n| `author` | No | Free text; not type-checked at runtime |\n| `allowed_commands` | Yes | Unique command names matching `^[a-zA-Z][a-zA-Z0-9_-]*$` |\n| `rules` | Yes | Array of rule objects |\n| `tests` | No | Array of fixtures |\n\n### Rule Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `name` | Yes | Unique within the rulebook (case-insensitive); same pattern as rulebook `name` |\n| `command` | Yes | Must be listed in `allowed_commands`; basename only, not path |\n| `subcommand` | No | Same pattern as `command`; omit to match any subcommand |\n| `intent` | No | One of `hard_stop`, `use_alternative`, `scope_down`, `manual_only`, `stop_and_explain` |\n| `block_args` | Yes | Non-empty array of non-empty strings |\n| `reason` | Yes | Non-empty string, max 256 chars |\n\n### Rule Fields (`rulebook_version` 2)\n\nVersion 2 replaces `subcommand` and `block_args` with an exact-token `match` object. Version 1 rulebooks keep their fields and their behavior; a client that does not support version 2 rejects the rulebook instead of applying broader version 1 semantics.\n\n```json\n{\n  \"name\": \"block-terraform-apply-destroy\",\n  \"command\": \"terraform\",\n  \"match\": {\n    \"command_path\": [\"apply\"],\n    \"any_args\": [\"-destroy\", \"--destroy\"]\n  },\n  \"reason\": \"Review a destroy plan first with 'terraform plan -destroy'.\",\n  \"intent\": \"use_alternative\"\n}\n```\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `name` | Yes | Same as version 1 |\n| `command` | Yes | Same as version 1 |\n| `match.command_path` | Yes | Non-empty array of non-empty command words |\n| `match.any_args` | No | Non-empty array of unique non-empty argument tokens |\n| `match.exclude_args` | No | Non-empty array of unique non-empty argument tokens |\n| `intent` | No | Same as version 1 |\n| `reason` | Yes | Same as version 1 |\n\n### Matching Behavior (`rulebook_version` 2)\n\n- **Command**: Normalized to lowercase basename, as in version 1.\n- **Command path**: After recognized global options and their values are skipped, the next command words must equal `command_path` exactly. AWS, gcloud, and Azure CLI value-taking global options are built in; Terraform's `-chdir=dir` is `=`-joined and is skipped with its own token.\n- **Unrecognized options**: A token starting with `-` that is not a recognized global option is skipped without consuming a value, so an unlisted value-taking option with a separate value (`--newflag value`) makes the rule miss. This fails open deliberately; document such gaps in the rulebook.\n- **`any_args`**: At least one listed token must appear literally among the arguments.\n- **`exclude_args`**: Any listed token appearing literally among the arguments prevents the match, which is how a safe preview such as `aws s3 rm --dryrun` stays allowed.\n- **No short-option expansion**: Arguments compare as exact tokens, so list every accepted spelling (`\"-destroy\"` and `\"--destroy\"`).\n- **Literal and case-sensitive**: No regex, glob, or substring matching. The first matching rule wins.\n- Release channels are separate rules: `gcloud beta compute instances delete` needs its own `command_path`.\n\n### Test Fixture Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `command` | Yes | Non-empty shell command string |\n| `expect` | Yes | `\"blocked\"` or `\"allowed\"` |\n| `rule` | Required for blocked fixtures | Rule name expected to block the command |\n\nFixtures are optional documentation of intended behavior. Version 1 fixtures are shape-validated only. Version 2 fixtures are evaluated against the rulebook's own rules when a source is fetched by `rule add` or `rule update`, and by `rule verify`; a failing fixture rejects that source before it is written. Loading a rulebook does not re-evaluate fixtures. CC Safety Net never executes fixture commands; they are analyzer inputs only.\n\n## Matching Behavior\n\nThe subcommand, argument, and option rules below describe `rulebook_version` 1 rules; version 2 rules match as described in Matching Behavior (`rulebook_version` 2). Execution order and transparent wrappers apply to both.\n\n- **Command**: Normalized to lowercase basename with any trailing `.exe` removed (`/usr/bin/git` → `git`).\n- **Subcommand**: The first command token after recognized Git and Docker global options and their values; `--` ends option parsing. An unrecognized option without `=` may consume the following token as its value.\n- **Arguments**: Each `block_args` value is compared literally against every command token, including expanded short options. The command is blocked if **any** item matches.\n- **Short options**: Expanded (`-Ap` matches `-A`).\n- **Long options**: Exact match (`--all-files` does not match `--all`).\n- **Execution order**: Built-in rules first, then custom rulebooks. Custom rules only add restrictions.\n- **Transparent wrappers**: A configured wrapper such as `rtk` lets `rtk git commit` be analyzed as `git commit` only when `git` is protected by built-in analyzers or active custom rules. `rtk -- git commit` is also supported.\n\n## Workflow\n\n1. Run `cc-safety-net rule init` or create `rule.json` manually.\n2. Optionally run `cc-safety-net rule init --example` to create an inactive example rulebook.\n3. Use `cc-safety-net rule wrapper add rtk` for trusted transparent wrappers.\n4. Run `cc-safety-net rule add <source>` after creating or choosing a rulebook source; add `--only <rulebook...>` or `--ref <ref>` for repository selection. The command adds the selected sources and syncs them.\n5. Edit a local rulebook whenever you like: the edit is enforced on the next command, so there is nothing to run afterwards.\n6. Run `cc-safety-net rule update [source]` to re-fetch remote sources and rewrite the vendored copies; the command prints what changed. A source with an ordinary update failure keeps its vendored copy while the other selected sources still update. Resource-limit failures remain fatal for the whole update.\n7. Run `cc-safety-net rule verify` to validate config, local rulebooks, and shareable GitHub-source rulebook directories in the current repository (it does not fetch remote content).\n8. Run `cc-safety-net rule list` to inspect active rulebooks and transparent wrappers.\n\nA missing or invalid rulebook file makes that source inactive, and an unreadable or invalid `rule.json` makes every source in its scope inactive. Inactive sources stop applying their rules while other custom rules and all built-in protections stay active. Fix the file named in the diagnostic, or run `cc-safety-net rule update` when a remote source has not been vendored yet. Run `cc-safety-net status` to see degraded sources.\n";function _o(_,L){if(!_.ok){Vu(_);return}Gu(_,L)}function Uu(_,L,j){if(_.ok)console.log(j);if(!_.add){_o(_,`Added rulebook source: ${L}`);return}if(!_.ok){Vu(_);return}if(_.add.added.length>0)console.log(`Added ${_.add.added.length} ${_.add.added.length===1?"rulebook":"rulebooks"} from ${_.add.source} at ${_.add.ref}:`),_.add.added.forEach((Y)=>{console.log(`  - ${Y}`)});if(_.add.alreadyConfigured.length>0)console.log(`Rulebooks already configured from ${_.add.source} at ${_.add.ref}: ${_.add.alreadyConfigured.join(", ")}`);if(_.add.commits.length>0)console.log(`Vendored at ${_.add.commits.map((Y)=>Y.slice(0,7)).join(", ")}.`);Gu(_,"Rule config updated.")}function Gu(_,L){for(let j of _.changes??[])console.log(j);console.log(L),console.log(""),bb(_.entries)}function bb(_){if(_.length===0){console.log("Active rulebooks: (none)");return}console.log(`Active rulebooks (${_.length}):`);for(let L of _)console.log(`  - ${L.name} ${L.version} (${wb(L.ruleCount)})`),console.log(`    Source: ${L.spec}`)}function wb(_){return`${_} ${_===1?"rule":"rules"}`}function Bu(_){Wn("Active sources",_.rulebooks,(L)=>[`[${L.source}] ${L.name} ${L.version}`,`  Source: ${L.spec}`]),Wn("Active rules",_.rules,(L)=>[`[${Cb(_,L.name)}] ${L.name}`,...kb(L),`  Reason: ${L.reason}`]),Wn("Disabled rules",Mu(_,"off"),(L)=>[L.key]),Wn("Reason overrides",Mu(_,"reason"),(L)=>[L.key,`  Reason: ${L.value.reason}`]),Wn("Transparent wrappers",_.transparent_wrappers,(L)=>[L]),Wn("Issues",_.errors,(L)=>[L]),Wn("Warnings",_.warnings,(L)=>[L])}function qu(_){Wn("Command tools",_,(L)=>typeof L.tool==="string"?[`[${L.scope}] ${L.tool}`]:[`[${L.scope}] ${L.tool.name}`,...L.tool.cwd===void 0?[]:[`  Cwd argument: ${L.tool.cwd}`]])}function Wn(_,L,j){if(L.length===0){console.log(`${_}: (none)`);return}console.log(`${_} (${L.length}):`);for(let Y of L){let[Z,...oe]=j(Y);console.log(`  - ${Z}`);for(let se of oe)console.log(`    ${se}`)}}function kb(_){if(!_.match)return[`  Command: ${_.subcommand?`${_.command} ${_.subcommand}`:_.command}`,`  Block args: ${_.block_args.join(", ")}`];return[`  Command: ${[_.command,..._.match.command_path].join(" ")}`,..._.match.any_args?[`  Any args: ${_.match.any_args.join(", ")}`]:[],..._.match.exclude_args?[`  Exclude args: ${_.match.exclude_args.join(", ")}`]:[]]}function Cb(_,L){return _.rulebooks.find((j)=>j.rules.includes(L))?.source??"project"}function Mu(_,L){return Object.entries({..._.userConfig?.overrides,..._.projectConfig?.overrides}).filter((j)=>{if(L==="off")return j[1]==="off";return!!j[1]&&typeof j[1]==="object"}).map(([j,Y])=>({key:j,value:Y}))}function Vu(_){for(let L of _.errors)console.error(L)}import{dirname as mp,join as Lo}from"node:path";import{join as $s,resolve as Db}from"node:path";function xr(_){let L=d(_);if(L.errors.length>0)return{ok:!1,result:{ok:!1,errors:L.errors,entries:[]}};return{ok:!0,config:L.config??le}}function Ku(_){bn(_,le)}function Ju(_){bn(_,{rulebook_version:1,name:"example-rules",version:"1.0.0",description:"Project-specific CC Safety Net rules.",author:"project",allowed_commands:["docker"],rules:[{name:"block-docker-system-prune",command:"docker",subcommand:"system",block_args:["prune"],reason:"Use targeted cleanup instead."}],tests:[{command:"docker system prune",expect:"blocked",rule:"block-docker-system-prune"}]})}import{dirname as Oo}from"node:path";var xb="custom.";function To(_){if(_.rulebook_version!==2)return[];let L=_.rules.map((j)=>({name:j.name,command:j.command,block_args:[],match:j.match,reason:j.reason,intent:j.intent}));return(_.tests??[]).flatMap((j,Y)=>{let Z=Is(y(j.command));if(Z.length===0)return[`tests[${Y}]: could not parse fixture command: ${j.command}`];let oe=Z.reduce((se,fe)=>se??N(fe,L)?.id.slice(xb.length),void 0);if(j.expect==="blocked"){if(oe===j.rule)return[];let se=oe?`"${oe}" matched first`:"no rule matched";return[`tests[${Y}]: expected "${j.rule}" to block "${j.command}" but ${se}`]}return oe?[`tests[${Y}]: expected "${j.command}" to be allowed but "${oe}" matched`]:[]})}function Is(_){return _.nodes.flatMap((L)=>{if(L.kind==="group"||L.kind==="function")return Is(L.body);if(L.kind!=="command")return[];let j=Ce(re(L.dialect,L.words)).words.map(t);return[...j.length>0?[j]:[],...L.nested.flatMap((Y)=>Is(Y))]})}var Io=Object.freeze({concurrency:4,maxRequests:131,maxResponseBytes:67108864});function Ao(_={}){return{requests:0,responseBytes:0,maxRequests:_.maxRequests??Io.maxRequests,maxResponseBytes:_.maxResponseBytes??Io.maxResponseBytes}}function Mn(_){return{controller:new AbortController,budget:Ao(),resolveUrl:_}}function Wu(_){return _ instanceof Error&&_.message==="Rule synchronization exceeds CC Safety Net's safe resource limits."}function zu(_){if(_.requests>=_.maxRequests)throw Error("Rule synchronization exceeds CC Safety Net's safe resource limits.");_.requests++}function Yu(_,L){if(L>_.maxResponseBytes-_.responseBytes)throw _.responseBytes+=L,Error("Rule synchronization exceeds CC Safety Net's safe resource limits.");_.responseBytes+=L}var Qu=Object.freeze({timeoutMs:15000,metadataBytes:524288,commitBytes:262144,treeBytes:16777216,rawBytes:4194304});async function Zu(_,L,j=w(Oo(Oo(L)),"rules policy"),Y=Mn()){if(C(_))return Rb(_,Y);return Eb(_,L,j)}async function ep(_,L,j,Y,Z,oe){if(!C(_))return Zu(_,L,j,Y);let se=Z?null:Sb(_,L,j);if(se)return se;if(!Z&&!oe)throw Error(`${_} is not vendored; run rule update ${_} to vendor it`);return Zu(_,L,j,Y)}function Sb(_,L,j=w(Oo(Oo(L)),"rules policy")){let Y=M(_),Z=F(L,Y.name),oe=r(i(j,Z));if(oe===null)return null;let se=de(As(oe,`Invalid rulebook ${Z}.`));if(se.name!==Y.name)throw Error(`rulebook name "${se.name}" in ${Z} must match "${Y.name}"`);return{spec:_,rulebook:se,content:oe}}async function np(_,L={}){if(!X(_))throw Error(`Invalid GitHub repository source: ${_}`);let[j,Y]=_.split("/");if(!j||!Y)throw Error(`Invalid GitHub repository source: ${_}`);if(L.ref!==void 0&&!ce(L.ref))throw Error(`GitHub rulebook refs must use valid path segments: ${L.ref}`);let Z=L.operation??Mn(),oe=L.ref??await Pb(j,Y,_,Z),se=await rp(j,Y,oe,_,Z),fe=await $o(`https://api.github.com/repos/${j}/${Y}/git/trees/${se}?recursive=1`,"tree",Z),ge=fe.response;if(!ge.ok)throw Error(`Failed to inspect ${_}: GitHub tree returned ${ge.status}`);let Pe=JSON.parse(fe.content);if(!Array.isArray(Pe?.tree))throw Error(`Failed to inspect ${_}: unexpected GitHub tree response`);let Ee=Pe.tree,Re=[...new Set(Ee.flatMap((Le)=>{if(!Le||typeof Le!=="object")return[];let _e=Le;if(_e.type!=="blob"||typeof _e.path!=="string")return[];let Te=_e.path.match(Et);return Te?.[1]?[Te[1]]:[]}))].sort();if(Re.length===0)throw Error(`No rulebooks found in ${_} under ${be}/`);return{source:_,owner:j,repo:Y,ref:oe,commit:se,names:Re}}async function Pb(_,L,j,Y){let Z=await $o(`https://api.github.com/repos/${_}/${L}`,"metadata",Y),oe=Z.response;if(!oe.ok)throw Error(`Failed to inspect ${j}: GitHub returned ${oe.status}`);let fe=JSON.parse(Z.content)?.default_branch;if(typeof fe!=="string"||fe==="")throw Error(`Failed to inspect ${j}: missing default branch`);if(!ce(fe))throw Error(`GitHub returned an invalid default branch: ${fe}`);return fe}function Eb(_,L,j){kt(_);let Y=F(L,_),Z=r(i(j,Y));if(Z===null)throw Error(`Rulebook source not found: ${_}`);let oe=tp(As(Z,"Invalid local rulebook source."));if(oe.name!==_)throw Error(`rulebook name "${oe.name}" must match local source "${_}"`);return{spec:_,rulebook:oe,content:Z}}async function Rb(_,L){let j=M(_),Y=await rp(j.owner,j.repo,j.ref,_,L),Z=await $o(`https://raw.githubusercontent.com/${j.owner}/${j.repo}/${Y}/${j.path}`,"raw",L),oe=Z.response;if(!oe.ok)throw Error(`Failed to fetch ${_}: GitHub raw returned ${oe.status}`);let se=Z.content,fe=tp(As(se,"Invalid GitHub rulebook response."));if(fe.name!==j.name)throw Error(`rulebook name "${fe.name}" must match GitHub source "${j.name}"`);return{spec:_,rulebook:fe,content:se}}function tp(_){let L=de(_),j=To(L);if(j.length>0)throw Error(j.join("; "));return L}function As(_,L){try{return JSON.parse(_)}catch{throw Error(L)}}async function rp(_,L,j,Y,Z){let oe=await $o(`https://api.github.com/repos/${_}/${L}/commits/${encodeURIComponent(j)}`,"commit",Z),se=oe.response;if(!se.ok)throw Error(`Failed to resolve ${Y}: GitHub returned ${se.status}`);let fe=JSON.parse(oe.content);if(typeof fe?.sha!=="string"||fe.sha==="")throw Error(`Failed to resolve commit for ${Y}`);return fe.sha}async function _b(_,L,j={}){if(j.signal?.aborted)throw j.signal.reason;let Y=j.budget??Ao(),Z=new AbortController,oe=()=>Z.abort(j.signal?.reason);j.signal?.addEventListener("abort",oe,{once:!0});let se=!1,fe=setTimeout(()=>{if(Z.signal.aborted)return;se=!0,Z.abort()},j.timeoutMs??Qu.timeoutMs);try{if(j.signal?.aborted)throw j.signal.reason;zu(Y);let ge=await fetch(_,{signal:Z.signal,redirect:"error"});if(!ge.ok)return op(ge),{response:ge,content:""};return{response:ge,content:await Tb(ge,L,Y,()=>Z.abort())}}catch(ge){if(se)throw Error("GitHub request timed out",{cause:ge});if(j.signal?.aborted)throw j.signal.reason;throw ge}finally{clearTimeout(fe),j.signal?.removeEventListener("abort",oe)}}function $o(_,L,j){return _b(j.resolveUrl?.(_)??_,L,{budget:j.budget,signal:j.controller.signal})}async function Tb(_,L,j=Ao(),Y){let Z=Qu[`${L}Bytes`],oe=Number(_.headers.get("content-length"));if(Number.isFinite(oe)&&oe>Z)throw op(_),Error(`GitHub ${L} response exceeds ${Z} bytes`);if(!_.body)return"";let se=_.body.getReader(),fe=[],ge=0;while(!0){let Pe=await se.read();if(Pe.done)break;try{Yu(j,Pe.value.byteLength)}catch(Ee){throw Y?.(),Xu(se),Ee}if(ge+=Pe.value.byteLength,ge>Z)throw Y?.(),Xu(se),Error(`GitHub ${L} response exceeds ${Z} bytes`);fe.push(Buffer.from(Pe.value))}return Buffer.concat(fe,ge).toString("utf-8")}function op(_){if(!_.body)return;ip(()=>_.body?.cancel())}function Xu(_){ip(()=>_.cancel())}function ip(_){try{Promise.resolve(_()).catch(()=>{})}catch{}}var Ib=/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)#(.+)$/;function sp(_,L){let j=cp(_.rules,L);if(j.length>0)return{ok:!0,specs:j};return lp(_.rules,L)}function ap(_,L){let j=cp(_,L);if(j.length>0)return{ok:!0,specs:j};let Y=Ob(_,L);if(Y.length>0)return{ok:!0,specs:Y};let Z=$b(_,L);if(!Z.ok)return Z;if(Z.specs.length>0)return{ok:!0,specs:Z.specs};return lp(_,L)}function lp(_,L){let j=_.filter((Y)=>Os(Y)?.name===L);if(j.length===1)return{ok:!0,specs:j};return Ab(L,j)}function Ab(_,L){return{ok:!1,result:{ok:!1,errors:L.length===0?[`No configured rulebook matches ${_}`]:[`Ambiguous rulebook match ${_}: ${L.join(", ")}`],entries:[]}}}function cp(_,L){return _.filter((j)=>j===L)}function Ob(_,L){let j=L.match(Ib),Y=j?.[1],Z=j?.[2],oe=j?.[3];if(!Y||!Z||!oe||!ce(oe))return[];return dp(_,(se)=>se.owner===Y&&se.repo===Z&&se.ref===oe)}function $b(_,L){if(!X(L))return{ok:!0,specs:[]};let[j,Y]=L.split("/"),Z=dp(_,(se)=>se.owner===j&&se.repo===Y);if(new Set(Z.map((se)=>Os(se)?.ref).filter((se)=>!!se)).size<2)return{ok:!0,specs:Z};return{ok:!1,result:{ok:!1,errors:[`Multiple refs are configured for ${L}. Use an explicit ref:`,`  cc-safety-net rule remove ${L}#<ref>`],entries:[]}}}function Os(_){try{return M(_)}catch{return null}}function dp(_,L){return _.filter((j)=>{let Y=Os(j);return Y?L(Y):!1})}async function No(_,L={}){return Nb(_,L,await Do(_,L,Mn()))}function Nb(_,L,j){if(!j.ok)return j;let Y=hn(_,L),Z=[...new Set(z(Y.configPath,Y.filesystemScope))];if(Z.length===0)return j;return{ok:!1,errors:Z,entries:j.entries}}async function Do(_,L,j,Y={},Z=new Set,oe=new Set){try{let se=hn(_,L),fe=xr(se.configTarget);if(!fe.ok)return fe.result;let ge=fe.config,Pe=L.only?sp(ge,L.only):{ok:!0,specs:ge.rules};if(!Pe.ok)return Pe.result;let Ee=new Set([...L.refresh?Pe.specs:[],...Z]),Re=(nn)=>ep(nn,se.configDir,se.filesystemScope,j,Ee.has(nn),!L.refresh||Ee.has(nn)),Le=await Vb(ge.rules,L.refresh?(nn)=>Re(nn).then((sn)=>({ok:!0,item:sn})).catch((sn)=>{if(Wu(sn))throw sn;return{ok:!1,spec:nn,message:sn instanceof Error?sn.message:String(sn)}}):async(nn)=>({ok:!0,item:await Re(nn)}),j),_e=Le.filter((nn)=>!nn.ok),Te=Le.filter((nn)=>nn.ok).map((nn)=>nn.item),Be=Te.flatMap((nn)=>Lb(nn,ge.rules)),Fe=Te.flatMap((nn)=>jb(nn,oe,se)),Ze=new Set([...Be,...Fe].map((nn)=>nn.spec)),tn=[..._e,...Be,...Fe],on=[],an=Fb(on,()=>Te.flatMap((nn)=>Ze.has(nn.spec)||tn.length>0&&oe.has(nn.spec)?[]:Hb(nn,se,Y,on)));return{ok:tn.length===0,errors:tn.map((nn)=>`Failed to update ${nn.spec}: ${nn.message}`),entries:Te.map(Ub),changes:an}}catch(se){return Pr(se)}}function Lb(_,L){if(!C(_.spec))return[];let j=He(_.spec),Y=L.filter((Z)=>Z!==_.spec&&He(Z).toLowerCase()===j.toLowerCase());if(Y.length===0)return[];return[{ok:!1,spec:_.spec,message:`rulebook name "${j}" is also claimed by ${Y.join(", ")}; rename one of them`}]}function jb(_,L,j){if(!L.has(_.spec)||!C(_.spec))return[];let Y=F(j.configDir,_.rulebook.name),Z=r(i(j.filesystemScope,Y));if(Z===null||Z===_.content)return[];return[{ok:!1,spec:_.spec,message:`${Y} already exists and no configured source claims it; remove or rename the file, then re-run rule add`}]}function Hb(_,L,j,Y){if(!C(_.spec))return[];let Z=F(L.configDir,_.rulebook.name),oe=i(L.filesystemScope,Z),se=r(oe);if(se===_.content)return[];return Y?.push({target:oe,previous:se}),g(oe,_.content,void 0,j._testAfterPolicyRename),Mb(_,se)}function Fb(_,L){try{return L()}catch(j){for(let Y of[..._].reverse()){if(Y.previous===null){W(Y.target);continue}g(Y.target,Y.previous)}throw j}}function Mb(_,L){if(L===null)return[`Vendored ${_.spec} (${_.rulebook.version})`];let j=we(L),Y="problem"in j?null:j.rulebook,Z=new Map(Y?.rules.map((se)=>[se.name,JSON.stringify(se)])??[]),oe=new Set(_.rulebook.rules.map((se)=>se.name));return[`Updated ${_.spec} (${Y?.version??"unreadable"} -> ${_.rulebook.version})`,...[...oe].filter((se)=>!Z.has(se)).map((se)=>`  + ${se}`),...[...Z.keys()].filter((se)=>!oe.has(se)).map((se)=>`  - ${se}`),..._.rulebook.rules.filter((se)=>{let fe=Z.get(se.name);return fe!==void 0&&fe!==JSON.stringify(se)}).map((se)=>`  ~ ${se.name}`)]}function Ub(_){return{spec:_.spec,name:_.rulebook.name,version:_.rulebook.version,ruleCount:_.rulebook.rules.length}}async function up(_,L,j={}){return Gb(_,L,j,Mn())}async function Gb(_,L,j,Y,Z={}){let oe=null,se=!1;try{let fe=hn(_,j),ge=r(fe.configTarget);oe={target:fe.configTarget,content:ge};let Pe=xr(fe.configTarget);if(!Pe.ok)return Pe.result;let Ee=Pe.config,Re=X(L)?await np(L,{ref:j.ref,operation:Y}):null,Le=Re?Bb(Re,j.rulebooks):[],_e=Re?Le.map((tn)=>qb(Ee.rules,Re,tn)??`${L}#${Re.ref}/${tn}`):[L],Te=_e.filter((tn)=>!Ee.rules.includes(tn)),Be=[...Ee.rules,...Te];if(Be.length>xe)return Kb();if(Be.length!==Ee.rules.length)se=!0,bn(fe.configTarget,{...Ee,rules:Be},void 0,Z._testAfterPolicyRename);let Fe=await Do(_,j,Y,Z,new Set(Te),new Set(Te));if(!Fe.ok)Sr(fe.configTarget,ge);if(!Fe.ok||!Re)return Fe;let Ze=Le.filter((tn,on)=>Te.includes(_e[on]??""));return{...Fe,add:{source:L,ref:Re.ref,selected:Le,added:Ze,alreadyConfigured:Le.filter((tn)=>!Ze.includes(tn)),commits:Te.length>0?[Re.commit]:[]}}}catch(fe){if(se&&oe)try{Sr(oe.target,oe.content)}catch(ge){return Pr(ge)}return Pr(fe)}}function Bb(_,L){let j=L?[...new Set(L)]:_.names,Y=j.filter((Z)=>!_.names.includes(Z));if(Y.length>0)throw Error(`Rulebooks not found in ${_.source} at ${_.ref}: ${Y.join(", ")}
-Available rulebooks: ${_.names.join(", ")}`);return j}function qb(_,L,j){let Y=`${L.source}#${L.ref}/${j}`;if(_.includes(Y))return Y;let Z=`${L.source}#${L.commit}/${j}`;return _.find((oe)=>oe===Z)}async function Vb(_,L,j=Mn()){if(_.length>xe)throw Error(ve);let Y=[],Z=0,oe,se=Array.from({length:Math.min(_.length,Io.concurrency)},async()=>{while(!oe){let fe=Z;if(fe>=_.length)return;Z++;try{Y[fe]=await L(_[fe],fe,j.controller.signal)}catch(ge){if(!oe)oe={value:ge},Z=_.length,j.controller.abort(ge);return}}});if(await Promise.all(se),oe)throw oe.value;return Y}function Kb(){return{ok:!1,errors:[ve],entries:[]}}async function pp(_,L,j={}){try{return await Jb(_,L,j,{})}catch(Y){return Pr(Y)}}async function Jb(_,L,j,Y){let Z=hn(_,j),oe=d(Z.configTarget);if(oe.errors.length>0)return{ok:!1,errors:oe.errors,entries:[]};if(!oe.config)return{ok:!1,errors:[`No config found at ${Z.configPath}`],entries:[]};let se=ap(oe.config.rules,L);if(!se.ok)return se.result;let fe=j.deleteSource?Wb(Z.configDir,se.specs,Z.filesystemScope):{ok:!0,dirs:[]};if(!fe.ok)return fe.result;let ge=r(Z.configTarget);if(ge===null)return Pr(Error("Rules config is unavailable."));try{bn(Z.configTarget,{...oe.config,rules:oe.config.rules.filter((Re)=>!se.specs.includes(Re))},void 0,Y._testAfterPolicyRename)}catch(Re){throw Sr(Z.configTarget,ge),Re}let Pe=await Do(_,j,Mn(),Y);if(!Pe.ok)return Sr(Z.configTarget,ge),Pe;let Ee=zb(fe.dirs,Y,Z.filesystemScope);if(!Ee.ok){Sr(Z.configTarget,ge);let Re=await Do(_,j,Mn(),Y);if(!Re.ok)return{ok:!1,errors:[...Ee.result.errors,...Re.errors],entries:Re.entries};return Ee.result}return Pe}function Wb(_,L,j){let Y=L.flatMap((fe)=>p.test(fe)?[]:["--delete-source can only delete local rulebook sources"]),Z=L.map((fe)=>$s(_,fe)),oe=Y.length>0?[]:Z.flatMap((fe)=>fp(fe,j)),se=[...Y,...oe];return se.length>0?{ok:!1,result:{ok:!1,errors:se,entries:[]}}:{ok:!0,dirs:Z}}function fp(_,L){let j=Db(_),Y=i(L,j),Z=he(Y);if(!Z)return[`Local rulebook source directory not found: ${_}`];let oe=Z.find((se)=>se.name==="rulebook.json");if(!oe)return[`Local rulebook source directory is missing rulebook.json: ${_}`];if(oe.kind!=="file")throw new o(L.label);if(r(i(L,$s(j,"rulebook.json"))),Z.length>1)return[`Local rulebook source directory contains extra files: ${_}. delete manually if you really want to remove the directory.`];return[]}function zb(_,L,j){let Y=_.flatMap((Z)=>{try{if(!he(i(j,Z)))return[];let oe=fp(Z,j);if(oe.length>0)return oe;return Yb(Z,L,j),[]}catch(oe){return[`Failed to delete local rulebook source ${Z}: ${oe instanceof Error?oe.message:String(oe)}`]}});return Y.length>0?{ok:!1,result:{ok:!1,errors:Y,entries:[]}}:{ok:!0}}function Yb(_,L,j){if(L._testDeleteLocalSourceDir){L._testDeleteLocalSourceDir(_);return}W(i(j,$s(_,ye))),Ct(i(j,_))}function Sr(_,L){if(L===null){W(_);return}g(_,L)}function Pr(_){return{ok:!1,errors:[_ instanceof Error?_.message:String(_)],entries:[]}}var Zb=".safety-net.json",Xb="~/.cc-safety-net/config.json";async function hp(_,L){let j=O(_,{cwd:L.cwd});if(j)console.log(`Skipped the project scope: ${I(L.cwd)} is the user rule config, not a project rule config`);return[j||await gp(_,{legacyPath:Lt(L.cwd),configPath:I(L.cwd),defaultRulebookName:"project-rules",migratedFrom:Zb,cleanup:L.cleanup,syncOptions:{cwd:L.cwd}}),await gp(_,{legacyPath:jt(_),configPath:B(_),defaultRulebookName:"user-rules",migratedFrom:Xb,cleanup:L.cleanup,syncOptions:{cwd:L.cwd,global:!0}})].every((Z)=>Z)?0:1}async function gp(_,L){let j=hn(_,L.syncOptions),Y=i(j.filesystemScope,L.legacyPath),Z=r(Y);if(Z===null)return console.log(`No legacy config found at ${L.legacyPath}`),!0;let oe=ew(Z);if(!oe.ok){for(let _e of oe.errors)console.error(_e);return!1}let se=d(j.configTarget);if(se.errors.length>0){for(let _e of se.errors)console.error(_e);return!1}let fe=se.config??le,ge=nw(mp(L.configPath),fe.rules,L.defaultRulebookName,L.migratedFrom,j.filesystemScope),Pe=Lo(mp(L.configPath),ge,"rulebook.json"),Ee=i(j.filesystemScope,Pe),Re=[yp(j.configTarget),yp(Ee)],Le=await Qb(_,L,j.configTarget,Ee,ge,oe.config.rules,{...fe,rules:fe.rules.includes(ge)?fe.rules:[...fe.rules,ge]});if(!Le.ok){ow(Re);for(let _e of Le.errors)console.error(_e);return!1}if(!L.cleanup)return console.log(`Migrated legacy config at ${L.legacyPath}. Legacy file is no longer used.`),!0;if(!rw(j.configTarget,Ee,ge,L.migratedFrom,oe.config.rules))return console.error(`Migration cleanup verification failed for ${L.legacyPath}`),!1;return W(Y),console.log(`Deleted legacy config at ${L.legacyPath}`),!0}async function Qb(_,L,j,Y,Z,oe,se){try{return bn(j,se),bn(Y,tw(Z,L.migratedFrom,oe)),await No(_,L.syncOptions)}catch(fe){return{ok:!1,errors:[fe instanceof Error?fe.message:String(fe)]}}}function ew(_){try{let L=JSON.parse(_),j=Wo(L);if(j.errors.length>0)return{ok:!1,errors:j.errors};return{ok:!0,config:{version:1,rules:L.rules??[]}}}catch{return{ok:!1,errors:["Invalid JSON"]}}}function nw(_,L,j,Y,Z){let oe=L.find((se)=>iw(i(Z,Lo(_,se,"rulebook.json")))===Y);if(oe)return oe;if(r(i(Z,Lo(_,j,"rulebook.json")))===null)return j;for(let se=2;;se++){let fe=`${j}-${se}`;if(r(i(Z,Lo(_,fe,"rulebook.json")))===null)return fe}}function tw(_,L,j){return{rulebook_version:1,name:_,version:"1.0.0",description:"Migrated CC Safety Net rules.",author:"project",migrated_from:L,allowed_commands:[...new Set(j.map((Y)=>Y.command))],rules:j,tests:j.map((Y)=>({command:[Y.command,Y.subcommand,Y.block_args[0]].filter(Boolean).join(" "),expect:"blocked",rule:Y.name}))}}function rw(_,L,j,Y,Z){if(!d(_).config?.rules.includes(j))return!1;try{let se=r(L);if(se===null)return!1;let fe=JSON.parse(se);return fe.migrated_from===Y&&JSON.stringify(fe.rules)===JSON.stringify(Z)}catch{return!1}}function yp(_){return{target:_,content:r(_)}}function ow(_){for(let L of _){if(L.content===null){W(L.target);continue}g(L.target,L.content)}}function iw(_){let L=r(_);if(L===null)return null;try{let j=JSON.parse(L);return typeof j.migrated_from==="string"?j.migrated_from:null}catch{return null}}import{mkdir as sw,readFile as aw,writeFile as lw}from"node:fs/promises";import{dirname as cw,join as dw}from"node:path";var uw=86400000,pw=604800000;async function bp(_,L=Date.now()){if(_.env.get("CC_SAFETY_NET_NO_UPDATE_CHECK"))return null;let j=tt(_);if(!j)return null;let Y=dw(j,".cc-safety-net","update-check.json"),Z=await fw(Y,L);if(!Z.lastCheck||L-Z.lastCheck>uw){let fe=await Gn();if(Z.lastCheck=L,fe.latestVersion)Z.latestVersion=fe.latestVersion;if(!await vp(Y,Z))return null;if(fe.error)return null}let oe=Z.latestVersion,se=pn();if(!oe||!ei(oe,se))return null;if(Z.notifiedVersion===oe&&Z.notifiedAt!==void 0&&L-Z.notifiedAt<pw)return null;if(Z.notifiedVersion=oe,Z.notifiedAt=L,!await vp(Y,Z))return null;return`UPDATE_AVAILABLE: cc-safety-net v${oe} is available (running v${se}). Ask the user once whether to run \`npx -y cc-safety-net@latest update\`; continue the current task either way and do not raise this again.`}async function fw(_,L){let j=await aw(_,"utf8").then((oe)=>JSON.parse(oe)).catch(()=>{return});if(!j||typeof j!=="object"||Array.isArray(j))return{};let Y=j,Z=(oe)=>typeof oe==="number"&&Number.isFinite(oe)&&oe<=L?oe:void 0;return{lastCheck:Z(Y.lastCheck),latestVersion:typeof Y.latestVersion==="string"?Y.latestVersion:void 0,notifiedVersion:typeof Y.notifiedVersion==="string"?Y.notifiedVersion:void 0,notifiedAt:Z(Y.notifiedAt)}}async function vp(_,L){return sw(cw(_),{recursive:!0,mode:448}).then(()=>lw(_,JSON.stringify(L),{mode:384})).then(()=>!0).catch(()=>!1)}import{join as vw,resolve as Ls}from"node:path";var wp=new Map([["Bash","posix"],["PowerShell","powershell"],["Monitor","posix"]]);var kp=new Map([["Bash","auto"]]);var Cp=new Map([["bash","auto"],["Bash","auto"],["powershell","powershell"],["PowerShell","powershell"]]);var xp=new Map([["Shell","auto"]]);var Sp=new Map([["exec","auto"]]),Pp="write_to_process";var Ep=new Map([["Execute","auto"]]);var Rp=new Map([["run_shell_command","auto"]]);var _p=new Map([["run_terminal_command","auto"],["run_terminal_cmd","auto"],["monitor","auto"],["bash","auto"],["Shell","auto"]]);var Tp=new Map([["terminal","posix"]]);var Ip=new Map([["Bash","posix"]]);var Ap="exec";var yw=[["antigravity-cli",[...el.keys(),nl]],["claude-code",[...wp.keys()]],["codex",[...kp.keys()]],["copilot-cli",[...Cp.keys()]],["cursor",[...xp.keys()]],["deepseek-harness",[...et.keys()]],["devin",[...Sp.keys(),Pp]],["droid",[...Ep.keys()]],["gemini-cli",[...Rp.keys()]],["grok-build",[..._p.keys()]],["hermes-agent",[...Tp.keys()]],["kimi-code",[...Ip.keys()]],["openclaw",[Ap]],["opencode",[Ye,ke]],["pi",[...Qe.keys()]]].flatMap(([_,L])=>L.map((j)=>({name:j,integration:cn(_)}))),Op="and is already analyzed. Built-in tools cannot be declared.";function jo(_){let L=Ie(_),j=[...new Set(yw.filter((Y)=>Ie(Y.name)===L).map((Y)=>Y.integration))].sort((Y,Z)=>Y.localeCompare(Z));if(j.length>0)return`"${_}" is a built-in shell tool of ${hw(j)}, ${Op}`;if(x(_)!=="unknown")return`"${_}" is a built-in file tool, ${Op}`;return}function hw(_){return _.length===1?_[0]??"":`${_.slice(0,-1).join(", ")} and ${_.at(-1)}`}var Dp="CC Safety Net Config",bw="═".repeat(Dp.length),ww="https://raw.githubusercontent.com/kenryu42/cc-safety-net/main/assets/cc-safety-net.schema.json",kw=new Set(["rule.json","rule.lock","cache"]);function Np(_,L={}){try{return Cw(_,L)}catch(j){if(j instanceof o)return console.error(j.message),1;throw j}}function Cw(_,L){let j=L.cwd??process.cwd(),Y=Q(_,{cwd:j}),Z=jt(_),oe=Lt(j),se=Ls(j,be),fe=i(Y.userScope,Z),ge=i(Y.projectScope,oe),Pe=!1,Ee=!1,Re=[],Le=[],_e=xw(i(Y.projectScope,se));if(Pw(),r(Y.userConfigTarget)!==null){let Te=Un(Y.userConfigTarget);if(Te.errors.push(...z(Y.userConfigPath,Y.userScope),...$p(Y.userConfigTarget)),Re.push({scope:"User",path:Y.userConfigPath,result:Te,schema:"rules",target:Y.userConfigTarget}),Te.errors.length>0)Pe=!0}if(r(fe)!==null)if(Ee=!0,r(Y.userConfigTarget)!==null)Le.push(Ho("user","cleanup"));else{let Te=zo(fe);if(Re.push({scope:"User",path:Z,result:Te,schema:"legacy",inactive:!0,target:fe}),Le.push(Ho("user",Te.errors.length>0?"fix-or-delete":"migrate")),Te.errors.length>0)Pe=!0}if(r(Y.projectConfigTarget)!==null){let Te=Un(Y.projectConfigTarget);if(Te.errors.push(...z(Y.projectConfigPath,Y.projectScope),...$p(Y.projectConfigTarget)),Re.push({scope:"Project",path:Ls(Y.projectConfigPath),result:Te,schema:"rules",target:Y.projectConfigTarget}),Te.errors.length>0)Pe=!0;if(r(ge)!==null)Ee=!0,Le.push(Ho("project","cleanup"))}else if(r(ge)!==null){Ee=!0,Pe=!0;let Te=zo(ge);Re.push({scope:"Project",path:Ls(oe),result:Te,schema:"legacy",inactive:!0,target:ge}),Le.push(Ho("project",Te.errors.length>0?"fix-or-delete":"migrate"))}if(_e?.result.errors.length)Pe=!0;if(Re.length===0&&!_e)return console.log(`
-No config files found. Using built-in rules only.`),0;for(let Te of Re)if(Te.inactive)Rw(Te.scope,Te.path,Te.result);else if(Te.result.errors.length>0)_w(Te.scope,Te.path,Te.result.errors);else{if(Te.schema==="rules"&&Aw(Te.target))console.log(`
-Added $schema to ${Te.scope.toLowerCase()} config.`);Ew(Te.scope,Te.path,Te.result,Te.schema)}for(let Te of Le)console.error(`
-${en.red(Te)}`);if(_e)if(_e.result.errors.length>0)Iw(_e.path,_e.result.errors);else Tw(_e.path,_e.result);if(Pe)return console.error(`
-Config validation failed.`),1;return console.log(Ee?`
+`)}function bu(P,L){return L.map((H)=>P==="install"&&H.target==="kimi-code"&&H.unavailableReason==="already installed"?{...H,available:!0,unavailableReason:void 0,label:`${H.label} (global hook installed)`}:H)}function gb(P,L){if(P.selectKimiInstallMethod)return P.selectKimiInstallMethod();if(!ys(P.input,P.output))return Promise.resolve("global-hook");return xd({input:P.input,output:P.output,globalHookInstalled:Tu(L)})}async function Au(P,L,H,Y=!1,Z){let oe=ub[L];if(P==="install")oe?.beforeInstall?.(H,Y);if(P==="uninstall")oe?.beforeUninstall?.(H);if(pb(L))return[cb(P,L,H,Y),P==="uninstall"?await oe?.afterUninstall?.(H):void 0].filter(Boolean).join(`
+`);if(fb(L))return db(P,L,H,Y);if(P==="uninstall")return L==="opencode"?lb(H):ab(L,H);return[await sb(L,H,Y,Z),await oe?.afterInstall?.(H)].filter(Boolean).join(`
+`)}function yb(P){let L=mn({label:"update"},P).errors[0];if(L)throw Error(L)}async function hb(P,L=Ft){let H=await Pu(P,L),Y=Po(sr(P),"installed-plugins");return{targets:Cs([...H.hooks.filter((oe)=>oe.platform!=="copilot-cli"&&oe.detected&&oe.method!==eo&&oe.method!==vi).map((oe)=>oe.platform),...[Jr,bl,vl].flatMap((oe)=>So(Po(Y,...oe))?["copilot-cli"]:[]),...Kr(P,Ts)?["claude-code"]:[],...As(H.codexPluginListOutput)?["codex"]:[]]),codexPluginListOutput:H.codexPluginListOutput,kimiPlugin:H.hooks.some(Eu)}}async function vb(P){let L=c(),H=P.output??process.stdout,Y=(P.scriptPath??process.argv[1]??"").split(/[\\/]/),Z=Y.find((Ae)=>/^bunx-\d+-/.test(Ae)),oe=Z!==void 0||Y.includes("_npx")?null:(P.checkLatestVersion??Bn)(),se=async()=>{let Ae=oe&&await oe;if(Ae?.updateAvailable)H.write(`
+Update available: cc-safety-net ${Ae.currentVersion} → ${Ae.latestVersion}. Update this CLI with your package manager, e.g. \`npm i -g cc-safety-net@latest\` for a global install.
+`)},me=hb(L,P.fetchVersion??Ft).then(async(Ae)=>{let Le=new Set(Ae.targets);return{targets:Ae.targets,codexPluginListOutput:Ae.codexPluginListOutput,kimiPlugin:Ae.kimiPlugin,available:new Map(await Promise.all(On.filter((We)=>Le.has(We.target)&&gu.has(We.target)).map(async(We)=>[We.target,await vr(We.probeCommand)])))}}),he=await tr(P.showBanner??!0,()=>({ready:me,finish:()=>me}),()=>nr({input:P.input??process.stdin,output:H}),{loadingMessage:"Checking installed integrations…",output:H}),ke=await Promise.resolve().then(()=>(nu(L.tmpdir,process.platform,Z),null)).catch((Ae)=>wr(Ae));if(he.targets.length===0){if(H.write("No installed integrations found. Run `cc-safety-net install` to set one up.\n"),ke!==null)console.error(ke);return await se(),ke===null?0:1}let Pe=he.targets.some((Ae)=>yu.has(Ae))?await Promise.resolve().then(()=>(xo(L),null)).catch((Ae)=>wr(Ae)):null,Te=await Fr(Promise.all(he.targets.map((Ae)=>{if(Ae==="kimi-code"&&he.kimiPlugin)return Promise.resolve({message:"Kimi Code plugin skipped: update it in Kimi Code from /plugins (Installed tab, select cc-safety-net, press Enter)",failed:!1});if(gu.has(Ae)&&!he.available.get(Ae))return Promise.resolve({message:`${cn(Ae)} not found; skipped`,failed:!1});if(Pe!==null&&yu.has(Ae))return Promise.resolve({message:Pe,failed:!0});return Au("install",Ae,L,!0,he.codexPluginListOutput).then((Le)=>({message:Le,failed:!1}),(Le)=>({message:wr(Le),failed:!0}))})),{loadingMessage:`Updating ${he.targets.length} integration${he.targets.length===1?"":"s"}…`,output:H}),_e=ke===null?Te:[...Te,{message:ke,failed:!0}];return _e.forEach((Ae)=>Ae.failed?console.error(Ae.message):H.write(`${Ae.message}
+`)),await se(),_e.some((Ae)=>Ae.failed)?1:0}function _s(P,L={}){return Promise.resolve().then(()=>yb(P)).then(()=>vb(L)).catch((H)=>(console.error(wr(H)),1))}async function kr(P,L,H={}){try{let Y=c(),Z=await tr(!0,()=>ib(Y,P,L,H),()=>nr({input:H.input??process.stdin,output:H.output??process.stdout}),{loadingMessage:P==="install"?"Checking available integrations…":"Checking installed integrations…",output:H.output??process.stdout});if(!Z)return(H.output??process.stdout).write(`Cancelled: nothing was ${P}ed.
+`),0;if(Z==="update")return(H.runUpdate??(()=>_s([],{fetchVersion:H.fetchVersion,input:H.input,output:H.output,showBanner:!1})))();let oe=H.output??process.stdout;return await Ud(Z,async(se)=>{if(se==="kimi-code"&&P==="install"){let he=await gb(H,Y);if(he===null){oe.write(`Cancelled: Kimi Code integration was not installed.
+`);return}if(he==="plugin"){oe.write(`${mb(Y)}
+`);return}}let me=await Fr(Au(P,se,Y),{loadingMessage:`${P==="install"?"Installing":"Uninstalling"} ${cn(se)} integration…`,output:oe});oe.write(`${me}
+`)}),0}catch(Y){return console.error(wr(Y)),1}}function wr(P){let L=P instanceof Error?P.message:String(P),H=typeof P==="object"&&P!==null&&"code"in P?P.code:null;if(H==="EACCES"||H==="EPERM")return`${L}
+Check file permissions for the target config file and parent directory.`;if(H==="ENOENT")return`${L}
+Check that the target config path and parent directory exist.`;if(H==="ENOTDIR")return`${L}
+Check that every parent path component is a directory.`;return L}import{mkdirSync as Pb}from"node:fs";import{dirname as Sb}from"node:path";import{createInterface as Rb}from"node:readline";import{existsSync as Iu,readFileSync as bb}from"node:fs";function Ot(P,L){let H=ft(P,L);return{policy:H.policy,errors:de(ut(H.issues,pt,(Y)=>Y.kind==="custom")," "," ")}}function Cr(P,L){return Ot(P,L).errors}function _u(P,L){return{"safety.level":P.safety.level,...Is("safety.overrides",P.safety.overrides),"workflow.worktree_mode":String(P.workflow.worktree_mode),"destructive_command_protection.enabled":String(P.destructive_command_protection.enabled),...Is("destructive_command_protection.overrides",P.destructive_command_protection.overrides),"destructive_command_protection.allow_paths":Os(P.destructive_command_protection.allow_paths),"secret_protection.enabled":String(P.secret_protection.enabled),...Is("secret_protection.overrides",P.secret_protection.overrides),"secret_protection.deny_paths":Os(P.secret_protection.deny_paths),"secret_protection.allow_paths":Os(P.secret_protection.allow_paths),...L?{"audit.retention_days":String(P.audit.retention_days)}:{}}}function Ro(P,L,H){let Y=_u(P,H),Z=_u(L,H);return[...new Set([...Object.keys(Y),...Object.keys(Z)])].flatMap((oe)=>Y[oe]===Z[oe]?[]:[{field:oe,before:Y[oe],after:Z[oe]}])}function xr(P,L){let H=u(P,L);if(!Iu(H))return{baseline:k(globalThis.__CC_SAFETY_NET_EMBEDDED_POLICY__,P.home),diagnostics:[]};let Y=$t(H),Z=Ot(Y.value,P.home);return{baseline:Z.policy,diagnostics:Y.errors.length>0?Y.errors:Z.errors}}function $t(P){if(!Iu(P))return{errors:[`${P}: file not found`]};try{return{value:JSON.parse(bb(P,"utf-8")),errors:[]}}catch(L){let H=L instanceof Error?L.message:String(L);return{errors:[`${P}: ${L instanceof SyntaxError?`Invalid JSON: ${H}`:H}`]}}}function Eo(P,L){let H=wb(P)?P:{};return{version:L.version,...Object.fromEntries(["safety","workflow","destructive_command_protection","secret_protection"].filter((Y)=>H[Y]!==void 0).map((Y)=>[Y,H[Y]]))}}function Is(P,L){return Object.fromEntries(Object.entries(L).flatMap(([H,Y])=>Y===void 0?[]:[[`${P}.${H}`,String(Y)]]))}function Os(P){return P.length===0?"(none)":P.join(", ")}function wb(P){return!!P&&typeof P==="object"&&!Array.isArray(P)}import{chmodSync as kb,existsSync as Ou,mkdirSync as Cb,readFileSync as $u}from"node:fs";import{dirname as xb}from"node:path";function Du(P,L={}){let H=u(P,L);if(!Ou(H))return{path:H,exists:!1,raw:"",policy:I(),errors:[]};let Y=$u(H,"utf-8");if(!Y.trim())return{path:H,exists:!0,raw:Y,policy:I(),errors:["Config file is empty"]};try{let Z=Ot(JSON.parse(Y),P.home);return{path:H,exists:!0,raw:Y,policy:Z.policy,errors:Z.errors}}catch(Z){return{path:H,exists:!0,raw:Y,policy:I(),errors:[`Invalid JSON: ${Z instanceof Error?Z.message:String(Z)}`]}}}function Hn(P,L,H={}){let Y=u(P,H),Z=Ot(L,P.home);if(Z.errors.length>0)return{path:Y,policy:I(),errors:Z.errors};let oe=Z.policy;return Cb(xb(Y),{recursive:!0,mode:448}),h(ae(Y),`${JSON.stringify(oe,null,2)}
+`,384),kb(Y,384),{path:Y,policy:oe,errors:[]}}function Nu(P,L){let H=Ot(L,P.home);if(H.errors.length>0)return{errors:H.errors};return{preview:Be(H.policy,P.env),errors:[]}}function Lu(P,L={}){let H=u(P,L);if(!Ou(H))return Hn(P,ne,L);let Y=$u(H,"utf-8");if(!Y.trim())return Hn(P,ne,L);try{return Hn(P,k(JSON.parse(Y),P.home),L)}catch{return Hn(P,ne,L)}}var ju=new Set(["check","apply"]),Fu="(unset)";async function Mu(P,L,H={}){let Y=mn({label:"policy",booleans:{global:["-g","--global"]},positionals:"list"},L),Z=Y.positionals[0],oe=[...Y.errors,...Z&&!ju.has(Z)?[`Unknown policy subcommand: ${Z}`]:[],...Z&&ju.has(Z)&&!Y.positionals[1]?[`policy ${Z} requires a file`]:[],...Y.positionals.slice(2).map((We)=>`Unexpected policy argument: ${We}`)];if(oe.length>0){for(let We of oe)console.error(We);return 1}let se=Y.positionals[1];if(!Z||!se)return Wt(Tr,console.error),1;let me=H.cwd??process.cwd(),he=Y.flags.global?u(P):y(me);if(!Y.flags.global&&O(P,{cwd:me}))return console.error(`${he} is the user policy, not a project policy; use --global for the user scope, or run from a project directory`),1;let ke=$t(se),Pe=[...ke.errors,...Cr(ke.value,P.home).map((We)=>`${se}: ${We}`),...!Y.flags.global&&Ab(ke.value)&&ke.value.audit!==void 0?[`${se}: audit settings are user scope only; remove the audit section from a project proposal`]:[]];if(Pe.length>0){for(let We of Pe)console.error(We);return 1}let Te=k(ke.value,P.home);if(console.log(`Scope: ${Y.flags.global?"user":"project"} (${he})`),console.log(`Proposal: ${se}`),Y.flags.global)Hu(k($t(he).value,P.home),Te,!0);if(!Y.flags.global){let We=xr(P).baseline;console.log("Effective policy (user + project merged):"),Hu(te(We,fe($t(he).value,P.home).policy).policy,te(We,fe(ke.value,P.home).policy).policy,!1)}if(Z==="check")return 0;let _e=H.input??process.stdin,Ae=H.output??process.stdout;if(!_e.isTTY||!Ae.isTTY)return console.error("policy apply confirms interactively; run this yourself in a terminal:"),console.error(`  cc-safety-net policy apply ${se}${Y.flags.global?" --global":""}`),1;if(!await Eb(`Apply this policy to ${he}? [y/N] `,_e,Ae))return console.log("Cancelled; nothing was written."),0;return Tb(P,he,ke.value,Te,Y.flags.global),console.log(`Policy applied: ${he}`),0}function Eb(P,L,H){let Y=Rb({input:L,output:H,terminal:!1});return new Promise((Z)=>{Y.once("close",()=>Z(!1)),Y.question(P,(oe)=>{Z(/^y(es)?$/i.test(oe.trim())),Y.close()})})}function Tb(P,L,H,Y,Z){if(Z){Hn(P,Y);return}Pb(Sb(L),{recursive:!0}),bn(L,Eo(H,Y))}function Hu(P,L,H){let Y=Ro(P,L,H);if(Y.length===0){console.log("No changes.");return}console.log(`Changes (${Y.length}):`);for(let Z of Y)console.log(`  ${Z.field}: ${Z.before??Fu} -> ${Z.after??Fu}`)}function Ab(P){return!!P&&typeof P==="object"&&!Array.isArray(P)}import{join as Gw}from"node:path";var Uu="# Custom Rules Reference\n\nAgent reference for generating CC Safety Net rulebook configuration.\n\n## Config Locations\n\n| Scope | Config path | Rulebook path | Priority |\n|-------|-------------|---------------|----------|\n| User | `~/.cc-safety-net/rules/rule.json` | `~/.cc-safety-net/rules/<rulebook-name>/rulebook.json` | First |\n| Project | `.cc-safety-net/rules/rule.json` | `.cc-safety-net/rules/<rulebook-name>/rulebook.json` | Second |\n| GitHub source | Listed in a local `rule.json` | Vendored into the consumer's `<rulebook-name>/rulebook.json` by `rule add` | Source order |\n\nEvery rulebook is a live file: the runtime reads it on each tool call, so an edit applies to the next command with no publishing step.\n\nUser scope is evaluated before project scope; within a scope, sources apply in `rules` array order. A duplicate active rulebook name keeps the first claim and ignores the later rulebook with a warning, so a user-scoped name shadows a project-scoped one.\n\nUse `cc-safety-net rule init` to create an inert local config. Use `--global` for user scope. Use `cc-safety-net rule init --example` to also create an inactive example rulebook. `CC_SAFETY_NET_HOME` overrides the `~/.cc-safety-net` user root.\n\nLegacy inline `.safety-net.json` and `~/.cc-safety-net/config.json` files are not loaded at runtime. Convert them with `cc-safety-net rule migrate`.\n\n## rule.json Schema\n\n```json\n{\n  \"version\": 1,\n  \"rules\": [\"project-rules\", \"owner/repo#main/team-rules\"],\n  \"overrides\": {\n    \"project-rules/block-docker-system-prune\": {\n      \"reason\": \"Use targeted Docker cleanup commands.\"\n    },\n    \"team-rules/block-npm-global\": \"off\"\n  },\n  \"transparent_wrappers\": [\"rtk\"]\n}\n```\n\n- `version`: Required. Must be `1`.\n- `$schema`: Optional. `cc-safety-net rule verify` inserts it into a valid `rule.json` that lacks it.\n- `rules`: Optional array of rulebook source strings. Missing `rules` is treated as `[]`.\n- `overrides`: Optional object keyed by `<rulebook-name>/<rule-name>`.\n- `overrides` values are either `\"off\"` to disable a rule or an object with a required `reason` (replacement block reason) and an optional `intent` (one of `hard_stop`, `use_alternative`, `scope_down`, `manual_only`, `stop_and_explain`).\n- A project override cannot target a user-scoped rule: only that override is ignored, the user rule keeps its configured state, and `rule verify` reports the diagnostic as a failure.\n- `transparent_wrappers`: Optional array of command names that transparently execute a visible child command.\n- `caffeinate`, `exec`, `nice`, `nohup`, `setsid`, `stdbuf`, `time`, and `timeout` are built-in transparent wrappers and need no configuration. Configure only other wrappers you intentionally trust, such as `\"rtk\"`.\n- Use `cc-safety-net rule wrapper add rtk` to configure RTK without manually editing `rule.json`.\n- `command_tools`: Optional array of shell tools that a plugin adds to an agent and that CC Safety Net does not know. Each entry is a tool name such as `\"ops_bash\"`, or `{ \"name\": \"ops_run_background\", \"cwd\": \"cwd\" }` when the tool takes its working directory in a named argument (otherwise `workdir`, `cwd`, or `working_directory` is read). A call to a declared tool with a non-empty string `command` is analyzed like a built-in shell command. User and project lists merge; the user entry wins a name declared in both.\n- Built-in shell and file tools are already analyzed and cannot be declared; `rule verify` reports one declared by hand.\n- Use `cc-safety-net rule tool add ops_bash ops_run_background` to declare tools in the user config, or add `--project` for the project config.\n\n## Rulebook Sources\n\n- Local sources are bare rulebook names such as `project-rules`; the rulebook file is `.cc-safety-net/rules/project-rules/rulebook.json`.\n- Run `cc-safety-net rule add owner/repo` to add every rulebook currently present on the repository's default branch.\n- Use `--only` to select one or more rulebooks while preserving their order: `cc-safety-net rule add owner/repo --only aws gcloud`.\n- Use `--ref` to select a branch, tag, or commit instead of the default branch: `cc-safety-net rule add owner/repo --ref v2 --only aws`.\n- GitHub sources are stored in canonical form as `owner/repo#ref/<rulebook-name>`. That form remains valid in `rule.json` and as direct CLI input.\n- GitHub refs may contain `/`-separated path segments, such as `feature/rulebook-v2`.\n- The GitHub source name, the repository directory name, and the rulebook `name` must match exactly.\n- Rulebook source strings must be unique in a config.\n\n## rulebook.json Schema\n\n```json\n{\n  \"rulebook_version\": 1,\n  \"name\": \"project-rules\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Project-specific CC Safety Net rules.\",\n  \"author\": \"project\",\n  \"allowed_commands\": [\"docker\"],\n  \"rules\": [\n    {\n      \"name\": \"block-docker-system-prune\",\n      \"command\": \"docker\",\n      \"subcommand\": \"system\",\n      \"block_args\": [\"prune\"],\n      \"reason\": \"Use targeted cleanup instead.\"\n    }\n  ],\n  \"tests\": [\n    {\n      \"command\": \"docker system prune\",\n      \"expect\": \"blocked\",\n      \"rule\": \"block-docker-system-prune\"\n    },\n    {\n      \"command\": \"docker ps\",\n      \"expect\": \"allowed\"\n    }\n  ]\n}\n```\n\n### Rulebook Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `rulebook_version` | Yes | Must be `1` or `2` |\n| `name` | Yes | `^[a-zA-Z][a-zA-Z0-9_-]{0,63}$` |\n| `version` | Yes | Non-empty string |\n| `description` | No | Free text; not type-checked at runtime |\n| `author` | No | Free text; not type-checked at runtime |\n| `allowed_commands` | Yes | Unique command names matching `^[a-zA-Z][a-zA-Z0-9_-]*$` |\n| `rules` | Yes | Array of rule objects |\n| `tests` | No | Array of fixtures |\n\n### Rule Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `name` | Yes | Unique within the rulebook (case-insensitive); same pattern as rulebook `name` |\n| `command` | Yes | Must be listed in `allowed_commands`; basename only, not path |\n| `subcommand` | No | Same pattern as `command`; omit to match any subcommand |\n| `intent` | No | One of `hard_stop`, `use_alternative`, `scope_down`, `manual_only`, `stop_and_explain` |\n| `block_args` | Yes | Non-empty array of non-empty strings |\n| `reason` | Yes | Non-empty string, max 256 chars |\n\n### Rule Fields (`rulebook_version` 2)\n\nVersion 2 replaces `subcommand` and `block_args` with an exact-token `match` object. Version 1 rulebooks keep their fields and their behavior; a client that does not support version 2 rejects the rulebook instead of applying broader version 1 semantics.\n\n```json\n{\n  \"name\": \"block-terraform-apply-destroy\",\n  \"command\": \"terraform\",\n  \"match\": {\n    \"command_path\": [\"apply\"],\n    \"any_args\": [\"-destroy\", \"--destroy\"]\n  },\n  \"reason\": \"Review a destroy plan first with 'terraform plan -destroy'.\",\n  \"intent\": \"use_alternative\"\n}\n```\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `name` | Yes | Same as version 1 |\n| `command` | Yes | Same as version 1 |\n| `match.command_path` | Yes | Non-empty array of non-empty command words |\n| `match.any_args` | No | Non-empty array of unique non-empty argument tokens |\n| `match.exclude_args` | No | Non-empty array of unique non-empty argument tokens |\n| `intent` | No | Same as version 1 |\n| `reason` | Yes | Same as version 1 |\n\n### Matching Behavior (`rulebook_version` 2)\n\n- **Command**: Normalized to lowercase basename, as in version 1.\n- **Command path**: After recognized global options and their values are skipped, the next command words must equal `command_path` exactly. AWS, gcloud, and Azure CLI value-taking global options are built in; Terraform's `-chdir=dir` is `=`-joined and is skipped with its own token.\n- **Unrecognized options**: A token starting with `-` that is not a recognized global option is skipped without consuming a value, so an unlisted value-taking option with a separate value (`--newflag value`) makes the rule miss. This fails open deliberately; document such gaps in the rulebook.\n- **`any_args`**: At least one listed token must appear literally among the arguments.\n- **`exclude_args`**: Any listed token appearing literally among the arguments prevents the match, which is how a safe preview such as `aws s3 rm --dryrun` stays allowed.\n- **No short-option expansion**: Arguments compare as exact tokens, so list every accepted spelling (`\"-destroy\"` and `\"--destroy\"`).\n- **Literal and case-sensitive**: No regex, glob, or substring matching. The first matching rule wins.\n- Release channels are separate rules: `gcloud beta compute instances delete` needs its own `command_path`.\n\n### Test Fixture Fields\n\n| Field | Required | Constraints |\n|-------|----------|-------------|\n| `command` | Yes | Non-empty shell command string |\n| `expect` | Yes | `\"blocked\"` or `\"allowed\"` |\n| `rule` | Required for blocked fixtures | Rule name expected to block the command |\n\nFixtures are optional documentation of intended behavior. Version 1 fixtures are shape-validated only. Version 2 fixtures are evaluated against the rulebook's own rules when a source is fetched by `rule add` or `rule update`, and by `rule verify`; a failing fixture rejects that source before it is written. Loading a rulebook does not re-evaluate fixtures. CC Safety Net never executes fixture commands; they are analyzer inputs only.\n\n## Matching Behavior\n\nThe subcommand, argument, and option rules below describe `rulebook_version` 1 rules; version 2 rules match as described in Matching Behavior (`rulebook_version` 2). Execution order and transparent wrappers apply to both.\n\n- **Command**: Normalized to lowercase basename with any trailing `.exe` removed (`/usr/bin/git` → `git`).\n- **Subcommand**: The first command token after recognized Git and Docker global options and their values; `--` ends option parsing. An unrecognized option without `=` may consume the following token as its value.\n- **Arguments**: Each `block_args` value is compared literally against every command token, including expanded short options. The command is blocked if **any** item matches.\n- **Short options**: Expanded (`-Ap` matches `-A`).\n- **Long options**: Exact match (`--all-files` does not match `--all`).\n- **Execution order**: Built-in rules first, then custom rulebooks. Custom rules only add restrictions.\n- **Transparent wrappers**: A configured wrapper such as `rtk` lets `rtk git commit` be analyzed as `git commit` only when `git` is protected by built-in analyzers or active custom rules. `rtk -- git commit` is also supported.\n\n## Workflow\n\n1. Run `cc-safety-net rule init` or create `rule.json` manually.\n2. Optionally run `cc-safety-net rule init --example` to create an inactive example rulebook.\n3. Use `cc-safety-net rule wrapper add rtk` for trusted transparent wrappers.\n4. Run `cc-safety-net rule add <source>` after creating or choosing a rulebook source; add `--only <rulebook...>` or `--ref <ref>` for repository selection. The command adds the selected sources and syncs them.\n5. Edit a local rulebook whenever you like: the edit is enforced on the next command, so there is nothing to run afterwards.\n6. Run `cc-safety-net rule update [source]` to re-fetch remote sources and rewrite the vendored copies; the command prints what changed. A source with an ordinary update failure keeps its vendored copy while the other selected sources still update. Resource-limit failures remain fatal for the whole update.\n7. Run `cc-safety-net rule verify` to validate config, local rulebooks, and shareable GitHub-source rulebook directories in the current repository (it does not fetch remote content).\n8. Run `cc-safety-net rule list` to inspect active rulebooks and transparent wrappers.\n\nA missing or invalid rulebook file makes that source inactive, and an unreadable or invalid `rule.json` makes every source in its scope inactive. Inactive sources stop applying their rules while other custom rules and all built-in protections stay active. Fix the file named in the diagnostic, or run `cc-safety-net rule update` when a remote source has not been vendored yet. Run `cc-safety-net status` to see degraded sources.\n";function To(P,L){if(!P.ok){Ju(P);return}qu(P,L)}function Gu(P,L,H){if(P.ok)console.log(H);if(!P.add){To(P,`Added rulebook source: ${L}`);return}if(!P.ok){Ju(P);return}if(P.add.added.length>0)console.log(`Added ${P.add.added.length} ${P.add.added.length===1?"rulebook":"rulebooks"} from ${P.add.source} at ${P.add.ref}:`),P.add.added.forEach((Y)=>{console.log(`  - ${Y}`)});if(P.add.alreadyConfigured.length>0)console.log(`Rulebooks already configured from ${P.add.source} at ${P.add.ref}: ${P.add.alreadyConfigured.join(", ")}`);if(P.add.commits.length>0)console.log(`Vendored at ${P.add.commits.map((Y)=>Y.slice(0,7)).join(", ")}.`);qu(P,"Rule config updated.")}function qu(P,L){for(let H of P.changes??[])console.log(H);console.log(L),console.log(""),_b(P.entries)}function _b(P){if(P.length===0){console.log("Active rulebooks: (none)");return}console.log(`Active rulebooks (${P.length}):`);for(let L of P)console.log(`  - ${L.name} ${L.version} (${Ib(L.ruleCount)})`),console.log(`    Source: ${L.spec}`)}function Ib(P){return`${P} ${P===1?"rule":"rules"}`}function Vu(P){zn("Active sources",P.rulebooks,(L)=>[`[${L.source}] ${L.name} ${L.version}`,`  Source: ${L.spec}`]),zn("Active rules",P.rules,(L)=>[`[${$b(P,L.name)}] ${L.name}`,...Ob(L),`  Reason: ${L.reason}`]),zn("Disabled rules",Bu(P,"off"),(L)=>[L.key]),zn("Reason overrides",Bu(P,"reason"),(L)=>[L.key,`  Reason: ${L.value.reason}`]),zn("Transparent wrappers",P.transparent_wrappers,(L)=>[L]),zn("Issues",P.errors,(L)=>[L]),zn("Warnings",P.warnings,(L)=>[L])}function Ku(P){zn("Command tools",P,(L)=>typeof L.tool==="string"?[`[${L.scope}] ${L.tool}`]:[`[${L.scope}] ${L.tool.name}`,...L.tool.cwd===void 0?[]:[`  Cwd argument: ${L.tool.cwd}`]])}function zn(P,L,H){if(L.length===0){console.log(`${P}: (none)`);return}console.log(`${P} (${L.length}):`);for(let Y of L){let[Z,...oe]=H(Y);console.log(`  - ${Z}`);for(let se of oe)console.log(`    ${se}`)}}function Ob(P){if(!P.match)return[`  Command: ${P.subcommand?`${P.command} ${P.subcommand}`:P.command}`,`  Block args: ${P.block_args.join(", ")}`];return[`  Command: ${[P.command,...P.match.command_path].join(" ")}`,...P.match.any_args?[`  Any args: ${P.match.any_args.join(", ")}`]:[],...P.match.exclude_args?[`  Exclude args: ${P.match.exclude_args.join(", ")}`]:[]]}function $b(P,L){return P.rulebooks.find((H)=>H.rules.includes(L))?.source??"project"}function Bu(P,L){return Object.entries({...P.userConfig?.overrides,...P.projectConfig?.overrides}).filter((H)=>{if(L==="off")return H[1]==="off";return!!H[1]&&typeof H[1]==="object"}).map(([H,Y])=>({key:H,value:Y}))}function Ju(P){for(let L of P.errors)console.error(L)}import{dirname as yp,join as Lo}from"node:path";import{join as Ls,resolve as Vb}from"node:path";function Pr(P){let L=d(P);if(L.errors.length>0)return{ok:!1,result:{ok:!1,errors:L.errors,entries:[]}};return{ok:!0,config:L.config??ue}}function zu(P){bn(P,ue)}function Wu(P){bn(P,{rulebook_version:1,name:"example-rules",version:"1.0.0",description:"Project-specific CC Safety Net rules.",author:"project",allowed_commands:["docker"],rules:[{name:"block-docker-system-prune",command:"docker",subcommand:"system",block_args:["prune"],reason:"Use targeted cleanup instead."}],tests:[{command:"docker system prune",expect:"blocked",rule:"block-docker-system-prune"}]})}import{dirname as Oo}from"node:path";var Db="custom.";function Ao(P){if(P.rulebook_version!==2)return[];let L=P.rules.map((H)=>({name:H.name,command:H.command,block_args:[],match:H.match,reason:H.reason,intent:H.intent}));return(P.tests??[]).flatMap((H,Y)=>{let Z=$s(v(H.command));if(Z.length===0)return[`tests[${Y}]: could not parse fixture command: ${H.command}`];let oe=Z.reduce((se,me)=>se??N(me,L)?.id.slice(Db.length),void 0);if(H.expect==="blocked"){if(oe===H.rule)return[];let se=oe?`"${oe}" matched first`:"no rule matched";return[`tests[${Y}]: expected "${H.rule}" to block "${H.command}" but ${se}`]}return oe?[`tests[${Y}]: expected "${H.command}" to be allowed but "${oe}" matched`]:[]})}function $s(P){return P.nodes.flatMap((L)=>{if(L.kind==="group"||L.kind==="function")return $s(L.body);if(L.kind!=="command")return[];let H=Ee(re(L.dialect,L.words)).words.map(t);return[...H.length>0?[H]:[],...L.nested.flatMap((Y)=>$s(Y))]})}var _o=Object.freeze({concurrency:4,maxRequests:131,maxResponseBytes:67108864});function Io(P={}){return{requests:0,responseBytes:0,maxRequests:P.maxRequests??_o.maxRequests,maxResponseBytes:P.maxResponseBytes??_o.maxResponseBytes}}function Mn(P){return{controller:new AbortController,budget:Io(),resolveUrl:P}}function Yu(P){return P instanceof Error&&P.message==="Rule synchronization exceeds CC Safety Net's safe resource limits."}function Zu(P){if(P.requests>=P.maxRequests)throw Error("Rule synchronization exceeds CC Safety Net's safe resource limits.");P.requests++}function Xu(P,L){if(L>P.maxResponseBytes-P.responseBytes)throw P.responseBytes+=L,Error("Rule synchronization exceeds CC Safety Net's safe resource limits.");P.responseBytes+=L}var np=Object.freeze({timeoutMs:15000,metadataBytes:524288,commitBytes:262144,treeBytes:16777216,rawBytes:4194304});async function Qu(P,L,H=w(Oo(Oo(L)),"rules policy"),Y=Mn()){if(C(P))return Fb(P,Y);return jb(P,L,H)}async function tp(P,L,H,Y,Z,oe){if(!C(P))return Qu(P,L,H,Y);let se=Z?null:Nb(P,L,H);if(se)return se;if(!Z&&!oe)throw Error(`${P} is not vendored; run rule update ${P} to vendor it`);return Qu(P,L,H,Y)}function Nb(P,L,H=w(Oo(Oo(L)),"rules policy")){let Y=M(P),Z=F(L,Y.name),oe=r(i(H,Z));if(oe===null)return null;let se=pe(Ds(oe,`Invalid rulebook ${Z}.`));if(se.name!==Y.name)throw Error(`rulebook name "${se.name}" in ${Z} must match "${Y.name}"`);return{spec:P,rulebook:se,content:oe}}async function rp(P,L={}){if(!X(P))throw Error(`Invalid GitHub repository source: ${P}`);let[H,Y]=P.split("/");if(!H||!Y)throw Error(`Invalid GitHub repository source: ${P}`);if(L.ref!==void 0&&!ce(L.ref))throw Error(`GitHub rulebook refs must use valid path segments: ${L.ref}`);let Z=L.operation??Mn(),oe=L.ref??await Lb(H,Y,P,Z),se=await ip(H,Y,oe,P,Z),me=await $o(`https://api.github.com/repos/${H}/${Y}/git/trees/${se}?recursive=1`,"tree",Z),he=me.response;if(!he.ok)throw Error(`Failed to inspect ${P}: GitHub tree returned ${he.status}`);let ke=JSON.parse(me.content);if(!Array.isArray(ke?.tree))throw Error(`Failed to inspect ${P}: unexpected GitHub tree response`);let Pe=ke.tree,Te=[...new Set(Pe.flatMap((_e)=>{if(!_e||typeof _e!=="object")return[];let Ae=_e;if(Ae.type!=="blob"||typeof Ae.path!=="string")return[];let Le=Ae.path.match(Et);return Le?.[1]?[Le[1]]:[]}))].sort();if(Te.length===0)throw Error(`No rulebooks found in ${P} under ${be}/`);return{source:P,owner:H,repo:Y,ref:oe,commit:se,names:Te}}async function Lb(P,L,H,Y){let Z=await $o(`https://api.github.com/repos/${P}/${L}`,"metadata",Y),oe=Z.response;if(!oe.ok)throw Error(`Failed to inspect ${H}: GitHub returned ${oe.status}`);let me=JSON.parse(Z.content)?.default_branch;if(typeof me!=="string"||me==="")throw Error(`Failed to inspect ${H}: missing default branch`);if(!ce(me))throw Error(`GitHub returned an invalid default branch: ${me}`);return me}function jb(P,L,H){kt(P);let Y=F(L,P),Z=r(i(H,Y));if(Z===null)throw Error(`Rulebook source not found: ${P}`);let oe=op(Ds(Z,"Invalid local rulebook source."));if(oe.name!==P)throw Error(`rulebook name "${oe.name}" must match local source "${P}"`);return{spec:P,rulebook:oe,content:Z}}async function Fb(P,L){let H=M(P),Y=await ip(H.owner,H.repo,H.ref,P,L),Z=await $o(`https://raw.githubusercontent.com/${H.owner}/${H.repo}/${Y}/${H.path}`,"raw",L),oe=Z.response;if(!oe.ok)throw Error(`Failed to fetch ${P}: GitHub raw returned ${oe.status}`);let se=Z.content,me=op(Ds(se,"Invalid GitHub rulebook response."));if(me.name!==H.name)throw Error(`rulebook name "${me.name}" must match GitHub source "${H.name}"`);return{spec:P,rulebook:me,content:se}}function op(P){let L=pe(P),H=Ao(L);if(H.length>0)throw Error(H.join("; "));return L}function Ds(P,L){try{return JSON.parse(P)}catch{throw Error(L)}}async function ip(P,L,H,Y,Z){let oe=await $o(`https://api.github.com/repos/${P}/${L}/commits/${encodeURIComponent(H)}`,"commit",Z),se=oe.response;if(!se.ok)throw Error(`Failed to resolve ${Y}: GitHub returned ${se.status}`);let me=JSON.parse(oe.content);if(typeof me?.sha!=="string"||me.sha==="")throw Error(`Failed to resolve commit for ${Y}`);return me.sha}async function Hb(P,L,H={}){if(H.signal?.aborted)throw H.signal.reason;let Y=H.budget??Io(),Z=new AbortController,oe=()=>Z.abort(H.signal?.reason);H.signal?.addEventListener("abort",oe,{once:!0});let se=!1,me=setTimeout(()=>{if(Z.signal.aborted)return;se=!0,Z.abort()},H.timeoutMs??np.timeoutMs);try{if(H.signal?.aborted)throw H.signal.reason;Zu(Y);let he=await fetch(P,{signal:Z.signal,redirect:"error"});if(!he.ok)return sp(he),{response:he,content:""};return{response:he,content:await Mb(he,L,Y,()=>Z.abort())}}catch(he){if(se)throw Error("GitHub request timed out",{cause:he});if(H.signal?.aborted)throw H.signal.reason;throw he}finally{clearTimeout(me),H.signal?.removeEventListener("abort",oe)}}function $o(P,L,H){return Hb(H.resolveUrl?.(P)??P,L,{budget:H.budget,signal:H.controller.signal})}async function Mb(P,L,H=Io(),Y){let Z=np[`${L}Bytes`],oe=Number(P.headers.get("content-length"));if(Number.isFinite(oe)&&oe>Z)throw sp(P),Error(`GitHub ${L} response exceeds ${Z} bytes`);if(!P.body)return"";let se=P.body.getReader(),me=[],he=0;while(!0){let ke=await se.read();if(ke.done)break;try{Xu(H,ke.value.byteLength)}catch(Pe){throw Y?.(),ep(se),Pe}if(he+=ke.value.byteLength,he>Z)throw Y?.(),ep(se),Error(`GitHub ${L} response exceeds ${Z} bytes`);me.push(Buffer.from(ke.value))}return Buffer.concat(me,he).toString("utf-8")}function sp(P){if(!P.body)return;ap(()=>P.body?.cancel())}function ep(P){ap(()=>P.cancel())}function ap(P){try{Promise.resolve(P()).catch(()=>{})}catch{}}var Ub=/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)#(.+)$/;function lp(P,L){let H=up(P.rules,L);if(H.length>0)return{ok:!0,specs:H};return dp(P.rules,L)}function cp(P,L){let H=up(P,L);if(H.length>0)return{ok:!0,specs:H};let Y=Gb(P,L);if(Y.length>0)return{ok:!0,specs:Y};let Z=qb(P,L);if(!Z.ok)return Z;if(Z.specs.length>0)return{ok:!0,specs:Z.specs};return dp(P,L)}function dp(P,L){let H=P.filter((Y)=>Ns(Y)?.name===L);if(H.length===1)return{ok:!0,specs:H};return Bb(L,H)}function Bb(P,L){return{ok:!1,result:{ok:!1,errors:L.length===0?[`No configured rulebook matches ${P}`]:[`Ambiguous rulebook match ${P}: ${L.join(", ")}`],entries:[]}}}function up(P,L){return P.filter((H)=>H===L)}function Gb(P,L){let H=L.match(Ub),Y=H?.[1],Z=H?.[2],oe=H?.[3];if(!Y||!Z||!oe||!ce(oe))return[];return pp(P,(se)=>se.owner===Y&&se.repo===Z&&se.ref===oe)}function qb(P,L){if(!X(L))return{ok:!0,specs:[]};let[H,Y]=L.split("/"),Z=pp(P,(se)=>se.owner===H&&se.repo===Y);if(new Set(Z.map((se)=>Ns(se)?.ref).filter((se)=>!!se)).size<2)return{ok:!0,specs:Z};return{ok:!1,result:{ok:!1,errors:[`Multiple refs are configured for ${L}. Use an explicit ref:`,`  cc-safety-net rule remove ${L}#<ref>`],entries:[]}}}function Ns(P){try{return M(P)}catch{return null}}function pp(P,L){return P.filter((H)=>{let Y=Ns(H);return Y?L(Y):!1})}async function No(P,L={}){return Kb(P,L,await Do(P,L,Mn()))}function Kb(P,L,H){if(!H.ok)return H;let Y=hn(P,L),Z=[...new Set(V(Y.configPath,Y.filesystemScope))];if(Z.length===0)return H;return{ok:!1,errors:Z,entries:H.entries}}async function Do(P,L,H,Y={},Z=new Set,oe=new Set){try{let se=hn(P,L),me=Pr(se.configTarget);if(!me.ok)return me.result;let he=me.config,ke=L.only?lp(he,L.only):{ok:!0,specs:he.rules};if(!ke.ok)return ke.result;let Pe=new Set([...L.refresh?ke.specs:[],...Z]),Te=(nn)=>tp(nn,se.configDir,se.filesystemScope,H,Pe.has(nn),!L.refresh||Pe.has(nn)),_e=await tw(he.rules,L.refresh?(nn)=>Te(nn).then((sn)=>({ok:!0,item:sn})).catch((sn)=>{if(Yu(sn))throw sn;return{ok:!1,spec:nn,message:sn instanceof Error?sn.message:String(sn)}}):async(nn)=>({ok:!0,item:await Te(nn)}),H),Ae=_e.filter((nn)=>!nn.ok),Le=_e.filter((nn)=>nn.ok).map((nn)=>nn.item),We=Le.flatMap((nn)=>Jb(nn,he.rules)),Fe=Le.flatMap((nn)=>zb(nn,oe,se)),Ze=new Set([...We,...Fe].map((nn)=>nn.spec)),tn=[...Ae,...We,...Fe],on=[],ln=Yb(on,()=>Le.flatMap((nn)=>Ze.has(nn.spec)||tn.length>0&&oe.has(nn.spec)?[]:Wb(nn,se,Y,on)));return{ok:tn.length===0,errors:tn.map((nn)=>`Failed to update ${nn.spec}: ${nn.message}`),entries:Le.map(Xb),changes:ln}}catch(se){return Rr(se)}}function Jb(P,L){if(!C(P.spec))return[];let H=Ge(P.spec),Y=L.filter((Z)=>Z!==P.spec&&Ge(Z).toLowerCase()===H.toLowerCase());if(Y.length===0)return[];return[{ok:!1,spec:P.spec,message:`rulebook name "${H}" is also claimed by ${Y.join(", ")}; rename one of them`}]}function zb(P,L,H){if(!L.has(P.spec)||!C(P.spec))return[];let Y=F(H.configDir,P.rulebook.name),Z=r(i(H.filesystemScope,Y));if(Z===null||Z===P.content)return[];return[{ok:!1,spec:P.spec,message:`${Y} already exists and no configured source claims it; remove or rename the file, then re-run rule add`}]}function Wb(P,L,H,Y){if(!C(P.spec))return[];let Z=F(L.configDir,P.rulebook.name),oe=i(L.filesystemScope,Z),se=r(oe);if(se===P.content)return[];return Y?.push({target:oe,previous:se}),h(oe,P.content,void 0,H._testAfterPolicyRename),Zb(P,se)}function Yb(P,L){try{return L()}catch(H){for(let Y of[...P].reverse()){if(Y.previous===null){W(Y.target);continue}h(Y.target,Y.previous)}throw H}}function Zb(P,L){if(L===null)return[`Vendored ${P.spec} (${P.rulebook.version})`];let H=Ce(L),Y="problem"in H?null:H.rulebook,Z=new Map(Y?.rules.map((se)=>[se.name,JSON.stringify(se)])??[]),oe=new Set(P.rulebook.rules.map((se)=>se.name));return[`Updated ${P.spec} (${Y?.version??"unreadable"} -> ${P.rulebook.version})`,...[...oe].filter((se)=>!Z.has(se)).map((se)=>`  + ${se}`),...[...Z.keys()].filter((se)=>!oe.has(se)).map((se)=>`  - ${se}`),...P.rulebook.rules.filter((se)=>{let me=Z.get(se.name);return me!==void 0&&me!==JSON.stringify(se)}).map((se)=>`  ~ ${se.name}`)]}function Xb(P){return{spec:P.spec,name:P.rulebook.name,version:P.rulebook.version,ruleCount:P.rulebook.rules.length}}async function fp(P,L,H={}){return Qb(P,L,H,Mn())}async function Qb(P,L,H,Y,Z={}){let oe=null,se=!1;try{let me=hn(P,H),he=r(me.configTarget);oe={target:me.configTarget,content:he};let ke=Pr(me.configTarget);if(!ke.ok)return ke.result;let Pe=ke.config,Te=X(L)?await rp(L,{ref:H.ref,operation:Y}):null,_e=Te?ew(Te,H.rulebooks):[],Ae=Te?_e.map((tn)=>nw(Pe.rules,Te,tn)??`${L}#${Te.ref}/${tn}`):[L],Le=Ae.filter((tn)=>!Pe.rules.includes(tn)),We=[...Pe.rules,...Le];if(We.length>xe)return rw();if(We.length!==Pe.rules.length)se=!0,bn(me.configTarget,{...Pe,rules:We},void 0,Z._testAfterPolicyRename);let Fe=await Do(P,H,Y,Z,new Set(Le),new Set(Le));if(!Fe.ok)Sr(me.configTarget,he);if(!Fe.ok||!Te)return Fe;let Ze=_e.filter((tn,on)=>Le.includes(Ae[on]??""));return{...Fe,add:{source:L,ref:Te.ref,selected:_e,added:Ze,alreadyConfigured:_e.filter((tn)=>!Ze.includes(tn)),commits:Le.length>0?[Te.commit]:[]}}}catch(me){if(se&&oe)try{Sr(oe.target,oe.content)}catch(he){return Rr(he)}return Rr(me)}}function ew(P,L){let H=L?[...new Set(L)]:P.names,Y=H.filter((Z)=>!P.names.includes(Z));if(Y.length>0)throw Error(`Rulebooks not found in ${P.source} at ${P.ref}: ${Y.join(", ")}
+Available rulebooks: ${P.names.join(", ")}`);return H}function nw(P,L,H){let Y=`${L.source}#${L.ref}/${H}`;if(P.includes(Y))return Y;let Z=`${L.source}#${L.commit}/${H}`;return P.find((oe)=>oe===Z)}async function tw(P,L,H=Mn()){if(P.length>xe)throw Error(Se);let Y=[],Z=0,oe,se=Array.from({length:Math.min(P.length,_o.concurrency)},async()=>{while(!oe){let me=Z;if(me>=P.length)return;Z++;try{Y[me]=await L(P[me],me,H.controller.signal)}catch(he){if(!oe)oe={value:he},Z=P.length,H.controller.abort(he);return}}});if(await Promise.all(se),oe)throw oe.value;return Y}function rw(){return{ok:!1,errors:[Se],entries:[]}}async function mp(P,L,H={}){try{return await ow(P,L,H,{})}catch(Y){return Rr(Y)}}async function ow(P,L,H,Y){let Z=hn(P,H),oe=d(Z.configTarget);if(oe.errors.length>0)return{ok:!1,errors:oe.errors,entries:[]};if(!oe.config)return{ok:!1,errors:[`No config found at ${Z.configPath}`],entries:[]};let se=cp(oe.config.rules,L);if(!se.ok)return se.result;let me=H.deleteSource?iw(Z.configDir,se.specs,Z.filesystemScope):{ok:!0,dirs:[]};if(!me.ok)return me.result;let he=r(Z.configTarget);if(he===null)return Rr(Error("Rules config is unavailable."));try{bn(Z.configTarget,{...oe.config,rules:oe.config.rules.filter((Te)=>!se.specs.includes(Te))},void 0,Y._testAfterPolicyRename)}catch(Te){throw Sr(Z.configTarget,he),Te}let ke=await Do(P,H,Mn(),Y);if(!ke.ok)return Sr(Z.configTarget,he),ke;let Pe=sw(me.dirs,Y,Z.filesystemScope);if(!Pe.ok){Sr(Z.configTarget,he);let Te=await Do(P,H,Mn(),Y);if(!Te.ok)return{ok:!1,errors:[...Pe.result.errors,...Te.errors],entries:Te.entries};return Pe.result}return ke}function iw(P,L,H){let Y=L.flatMap((me)=>p.test(me)?[]:["--delete-source can only delete local rulebook sources"]),Z=L.map((me)=>Ls(P,me)),oe=Y.length>0?[]:Z.flatMap((me)=>gp(me,H)),se=[...Y,...oe];return se.length>0?{ok:!1,result:{ok:!1,errors:se,entries:[]}}:{ok:!0,dirs:Z}}function gp(P,L){let H=Vb(P),Y=i(L,H),Z=ye(Y);if(!Z)return[`Local rulebook source directory not found: ${P}`];let oe=Z.find((se)=>se.name==="rulebook.json");if(!oe)return[`Local rulebook source directory is missing rulebook.json: ${P}`];if(oe.kind!=="file")throw new o(L.label);if(r(i(L,Ls(H,"rulebook.json"))),Z.length>1)return[`Local rulebook source directory contains extra files: ${P}. delete manually if you really want to remove the directory.`];return[]}function sw(P,L,H){let Y=P.flatMap((Z)=>{try{if(!ye(i(H,Z)))return[];let oe=gp(Z,H);if(oe.length>0)return oe;return aw(Z,L,H),[]}catch(oe){return[`Failed to delete local rulebook source ${Z}: ${oe instanceof Error?oe.message:String(oe)}`]}});return Y.length>0?{ok:!1,result:{ok:!1,errors:Y,entries:[]}}:{ok:!0}}function aw(P,L,H){if(L._testDeleteLocalSourceDir){L._testDeleteLocalSourceDir(P);return}W(i(H,Ls(P,ve))),Ct(i(H,P))}function Sr(P,L){if(L===null){W(P);return}h(P,L)}function Rr(P){return{ok:!1,errors:[P instanceof Error?P.message:String(P)],entries:[]}}var lw=".safety-net.json",cw="~/.cc-safety-net/config.json";async function bp(P,L){let H=O(P,{cwd:L.cwd});if(H)console.log(`Skipped the project scope: ${A(L.cwd)} is the user rule config, not a project rule config`);return[H||await hp(P,{legacyPath:Lt(L.cwd),configPath:A(L.cwd),defaultRulebookName:"project-rules",migratedFrom:lw,cleanup:L.cleanup,syncOptions:{cwd:L.cwd}}),await hp(P,{legacyPath:jt(P),configPath:z(P),defaultRulebookName:"user-rules",migratedFrom:cw,cleanup:L.cleanup,syncOptions:{cwd:L.cwd,global:!0}})].every((Z)=>Z)?0:1}async function hp(P,L){let H=hn(P,L.syncOptions),Y=i(H.filesystemScope,L.legacyPath),Z=r(Y);if(Z===null)return console.log(`No legacy config found at ${L.legacyPath}`),!0;let oe=uw(Z);if(!oe.ok){for(let Ae of oe.errors)console.error(Ae);return!1}let se=d(H.configTarget);if(se.errors.length>0){for(let Ae of se.errors)console.error(Ae);return!1}let me=se.config??ue,he=pw(yp(L.configPath),me.rules,L.defaultRulebookName,L.migratedFrom,H.filesystemScope),ke=Lo(yp(L.configPath),he,"rulebook.json"),Pe=i(H.filesystemScope,ke),Te=[vp(H.configTarget),vp(Pe)],_e=await dw(P,L,H.configTarget,Pe,he,oe.config.rules,{...me,rules:me.rules.includes(he)?me.rules:[...me.rules,he]});if(!_e.ok){gw(Te);for(let Ae of _e.errors)console.error(Ae);return!1}if(!L.cleanup)return console.log(`Migrated legacy config at ${L.legacyPath}. Legacy file is no longer used.`),!0;if(!mw(H.configTarget,Pe,he,L.migratedFrom,oe.config.rules))return console.error(`Migration cleanup verification failed for ${L.legacyPath}`),!1;return W(Y),console.log(`Deleted legacy config at ${L.legacyPath}`),!0}async function dw(P,L,H,Y,Z,oe,se){try{return bn(H,se),bn(Y,fw(Z,L.migratedFrom,oe)),await No(P,L.syncOptions)}catch(me){return{ok:!1,errors:[me instanceof Error?me.message:String(me)]}}}function uw(P){try{let L=JSON.parse(P),H=Wo(L);if(H.errors.length>0)return{ok:!1,errors:H.errors};return{ok:!0,config:{version:1,rules:L.rules??[]}}}catch{return{ok:!1,errors:["Invalid JSON"]}}}function pw(P,L,H,Y,Z){let oe=L.find((se)=>yw(i(Z,Lo(P,se,"rulebook.json")))===Y);if(oe)return oe;if(r(i(Z,Lo(P,H,"rulebook.json")))===null)return H;for(let se=2;;se++){let me=`${H}-${se}`;if(r(i(Z,Lo(P,me,"rulebook.json")))===null)return me}}function fw(P,L,H){return{rulebook_version:1,name:P,version:"1.0.0",description:"Migrated CC Safety Net rules.",author:"project",migrated_from:L,allowed_commands:[...new Set(H.map((Y)=>Y.command))],rules:H,tests:H.map((Y)=>({command:[Y.command,Y.subcommand,Y.block_args[0]].filter(Boolean).join(" "),expect:"blocked",rule:Y.name}))}}function mw(P,L,H,Y,Z){if(!d(P).config?.rules.includes(H))return!1;try{let se=r(L);if(se===null)return!1;let me=JSON.parse(se);return me.migrated_from===Y&&JSON.stringify(me.rules)===JSON.stringify(Z)}catch{return!1}}function vp(P){return{target:P,content:r(P)}}function gw(P){for(let L of P){if(L.content===null){W(L.target);continue}h(L.target,L.content)}}function yw(P){let L=r(P);if(L===null)return null;try{let H=JSON.parse(L);return typeof H.migrated_from==="string"?H.migrated_from:null}catch{return null}}import{mkdir as hw,readFile as vw,writeFile as bw}from"node:fs/promises";import{dirname as ww,join as kw}from"node:path";var Cw=86400000,xw=604800000;async function kp(P,L=Date.now()){if(P.env.get("CC_SAFETY_NET_NO_UPDATE_CHECK"))return null;let H=tt(P);if(!H)return null;let Y=kw(H,".cc-safety-net","update-check.json"),Z=await Pw(Y,L);if(!Z.lastCheck||L-Z.lastCheck>Cw){let me=await Bn();if(Z.lastCheck=L,me.latestVersion)Z.latestVersion=me.latestVersion;if(!await wp(Y,Z))return null;if(me.error)return null}let oe=Z.latestVersion,se=pn();if(!oe||!ni(oe,se))return null;if(Z.notifiedVersion===oe&&Z.notifiedAt!==void 0&&L-Z.notifiedAt<xw)return null;if(Z.notifiedVersion=oe,Z.notifiedAt=L,!await wp(Y,Z))return null;return`UPDATE_AVAILABLE: cc-safety-net v${oe} is available (running v${se}). Ask the user once whether to run \`npx -y cc-safety-net@latest update\`; continue the current task either way and do not raise this again.`}async function Pw(P,L){let H=await vw(P,"utf8").then((oe)=>JSON.parse(oe)).catch(()=>{return});if(!H||typeof H!=="object"||Array.isArray(H))return{};let Y=H,Z=(oe)=>typeof oe==="number"&&Number.isFinite(oe)&&oe<=L?oe:void 0;return{lastCheck:Z(Y.lastCheck),latestVersion:typeof Y.latestVersion==="string"?Y.latestVersion:void 0,notifiedVersion:typeof Y.notifiedVersion==="string"?Y.notifiedVersion:void 0,notifiedAt:Z(Y.notifiedAt)}}async function wp(P,L){return hw(ww(P),{recursive:!0,mode:448}).then(()=>bw(P,JSON.stringify(L),{mode:384})).then(()=>!0).catch(()=>!1)}import{join as Aw,resolve as Hs}from"node:path";var Cp=new Map([["Bash","posix"],["PowerShell","powershell"],["Monitor","posix"]]);var xp=new Map([["Bash","auto"]]);var Pp=new Map([["bash","auto"],["Bash","auto"],["powershell","powershell"],["PowerShell","powershell"]]);var Sp=new Map([["Shell","auto"]]);var Rp=new Map([["exec","auto"]]),Ep="write_to_process";var Tp=new Map([["Execute","auto"]]);var Ap=new Map([["run_shell_command","auto"]]);var _p=new Map([["run_terminal_command","auto"],["run_terminal_cmd","auto"],["monitor","auto"],["bash","auto"],["Shell","auto"]]);var Ip=new Map([["terminal","posix"]]);var Op=new Map([["Bash","posix"]]);var $p="exec";var Ew=[["antigravity-cli",[...rl.keys(),ol]],["claude-code",[...Cp.keys()]],["codex",[...xp.keys()]],["copilot-cli",[...Pp.keys()]],["cursor",[...Sp.keys()]],["deepseek-harness",[...et.keys()]],["devin",[...Rp.keys(),Ep]],["droid",[...Tp.keys()]],["gemini-cli",[...Ap.keys()]],["grok-build",[..._p.keys()]],["hermes-agent",[...Ip.keys()]],["kimi-code",[...Op.keys()]],["openclaw",[$p]],["opencode",[Ye,Re]],["pi",[...Qe.keys()]]].flatMap(([P,L])=>L.map((H)=>({name:H,integration:cn(P)}))),Dp="and is already analyzed. Built-in tools cannot be declared.";function jo(P){let L=Ie(P),H=[...new Set(Ew.filter((Y)=>Ie(Y.name)===L).map((Y)=>Y.integration))].sort((Y,Z)=>Y.localeCompare(Z));if(H.length>0)return`"${P}" is a built-in shell tool of ${Tw(H)}, ${Dp}`;if(x(P)!=="unknown")return`"${P}" is a built-in file tool, ${Dp}`;return}function Tw(P){return P.length===1?P[0]??"":`${P.slice(0,-1).join(", ")} and ${P.at(-1)}`}var Lp="CC Safety Net Config",_w="═".repeat(Lp.length),Iw="https://raw.githubusercontent.com/kenryu42/cc-safety-net/main/assets/cc-safety-net.schema.json",Ow=new Set(["rule.json","rule.lock","cache"]);function jp(P,L={}){try{return $w(P,L)}catch(H){if(H instanceof o)return console.error(H.message),1;throw H}}function $w(P,L){let H=L.cwd??process.cwd(),Y=Q(P,{cwd:H}),Z=jt(P),oe=Lt(H),se=Hs(H,be),me=i(Y.userScope,Z),he=i(Y.projectScope,oe),ke=!1,Pe=!1,Te=[],_e=[],Ae=Dw(i(Y.projectScope,se));if(Lw(),r(Y.userConfigTarget)!==null){let Le=Un(Y.userConfigTarget);if(Le.errors.push(...V(Y.userConfigPath,Y.userScope),...Np(Y.userConfigTarget)),Te.push({scope:"User",path:Y.userConfigPath,result:Le,schema:"rules",target:Y.userConfigTarget}),Le.errors.length>0)ke=!0}if(r(me)!==null)if(Pe=!0,r(Y.userConfigTarget)!==null)_e.push(Fo("user","cleanup"));else{let Le=Yo(me);if(Te.push({scope:"User",path:Z,result:Le,schema:"legacy",inactive:!0,target:me}),_e.push(Fo("user",Le.errors.length>0?"fix-or-delete":"migrate")),Le.errors.length>0)ke=!0}if(r(Y.projectConfigTarget)!==null){let Le=Un(Y.projectConfigTarget);if(Le.errors.push(...V(Y.projectConfigPath,Y.projectScope),...Np(Y.projectConfigTarget)),Te.push({scope:"Project",path:Hs(Y.projectConfigPath),result:Le,schema:"rules",target:Y.projectConfigTarget}),Le.errors.length>0)ke=!0;if(r(he)!==null)Pe=!0,_e.push(Fo("project","cleanup"))}else if(r(he)!==null){Pe=!0,ke=!0;let Le=Yo(he);Te.push({scope:"Project",path:Hs(oe),result:Le,schema:"legacy",inactive:!0,target:he}),_e.push(Fo("project",Le.errors.length>0?"fix-or-delete":"migrate"))}if(Ae?.result.errors.length)ke=!0;if(Te.length===0&&!Ae)return console.log(`
+No config files found. Using built-in rules only.`),0;for(let Le of Te)if(Le.inactive)Fw(Le.scope,Le.path,Le.result);else if(Le.result.errors.length>0)Hw(Le.scope,Le.path,Le.result.errors);else{if(Le.schema==="rules"&&Bw(Le.target))console.log(`
+Added $schema to ${Le.scope.toLowerCase()} config.`);jw(Le.scope,Le.path,Le.result,Le.schema)}for(let Le of _e)console.error(`
+${en.red(Le)}`);if(Ae)if(Ae.result.errors.length>0)Uw(Ae.path,Ae.result.errors);else Mw(Ae.path,Ae.result);if(ke)return console.error(`
+Config validation failed.`),1;return console.log(Pe?`
 Configs valid with warnings.`:`
-All configs valid.`),0}function $p(_){return(d(_).config?.command_tools??[]).flatMap((L)=>jo(typeof L==="string"?L:L.name)??[])}function Ho(_,L){let j=`legacy ${_} config`;if(L==="cleanup")return`Warning: Legacy ${_} config is no longer needed. Run \`npx -y cc-safety-net rule migrate --cleanup\` to clean it up safely.`;if(L==="migrate")return`Warning: Legacy ${_} config is ignored by CC Safety Net. Run \`npx -y cc-safety-net rule migrate\`.`;return`Warning: Legacy ${_} config is no longer supported. Fix or delete the ${j}, then run \`npx -y cc-safety-net rule migrate\`.`}function xw(_){if(he(_)===null)return null;let L=Sw(_);if(L.ruleNames.size===0&&L.errors.length===0)return null;return{path:_.path,result:L}}function Sw(_){let L=[],j=new Set,Y=(he(_)??[]).filter((Z)=>!kw.has(Z.name)).sort((Z,oe)=>Z.name.localeCompare(oe.name));if(Y.length===0)return{errors:L,ruleNames:j};for(let Z of Y){if(!p.test(Z.name)){L.push(`rulebook directory names must match ${p}: ${Z.name}`);continue}if(Z.kind!=="directory"){L.push(`${Z.name} must be a rulebook directory`);continue}let oe=i(_.scope,vw(_.path,Z.name,"rulebook.json")),se=r(oe);if(se===null){L.push(`${Z.name}/rulebook.json is required`);continue}try{let fe;try{fe=JSON.parse(se)}catch{L.push(`${Z.name}/rulebook.json: invalid JSON`);continue}let ge=de(fe);if(ge.name!==Z.name){L.push(`rulebook name "${ge.name}" must match folder "${Z.name}"`);continue}let Pe=To(ge);if(Pe.length>0){L.push(...Pe.map((Ee)=>`${Z.name}/rulebook.json: ${Ee}`));continue}j.add(Z.name)}catch(fe){L.push(fe instanceof Error?`${Z.name}/rulebook.json: ${fe.message}`:`${Z.name}/rulebook.json: ${String(fe)}`)}}return{errors:L,ruleNames:j}}function Pw(){console.log(Dp),console.log(bw)}function Ew(_,L,j,Y){if(console.log(`
-✓ ${_} config: ${L}`),console.log(`  Schema: ${Y==="rules"?"rulebook sources":"legacy inline rules"}`),j.ruleNames.size>0){console.log(`  ${Y==="rules"?"Sources":"Rules"}:`);let Z=1;for(let oe of j.ruleNames)console.log(`    ${Z}. ${oe}`),Z++}else console.log(`  ${Y==="rules"?"Sources":"Rules"}: (none)`)}function Rw(_,L,j){if(console.error(`
-✗ Legacy ${_.toLowerCase()} config: ${L}`),console.error("  Schema: legacy inline rules"),console.error("  Status: ignored by CC Safety Net"),j.errors.length>0){console.error("  Errors:");let Y=1;for(let Z of j.errors)for(let oe of Z.split("; "))console.error(`    ${Y}. ${oe}`),Y++;return}if(j.ruleNames.size>0){console.error("  Rules:");let Y=1;for(let Z of j.ruleNames)console.error(`    ${Y}. ${Z}`),Y++;return}console.error("  Rules: (none)")}function _w(_,L,j){Lp(`${_} config`,L,j)}function Tw(_,L){console.log(`
-✓ GitHub source rules: ${_}`),console.log("  Rulebooks:");let j=1;for(let Y of L.ruleNames)console.log(`    ${j}. ${Y}`),j++}function Iw(_,L){Lp("GitHub source rules",_,L)}function Lp(_,L,j){console.error(`
-✗ ${_}: ${L}`),console.error("  Errors:");let Y=1;for(let Z of j)for(let oe of Z.split("; "))console.error(`    ${Y}. ${oe}`),Y++}function Aw(_){try{let L=r(_);if(L===null)return!1;let j=JSON.parse(L);if(j.$schema)return!1;return g(_,JSON.stringify({$schema:ww,...j},null,2)),!0}catch(L){if(L instanceof o)throw L;return!1}}var jp=new Set(["init","add","remove","update","sync","list","wrapper","tool","migrate","doc","verify"]),$w=new Set(["init","add","remove","update","sync","wrapper"]),Fp=new Set(["add","remove","list"]),Dw="cc-safety-net/rulebooks";async function Mp(_,L){try{return await Nw(_,L)}catch(j){if(j instanceof o)return console.error(j.message),1;throw j}}async function Nw(_,L){let j=jw(L),Y=j.help?Lw(j.positionals):null;if(Y)return zt(Y),0;if(j.errors.length>0){for(let Pe of j.errors)console.error(Pe);return 1}let Z=j.positionals[0];if(!Z)return zt(Nt,console.error),1;let oe=j.positionals[1],se={global:j.global},fe=process.cwd();if((Z==="tool"?j.project:!j.global&&$w.has(Z)&&!(Z==="wrapper"&&oe==="list"))&&O(_,{cwd:fe}))return console.error(`${I(fe)} is the user rule config, not a project rule config; ${Z==="tool"?"drop --project":"use --global"} for the user scope, or run from a project directory`),1;if(Z==="init"){let Pe=hn(_,se);Mw(Pe.configTarget);let Ee=Ow(Pe.configDir,"example-rules","rulebook.json"),Re=i(Pe.filesystemScope,Ee);if(j.example&&r(Re)===null)Ju(Re);let Le=z(Pe.configPath,Pe.filesystemScope);for(let _e of Le)console.error(_e);if(Le.length>0)return 1;return console.log("Rule config initialized."),0}if(Z==="add"){let Pe=Up(j);if(!Pe)return console.error("rule add requires a source (pass --only <rulebook...> to select from cc-safety-net/rulebooks)"),1;let Ee=hn(_,se),Re=await up(_,Pe,{...se,ref:j.ref,rulebooks:j.only.length>0?j.only:void 0});return Uu(Re,Pe,`Scope: ${j.global?"user":"project"} (${Ee.configDir})`),Re.ok?0:1}if(Z==="remove"){if(!oe)return console.error("rule remove requires a source"),1;let Pe=await pp(_,oe,{...se,deleteSource:j.deleteSource});return _o(Pe,`Removed rulebook source: ${oe}`),Pe.ok?0:1}if(Z==="update"){let Pe=await No(_,{...se,only:oe,refresh:!0});return _o(Pe,"Rule config updated."),Pe.ok?0:1}if(Z==="sync")return Ka(_,{global:j.global});if(Z==="list"){let Pe=ee(_,{cwd:fe});return Bu(Pe),Pe.errors.length>0?1:0}if(Z==="wrapper")return Uw(_,j);if(Z==="tool")return Bw(_,j,fe);if(Z==="migrate")return hp(_,{cleanup:j.cleanup,cwd:fe});if(Z==="doc"){console.log(Fu);let Pe=await bp(_);if(Pe)console.error(Pe);return 0}if(Z==="verify")return Np(_);return 1}function Lw(_){if(_.length===0)return Nt;let L=Nt.subcommands.filter((Y)=>Y.usage.split(" ")[0]===_[0]);if(L.length===0)return null;if(_.length===1&&L.length>1)return{name:`rule ${_[0]}`,description:`Subcommands of rule ${_[0]}`,usage:`rule ${_[0]} <subcommand>`,subcommands:L,options:[]};let j=_.length===1?L[0]:L.find((Y)=>Y.usage.split(" ")[1]===_[1]);if(!j)return null;return{name:`rule ${_[0]}`,description:j.description,usage:`rule ${j.usage}`,options:_[0]==="add"?Vo:[],examples:_[0]==="add"?Ko:void 0}}function jw(_){let L=mn({label:"rule",booleans:{global:["-g","--global"],project:["--project"],cleanup:["--cleanup"],deleteSource:["--delete-source"],example:["--example"]},values:{ref:["--ref"],cwdArg:["--cwd-arg"]},lists:{only:["--only"]},positionals:"list"},_),j={...L.flags,ref:L.values.ref,cwdArg:L.values.cwdArg,only:L.lists.only??[],help:L.help,positionals:L.positionals,errors:L.errors};return Hw(j),j}function Hw(_){let[L]=_.positionals;if(L&&!jp.has(L))_.errors.push(`Unknown rule subcommand: ${L}`);if(_.deleteSource&&L!=="remove")if(L&&jp.has(L))_.errors.push(`Unknown option for rule ${L}: --delete-source`);else _.errors.push("--delete-source is only valid with 'rule remove'");if(_.cleanup&&L!=="migrate")_.errors.push(zn(L,"--cleanup"));if(_.example&&L!=="init")_.errors.push(zn(L,"--example"));if(_.ref&&L!=="add")_.errors.push(zn(L,"--ref"));if(_.only.length>0&&L!=="add")_.errors.push(zn(L,"--only"));let j=L==="tool"?_.positionals[1]:void 0,Y=j&&Fp.has(j)?`tool ${j}`:L;if(_.project&&j!=="add"&&j!=="remove")_.errors.push(zn(Y,"--project"));if(_.cwdArg!==void 0&&j!=="add")_.errors.push(zn(Y,"--cwd-arg"));if(L==="tool"&&_.global)_.errors.push(zn(L,"--global"));if(L==="add")Fw(_);if(L==="migrate"){if(_.global)_.errors.push(zn(L,"--global"));if(_.positionals.length>1)_.errors.push(`Unexpected rule migrate argument: ${_.positionals[1]}`)}else if(L==="wrapper")Hp(_,"a command");else if(L==="tool")Hp(_,"a tool name");else if(_.positionals.length>2)_.errors.push(`Unexpected rule argument: ${_.positionals[2]}`);if(L==="list"&&_.global)_.errors.push("Unknown option for rule list: --global")}function Up(_){if(_.positionals[1])return _.positionals[1];if(_.ref||_.only.length>0)return Dw;return}function Fw(_){let L=Up(_);if(!L)return;if((_.ref||_.only.length>0)&&!X(L)){if(_.ref)_.errors.push(`--ref can only select a ref for an owner/repo source: ${L}`);if(_.only.length>0)_.errors.push("--only can only select rulebooks from an owner/repo source");return}if(_.ref&&!ce(_.ref))_.errors.push(`--ref must use valid path segments: ${_.ref}`);let j=_.only.filter((Y)=>!p.test(Y));if(j.length>0)_.errors.push(`Invalid rulebook names: ${j.join(", ")}`)}function zn(_,L){return _?`Unknown option for rule ${_}: ${L}`:`Unknown option for rule: ${L}`}function Hp(_,L){let j=_.positionals[0],Y=_.positionals[1],Z=_.positionals[2];if(!Y){_.errors.push(`rule ${j} requires add, remove, or list`);return}if(!Fp.has(Y)){_.errors.push(`Unknown rule ${j} action: ${Y}`);return}if(Y==="list"){if(Z)_.errors.push(`Unexpected rule ${j} argument: ${Z}`);return}if(!Z){_.errors.push(`rule ${j} ${Y} requires ${L}`);return}if(j!=="tool"&&_.positionals.length>3)_.errors.push(`Unexpected rule ${j} argument: ${_.positionals[3]}`)}function Mw(_){if(r(_)===null){Ku(_);return}let L=d(_);if(!L.config)return;bn(_,L.config)}async function Uw(_,L){let j=L.positionals[1],Y=L.positionals[2],Z=hn(_,{global:L.global}).configTarget;if(j==="list"){let ge=d(Z);if(ge.errors.length>0){for(let Pe of ge.errors)console.error(Pe);return 1}return Gw(ge.config?.transparent_wrappers??[]),0}if(!Y||!E.test(Y))return console.error("transparent wrapper must match command pattern"),1;if($e(Y))return console.error(`reserved command "${Y}" cannot be a wrapper`),1;let oe=d(Z);if(oe.errors.length>0){for(let ge of oe.errors)console.error(ge);return 1}let se=oe.config??le,fe=j==="add"?[...new Set([...se.transparent_wrappers??[],Y])]:(se.transparent_wrappers??[]).filter((ge)=>ge!==Y);return bn(Z,{...se,transparent_wrappers:fe}),console.log(j==="add"?`Added transparent wrapper: ${Y}`:`Removed transparent wrapper: ${Y}`),0}function Gw(_){if(_.length===0){console.log("Transparent wrappers: (none)");return}console.log(`Transparent wrappers (${_.length}):`);for(let L of _)console.log(`  - ${L}`)}function Bw(_,L,j){let Y=L.positionals[1],Z=[...new Set(L.positionals.slice(2))];if(Y==="list")return qw(_,j);let oe=[...Z.flatMap((Pe)=>{if(!je.test(Pe))return[`"${Pe}" is not a tool name: ${Se}.`];let Ee=Y==="add"?jo(Pe):void 0;return Ee?[Ee]:[]}),...L.cwdArg!==void 0&&!je.test(L.cwdArg)?[`"${L.cwdArg}" is not an argument name: ${Se}.`]:[]];if(oe.length>0){for(let Pe of oe)console.error(en.red(`Error: ${Pe}`));return 1}let se=hn(_,{global:!L.project}),fe=xr(se.configTarget);if(!fe.ok){for(let Pe of fe.result.errors)console.error(Pe);return 1}let ge=Z.reduce((Pe,Ee)=>{let Re=L.cwdArg===void 0?Ee:{name:Ee,cwd:L.cwdArg},Le=(_e)=>(typeof _e==="string"?_e:_e.name)===Ee;if(Y==="remove")return Pe.filter((_e)=>!Le(_e));return Pe.some(Le)?Pe.map((_e)=>Le(_e)?Re:_e):[...Pe,Re]},fe.config.command_tools??[]);bn(se.configTarget,{...fe.config,command_tools:ge});for(let Pe of Z)console.log(Y==="add"?`Added command tool: ${Pe}${L.cwdArg===void 0?"":` (cwd argument: ${L.cwdArg})`}`:`Removed command tool: ${Pe}`);return console.log(`Scope: ${L.project?"project":"user"} (${se.configPath})`),0}function qw(_,L){let j=(O(_,{cwd:L})?["user"]:["user","project"]).map((Z)=>{let oe=hn(_,{global:Z==="user"});return{scope:Z,path:oe.configPath,...d(oe.configTarget)}}),Y=j.flatMap((Z)=>Z.errors.map((oe)=>`${Z.path}: ${oe}`));if(Y.length>0){for(let Z of Y)console.error(Z);return 1}return qu(j.flatMap((Z)=>(Z.config?.command_tools??[]).map((oe)=>({scope:Z.scope,tool:oe})))),0}import{sep as Yw}from"node:path";import{existsSync as Vw,readFileSync as Kw}from"node:fs";import{join as Jw}from"node:path";async function Ww(_){if(_.isTTY)return null;return(await st(_).catch(()=>null))?.trim()||null}function zw(_){let L=_.env.get("CLAUDE_SETTINGS_PATH");if(L)return L;return Jw(Vr(_),"settings.json")}function js(_){let L=zw(_);if(!Vw(L))return!1;try{let j=Kw(L,"utf-8"),Y=JSON.parse(j);if(!Y.enabledPlugins)return!1;let Z="cc-safety-net@cc-marketplace";if(!(Z in Y.enabledPlugins))return!1;return Y.enabledPlugins[Z]===!0}catch(j){if(S(n.debug,_.env))console.error(`CC Safety Net debug: failed to read Claude settings: ${L}: ${j instanceof Error?j.message:String(j)}`);return!1}}async function Hs(_,L=process.stdin){let j=js(_),Y;if(!j)Y="\uD83D\uDEE1️ CC Safety Net ❌";else{let oe=R(_,{cwd:process.cwd()}),se=oe.policy,fe=P(se,_.env),ge=Object.values(q(se,fe.capabilities)).some((Re)=>Re.changesInherited),Pe={standard:"✅",strict:"\uD83D\uDD12",paranoid:"\uD83D\uDC41️",custom:"\uD83D\uDD27"}[ge?"custom":fe.effectiveLevel],Ee=oe.policyScopes&&!oe.policyScopes.weakeningsIgnored&&oe.policyScopes.weakenings.length>0?"\uD83D\uDD3B":"";Y=`\uD83D\uDEE1️ CC Safety Net ${Pe}${fe.worktreeMode?"\uD83C\uDF33":""}${Ee}${oe.state==="degraded"?"⚠️":""}`}let Z=await Ww(L);if(Z&&!Z.startsWith("{"))console.log(`${Z} | ${Y}`);else console.log(Y)}function Gp(_){let L=R(_,{cwd:process.cwd()}),j=L.policy,Y=P(j,_.env),Z=!!process.env.NO_COLOR||!process.stdout.isTTY,oe=Math.min(process.stdout.columns||80,100),se=Z?"ok":"✔",fe=Z?"OFF":"✘",ge=(Be,Fe)=>{let Ze=`  ${Be.padEnd(13)}${Fe}`;return(Ze.length>oe?`${Ze.slice(0,oe-1)}…`:Ze).replaceAll(fe,en.red(fe))},Pe=Object.values(q(j,Y.capabilities)).some((Be)=>Be.changesInherited),Ee=(Be)=>Be===_.home||Be.startsWith(`${_.home}${Yw}`)?`~${Be.slice(_.home.length)}`:Be,Re={ready:en.green,degraded:en.yellow}[L.state],Le=L.policyScopes?.weakenings??[],_e=[...js(_)?[]:["plugin cc-safety-net@cc-marketplace is disabled in Claude Code; nothing is enforced in Claude Code until it is re-enabled. Other integrations are not affected."],...L.diagnostics],Te=Z?"-":"·";console.log([`${Z?"":"\uD83D\uDEE1️  "}CC Safety Net — ${Re(L.state)}`,"",ge("Protection",`destructive ${j.destructiveCommandProtectionEnabled?se:fe}   secrets ${j.secretProtection.enabled?se:fe}`),ge("Level",Pe?`${Y.effectiveLevel} (customised)`:Y.effectiveLevel),ge("Rules",j.rules.length===0?"none active":`${j.rules.length} active`),ge("Policy",Ee(u(_))),...L.policyScopes?[ge("Project",Ee(h(process.cwd())))]:[],...Y.worktreeMode?[ge("Worktree","relaxations active")]:[],"",...Le.length===0?[]:[L.policyScopes?.weakeningsIgnored?"  Project policy (ignored)":"  Project policy",...Le.flatMap((Be)=>fr(Be,"      ",oe-6).map((Fe,Ze)=>Ze===0?`    ${Fe}`:Fe)),""],..._e.length===0?["  Everything configured is active."]:["  Not active",..._e.flatMap((Be)=>fr(Be,"      ",oe-6).map((Fe,Ze)=>Ze===0?`    ${Te} ${Fe}`:Fe)),"","  Full report: cc-safety-net doctor"]].join(`
-`))}import{spawn as Qp}from"node:child_process";import{randomBytes as sk}from"node:crypto";import{existsSync as ak}from"node:fs";import{createServer as lk}from"node:http";import{Writable as ck}from"node:stream";var Fo=500;function Zw(_){let L=_.filter((Z)=>Z.decision!=="allow"),j=_.filter((Z)=>Z.decision==="allow"),Y=Math.min(L.length,Math.max(Fo-j.length,Math.ceil(Fo/2)));return[...L.slice(0,Y),...j.slice(0,Fo-Y)]}function Bp(_,L,j=G(_)){if(j)J(_,j);let Y=(Fe)=>new Date(Fe.getFullYear(),Fe.getMonth(),Fe.getDate()).getTime(),Z=Y(new Date),oe=new Date(Z);oe.setDate(oe.getDate()-(L-1));let se=oe.getTime(),fe=[],ge={count:0};for(let Fe of j?Yn(j,ge):[])for(let Ze of Dt(Fe,ge)){let tn=new Date(Ze.ts).getTime();if(!Number.isFinite(tn))continue;if(tn>=se)fe.push(Ze)}fe.sort((Fe,Ze)=>new Date(Ze.ts).getTime()-new Date(Fe.ts).getTime());let Pe=Array.from({length:L},()=>0),Ee=Array.from({length:L},()=>0),Re={},Le={},_e={},Te=0,Be=0;for(let Fe of fe){let Ze=Fe.agent||"unknown";Re[Ze]=(Re[Ze]??0)+1;let tn=Math.round((Z-Y(new Date(Fe.ts)))/86400000),on=L-1-tn,an=tn>=0&&tn<L;if(an)Ee[on]=(Ee[on]??0)+1;if(Fe.decision!=="allow"){if(Te++,Fe.ruleId)Le[Fe.ruleId]=(Le[Fe.ruleId]??0)+1;let nn=Go(Fe.segment||Fe.command);if(nn)_e[nn]=(_e[nn]??0)+1;if(Fe.failureStage)Be++;if(an)Pe[on]=(Pe[on]??0)+1}}return{days:L,logsDir:j,homeDir:_.home,totalInWindow:fe.length,truncated:fe.length>Fo,unreadable:ge.count,counts:{blocked:Te,allowed:fe.length-Te,agents:Re,blockedByDay:Pe,analyzedByDay:Ee,rules:Le,commands:_e,errors:Be},entries:Zw(fe).sort((Fe,Ze)=>new Date(Ze.ts).getTime()-new Date(Fe.ts).getTime())}}import{spawn as Xw}from"node:child_process";import{existsSync as Qw,statSync as qp}from"node:fs";import{delimiter as ek,join as nk}from"node:path";var tk=120000,Mo="Choose the project folder",rk=`try
+All configs valid.`),0}function Np(P){return(d(P).config?.command_tools??[]).flatMap((L)=>jo(typeof L==="string"?L:L.name)??[])}function Fo(P,L){let H=`legacy ${P} config`;if(L==="cleanup")return`Warning: Legacy ${P} config is no longer needed. Run \`npx -y cc-safety-net rule migrate --cleanup\` to clean it up safely.`;if(L==="migrate")return`Warning: Legacy ${P} config is ignored by CC Safety Net. Run \`npx -y cc-safety-net rule migrate\`.`;return`Warning: Legacy ${P} config is no longer supported. Fix or delete the ${H}, then run \`npx -y cc-safety-net rule migrate\`.`}function Dw(P){if(ye(P)===null)return null;let L=Nw(P);if(L.ruleNames.size===0&&L.errors.length===0)return null;return{path:P.path,result:L}}function Nw(P){let L=[],H=new Set,Y=(ye(P)??[]).filter((Z)=>!Ow.has(Z.name)).sort((Z,oe)=>Z.name.localeCompare(oe.name));if(Y.length===0)return{errors:L,ruleNames:H};for(let Z of Y){if(!p.test(Z.name)){L.push(`rulebook directory names must match ${p}: ${Z.name}`);continue}if(Z.kind!=="directory"){L.push(`${Z.name} must be a rulebook directory`);continue}let oe=i(P.scope,Aw(P.path,Z.name,"rulebook.json")),se=r(oe);if(se===null){L.push(`${Z.name}/rulebook.json is required`);continue}try{let me;try{me=JSON.parse(se)}catch{L.push(`${Z.name}/rulebook.json: invalid JSON`);continue}let he=pe(me);if(he.name!==Z.name){L.push(`rulebook name "${he.name}" must match folder "${Z.name}"`);continue}let ke=Ao(he);if(ke.length>0){L.push(...ke.map((Pe)=>`${Z.name}/rulebook.json: ${Pe}`));continue}H.add(Z.name)}catch(me){L.push(me instanceof Error?`${Z.name}/rulebook.json: ${me.message}`:`${Z.name}/rulebook.json: ${String(me)}`)}}return{errors:L,ruleNames:H}}function Lw(){console.log(Lp),console.log(_w)}function jw(P,L,H,Y){if(console.log(`
+✓ ${P} config: ${L}`),console.log(`  Schema: ${Y==="rules"?"rulebook sources":"legacy inline rules"}`),H.ruleNames.size>0){console.log(`  ${Y==="rules"?"Sources":"Rules"}:`);let Z=1;for(let oe of H.ruleNames)console.log(`    ${Z}. ${oe}`),Z++}else console.log(`  ${Y==="rules"?"Sources":"Rules"}: (none)`)}function Fw(P,L,H){if(console.error(`
+✗ Legacy ${P.toLowerCase()} config: ${L}`),console.error("  Schema: legacy inline rules"),console.error("  Status: ignored by CC Safety Net"),H.errors.length>0){console.error("  Errors:");let Y=1;for(let Z of H.errors)for(let oe of Z.split("; "))console.error(`    ${Y}. ${oe}`),Y++;return}if(H.ruleNames.size>0){console.error("  Rules:");let Y=1;for(let Z of H.ruleNames)console.error(`    ${Y}. ${Z}`),Y++;return}console.error("  Rules: (none)")}function Hw(P,L,H){Fp(`${P} config`,L,H)}function Mw(P,L){console.log(`
+✓ GitHub source rules: ${P}`),console.log("  Rulebooks:");let H=1;for(let Y of L.ruleNames)console.log(`    ${H}. ${Y}`),H++}function Uw(P,L){Fp("GitHub source rules",P,L)}function Fp(P,L,H){console.error(`
+✗ ${P}: ${L}`),console.error("  Errors:");let Y=1;for(let Z of H)for(let oe of Z.split("; "))console.error(`    ${Y}. ${oe}`),Y++}function Bw(P){try{let L=r(P);if(L===null)return!1;let H=JSON.parse(L);if(H.$schema)return!1;return h(P,JSON.stringify({$schema:Iw,...H},null,2)),!0}catch(L){if(L instanceof o)throw L;return!1}}var Hp=new Set(["init","add","remove","update","sync","list","wrapper","tool","migrate","doc","verify"]),qw=new Set(["init","add","remove","update","sync","wrapper"]),Up=new Set(["add","remove","list"]),Vw="cc-safety-net/rulebooks";async function Bp(P,L){try{return await Kw(P,L)}catch(H){if(H instanceof o)return console.error(H.message),1;throw H}}async function Kw(P,L){let H=zw(L),Y=H.help?Jw(H.positionals):null;if(Y)return Wt(Y),0;if(H.errors.length>0){for(let ke of H.errors)console.error(ke);return 1}let Z=H.positionals[0];if(!Z)return Wt(Nt,console.error),1;let oe=H.positionals[1],se={global:H.global},me=process.cwd();if((Z==="tool"?H.project:!H.global&&qw.has(Z)&&!(Z==="wrapper"&&oe==="list"))&&O(P,{cwd:me}))return console.error(`${A(me)} is the user rule config, not a project rule config; ${Z==="tool"?"drop --project":"use --global"} for the user scope, or run from a project directory`),1;if(Z==="init"){let ke=hn(P,se);Zw(ke.configTarget);let Pe=Gw(ke.configDir,"example-rules","rulebook.json"),Te=i(ke.filesystemScope,Pe);if(H.example&&r(Te)===null)Wu(Te);let _e=V(ke.configPath,ke.filesystemScope);for(let Ae of _e)console.error(Ae);if(_e.length>0)return 1;return console.log("Rule config initialized."),0}if(Z==="add"){let ke=Gp(H);if(!ke)return console.error("rule add requires a source (pass --only <rulebook...> to select from cc-safety-net/rulebooks)"),1;let Pe=hn(P,se),Te=await fp(P,ke,{...se,ref:H.ref,rulebooks:H.only.length>0?H.only:void 0});return Gu(Te,ke,`Scope: ${H.global?"user":"project"} (${Pe.configDir})`),Te.ok?0:1}if(Z==="remove"){if(!oe)return console.error("rule remove requires a source"),1;let ke=await mp(P,oe,{...se,deleteSource:H.deleteSource});return To(ke,`Removed rulebook source: ${oe}`),ke.ok?0:1}if(Z==="update"){let ke=await No(P,{...se,only:oe,refresh:!0});return To(ke,"Rule config updated."),ke.ok?0:1}if(Z==="sync")return Wa(P,{global:H.global});if(Z==="list"){let ke=ee(P,{cwd:me});return Vu(ke),ke.errors.length>0?1:0}if(Z==="wrapper")return Xw(P,H);if(Z==="tool")return ek(P,H,me);if(Z==="migrate")return bp(P,{cleanup:H.cleanup,cwd:me});if(Z==="doc"){console.log(Uu);let ke=await kp(P);if(ke)console.error(ke);return 0}if(Z==="verify")return jp(P);return 1}function Jw(P){if(P.length===0)return Nt;let L=Nt.subcommands.filter((Y)=>Y.usage.split(" ")[0]===P[0]);if(L.length===0)return null;if(P.length===1&&L.length>1)return{name:`rule ${P[0]}`,description:`Subcommands of rule ${P[0]}`,usage:`rule ${P[0]} <subcommand>`,subcommands:L,options:[]};let H=P.length===1?L[0]:L.find((Y)=>Y.usage.split(" ")[1]===P[1]);if(!H)return null;return{name:`rule ${P[0]}`,description:H.description,usage:`rule ${H.usage}`,options:P[0]==="add"?Ko:[],examples:P[0]==="add"?Jo:void 0}}function zw(P){let L=mn({label:"rule",booleans:{global:["-g","--global"],project:["--project"],cleanup:["--cleanup"],deleteSource:["--delete-source"],example:["--example"]},values:{ref:["--ref"],cwdArg:["--cwd-arg"]},lists:{only:["--only"]},positionals:"list"},P),H={...L.flags,ref:L.values.ref,cwdArg:L.values.cwdArg,only:L.lists.only??[],help:L.help,positionals:L.positionals,errors:L.errors};return Ww(H),H}function Ww(P){let[L]=P.positionals;if(L&&!Hp.has(L))P.errors.push(`Unknown rule subcommand: ${L}`);if(P.deleteSource&&L!=="remove")if(L&&Hp.has(L))P.errors.push(`Unknown option for rule ${L}: --delete-source`);else P.errors.push("--delete-source is only valid with 'rule remove'");if(P.cleanup&&L!=="migrate")P.errors.push(Wn(L,"--cleanup"));if(P.example&&L!=="init")P.errors.push(Wn(L,"--example"));if(P.ref&&L!=="add")P.errors.push(Wn(L,"--ref"));if(P.only.length>0&&L!=="add")P.errors.push(Wn(L,"--only"));let H=L==="tool"?P.positionals[1]:void 0,Y=H&&Up.has(H)?`tool ${H}`:L;if(P.project&&H!=="add"&&H!=="remove")P.errors.push(Wn(Y,"--project"));if(P.cwdArg!==void 0&&H!=="add")P.errors.push(Wn(Y,"--cwd-arg"));if(L==="tool"&&P.global)P.errors.push(Wn(L,"--global"));if(L==="add")Yw(P);if(L==="migrate"){if(P.global)P.errors.push(Wn(L,"--global"));if(P.positionals.length>1)P.errors.push(`Unexpected rule migrate argument: ${P.positionals[1]}`)}else if(L==="wrapper")Mp(P,"a command");else if(L==="tool")Mp(P,"a tool name");else if(P.positionals.length>2)P.errors.push(`Unexpected rule argument: ${P.positionals[2]}`);if(L==="list"&&P.global)P.errors.push("Unknown option for rule list: --global")}function Gp(P){if(P.positionals[1])return P.positionals[1];if(P.ref||P.only.length>0)return Vw;return}function Yw(P){let L=Gp(P);if(!L)return;if((P.ref||P.only.length>0)&&!X(L)){if(P.ref)P.errors.push(`--ref can only select a ref for an owner/repo source: ${L}`);if(P.only.length>0)P.errors.push("--only can only select rulebooks from an owner/repo source");return}if(P.ref&&!ce(P.ref))P.errors.push(`--ref must use valid path segments: ${P.ref}`);let H=P.only.filter((Y)=>!p.test(Y));if(H.length>0)P.errors.push(`Invalid rulebook names: ${H.join(", ")}`)}function Wn(P,L){return P?`Unknown option for rule ${P}: ${L}`:`Unknown option for rule: ${L}`}function Mp(P,L){let H=P.positionals[0],Y=P.positionals[1],Z=P.positionals[2];if(!Y){P.errors.push(`rule ${H} requires add, remove, or list`);return}if(!Up.has(Y)){P.errors.push(`Unknown rule ${H} action: ${Y}`);return}if(Y==="list"){if(Z)P.errors.push(`Unexpected rule ${H} argument: ${Z}`);return}if(!Z){P.errors.push(`rule ${H} ${Y} requires ${L}`);return}if(H!=="tool"&&P.positionals.length>3)P.errors.push(`Unexpected rule ${H} argument: ${P.positionals[3]}`)}function Zw(P){if(r(P)===null){zu(P);return}let L=d(P);if(!L.config)return;bn(P,L.config)}async function Xw(P,L){let H=L.positionals[1],Y=L.positionals[2],Z=hn(P,{global:L.global}).configTarget;if(H==="list"){let he=d(Z);if(he.errors.length>0){for(let ke of he.errors)console.error(ke);return 1}return Qw(he.config?.transparent_wrappers??[]),0}if(!Y||!E.test(Y))return console.error("transparent wrapper must match command pattern"),1;if($e(Y))return console.error(`reserved command "${Y}" cannot be a wrapper`),1;let oe=d(Z);if(oe.errors.length>0){for(let he of oe.errors)console.error(he);return 1}let se=oe.config??ue,me=H==="add"?[...new Set([...se.transparent_wrappers??[],Y])]:(se.transparent_wrappers??[]).filter((he)=>he!==Y);return bn(Z,{...se,transparent_wrappers:me}),console.log(H==="add"?`Added transparent wrapper: ${Y}`:`Removed transparent wrapper: ${Y}`),0}function Qw(P){if(P.length===0){console.log("Transparent wrappers: (none)");return}console.log(`Transparent wrappers (${P.length}):`);for(let L of P)console.log(`  - ${L}`)}function ek(P,L,H){let Y=L.positionals[1],Z=[...new Set(L.positionals.slice(2))];if(Y==="list")return nk(P,H);let oe=[...Z.flatMap((ke)=>{if(!Ue.test(ke))return[`"${ke}" is not a tool name: ${we}.`];let Pe=Y==="add"?jo(ke):void 0;return Pe?[Pe]:[]}),...L.cwdArg!==void 0&&!Ue.test(L.cwdArg)?[`"${L.cwdArg}" is not an argument name: ${we}.`]:[]];if(oe.length>0){for(let ke of oe)console.error(en.red(`Error: ${ke}`));return 1}let se=hn(P,{global:!L.project}),me=Pr(se.configTarget);if(!me.ok){for(let ke of me.result.errors)console.error(ke);return 1}let he=Z.reduce((ke,Pe)=>{let Te=L.cwdArg===void 0?Pe:{name:Pe,cwd:L.cwdArg},_e=(Ae)=>(typeof Ae==="string"?Ae:Ae.name)===Pe;if(Y==="remove")return ke.filter((Ae)=>!_e(Ae));return ke.some(_e)?ke.map((Ae)=>_e(Ae)?Te:Ae):[...ke,Te]},me.config.command_tools??[]);bn(se.configTarget,{...me.config,command_tools:he});for(let ke of Z)console.log(Y==="add"?`Added command tool: ${ke}${L.cwdArg===void 0?"":` (cwd argument: ${L.cwdArg})`}`:`Removed command tool: ${ke}`);return console.log(`Scope: ${L.project?"project":"user"} (${se.configPath})`),0}function nk(P,L){let H=(O(P,{cwd:L})?["user"]:["user","project"]).map((Z)=>{let oe=hn(P,{global:Z==="user"});return{scope:Z,path:oe.configPath,...d(oe.configTarget)}}),Y=H.flatMap((Z)=>Z.errors.map((oe)=>`${Z.path}: ${oe}`));if(Y.length>0){for(let Z of Y)console.error(Z);return 1}return Ku(H.flatMap((Z)=>(Z.config?.command_tools??[]).map((oe)=>({scope:Z.scope,tool:oe})))),0}import{sep as ak}from"node:path";import{existsSync as tk,readFileSync as rk}from"node:fs";import{join as ok}from"node:path";async function ik(P){if(P.isTTY)return null;return(await st(P).catch(()=>null))?.trim()||null}function sk(P){let L=P.env.get("CLAUDE_SETTINGS_PATH");if(L)return L;return ok(Vr(P),"settings.json")}function Ms(P){let L=sk(P);if(!tk(L))return!1;try{let H=rk(L,"utf-8"),Y=JSON.parse(H);if(!Y.enabledPlugins)return!1;let Z="cc-safety-net@cc-marketplace";if(!(Z in Y.enabledPlugins))return!1;return Y.enabledPlugins[Z]===!0}catch(H){if(S(n.debug,P.env))console.error(`CC Safety Net debug: failed to read Claude settings: ${L}: ${H instanceof Error?H.message:String(H)}`);return!1}}async function Us(P,L=process.stdin){let H=Ms(P),Y;if(!H)Y="\uD83D\uDEE1️ CC Safety Net ❌";else{let oe=R(P,{cwd:process.cwd()}),se=oe.policy,me=_(se,P.env),he=Object.values(K(se,me.capabilities)).some((Te)=>Te.changesInherited),ke={standard:"✅",strict:"\uD83D\uDD12",paranoid:"\uD83D\uDC41️",custom:"\uD83D\uDD27"}[he?"custom":me.effectiveLevel],Pe=oe.policyScopes&&!oe.policyScopes.weakeningsIgnored&&oe.policyScopes.weakenings.length>0?"\uD83D\uDD3B":"";Y=`\uD83D\uDEE1️ CC Safety Net ${ke}${me.worktreeMode?"\uD83C\uDF33":""}${Pe}${oe.state==="degraded"?"⚠️":""}`}let Z=await ik(L);if(Z&&!Z.startsWith("{"))console.log(`${Z} | ${Y}`);else console.log(Y)}function qp(P){let L=R(P,{cwd:process.cwd()}),H=L.policy,Y=_(H,P.env),Z=!!process.env.NO_COLOR||!process.stdout.isTTY,oe=Math.min(process.stdout.columns||80,100),se=Z?"ok":"✔",me=Z?"OFF":"✘",he=(We,Fe)=>{let Ze=`  ${We.padEnd(13)}${Fe}`;return(Ze.length>oe?`${Ze.slice(0,oe-1)}…`:Ze).replaceAll(me,en.red(me))},ke=Object.values(K(H,Y.capabilities)).some((We)=>We.changesInherited),Pe=(We)=>We===P.home||We.startsWith(`${P.home}${ak}`)?`~${We.slice(P.home.length)}`:We,Te={ready:en.green,degraded:en.yellow}[L.state],_e=L.policyScopes?.weakenings??[],Ae=[...Ms(P)?[]:["plugin cc-safety-net@cc-marketplace is disabled in Claude Code; nothing is enforced in Claude Code until it is re-enabled. Other integrations are not affected."],...L.diagnostics],Le=Z?"-":"·";console.log([`${Z?"":"\uD83D\uDEE1️  "}CC Safety Net — ${Te(L.state)}`,"",he("Protection",`destructive ${H.destructiveCommandProtectionEnabled?se:me}   secrets ${H.secretProtection.enabled?se:me}`),he("Level",ke?`${Y.effectiveLevel} (customised)`:Y.effectiveLevel),he("Rules",H.rules.length===0?"none active":`${H.rules.length} active`),he("Policy",Pe(u(P))),...L.policyScopes?[he("Project",Pe(y(process.cwd())))]:[],...Y.worktreeMode?[he("Worktree","relaxations active")]:[],"",..._e.length===0?[]:[L.policyScopes?.weakeningsIgnored?"  Project policy (ignored)":"  Project policy",..._e.flatMap((We)=>mr(We,"      ",oe-6).map((Fe,Ze)=>Ze===0?`    ${Fe}`:Fe)),""],...Ae.length===0?["  Everything configured is active."]:["  Not active",...Ae.flatMap((We)=>mr(We,"      ",oe-6).map((Fe,Ze)=>Ze===0?`    ${Le} ${Fe}`:Fe)),"","  Full report: cc-safety-net doctor"]].join(`
+`))}import{spawn as df}from"node:child_process";import{randomBytes as hk}from"node:crypto";import{existsSync as uf,mkdirSync as vk,readFileSync as bk}from"node:fs";import{createServer as wk}from"node:http";import{dirname as pf,join as kk}from"node:path";import{Writable as Ck}from"node:stream";var Ho=500;function lk(P){let L=P.filter((Z)=>Z.decision!=="allow"),H=P.filter((Z)=>Z.decision==="allow"),Y=Math.min(L.length,Math.max(Ho-H.length,Math.ceil(Ho/2)));return[...L.slice(0,Y),...H.slice(0,Ho-Y)]}function Vp(P,L,H=G(P)){if(H)J(P,H);let Y=(Fe)=>new Date(Fe.getFullYear(),Fe.getMonth(),Fe.getDate()).getTime(),Z=Y(new Date),oe=new Date(Z);oe.setDate(oe.getDate()-(L-1));let se=oe.getTime(),me=[],he={count:0};for(let Fe of H?Yn(H,he):[])for(let Ze of Dt(Fe,he)){let tn=new Date(Ze.ts).getTime();if(!Number.isFinite(tn))continue;if(tn>=se)me.push(Ze)}me.sort((Fe,Ze)=>new Date(Ze.ts).getTime()-new Date(Fe.ts).getTime());let ke=Array.from({length:L},()=>0),Pe=Array.from({length:L},()=>0),Te={},_e={},Ae={},Le=0,We=0;for(let Fe of me){let Ze=Fe.agent||"unknown";Te[Ze]=(Te[Ze]??0)+1;let tn=Math.round((Z-Y(new Date(Fe.ts)))/86400000),on=L-1-tn,ln=tn>=0&&tn<L;if(ln)Pe[on]=(Pe[on]??0)+1;if(Fe.decision!=="allow"){if(Le++,Fe.ruleId)_e[Fe.ruleId]=(_e[Fe.ruleId]??0)+1;let nn=Go(Fe.segment||Fe.command);if(nn)Ae[nn]=(Ae[nn]??0)+1;if(Fe.failureStage)We++;if(ln)ke[on]=(ke[on]??0)+1}}return{days:L,logsDir:H,homeDir:P.home,totalInWindow:me.length,truncated:me.length>Ho,unreadable:he.count,counts:{blocked:Le,allowed:me.length-Le,agents:Te,blockedByDay:ke,analyzedByDay:Pe,rules:_e,commands:Ae,errors:We},entries:lk(me).sort((Fe,Ze)=>new Date(Ze.ts).getTime()-new Date(Fe.ts).getTime())}}import{spawn as ck}from"node:child_process";import{existsSync as dk,statSync as Kp}from"node:fs";import{delimiter as uk,join as pk}from"node:path";var fk=120000,Mo="Choose the project folder",mk=`try
   return POSIX path of (choose folder with prompt "${Mo}")
 on error number -128
   return ""
-end try`,ok=`Add-Type -AssemblyName System.Windows.Forms
+end try`,gk=`Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
 $dialog.Description = '${Mo}'
-if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($dialog.SelectedPath) }`,Vp=[{binary:"zenity",args:["--file-selection","--directory",`--title=${Mo}`]},{binary:"kdialog",args:["--getexistingdirectory",".","--title",Mo]}],Kp=(_,L)=>(L.PATH??"").split(ek).some((j)=>{if(j.length===0)return!1;try{let Y=qp(nk(j,_));return Y.isFile()&&(Y.mode&73)!==0}catch{return!1}});function Fs(_,L){if(_==="darwin"||_==="win32")return!0;if(_!=="linux")return!1;if(!L.DISPLAY&&!L.WAYLAND_DISPLAY)return!1;return Vp.some((j)=>Kp(j.binary,L))}function ik(_,L){if(_==="darwin")return{cmd:"osascript",args:["-e",rk]};if(_==="win32")return{cmd:"powershell.exe",args:["-NoProfile","-STA","-Command",ok]};let j=Vp.find((Y)=>Kp(Y.binary,L));return j?{cmd:j.binary,args:j.args}:null}function Ms(_=process.platform,L=process.env){let j=ik(_,L);if(!j)return Promise.resolve({error:"No folder dialog is available on this system"});return new Promise((Y)=>{let Z=Xw(j.cmd,j.args,{env:L,stdio:["ignore","pipe","pipe"]}),oe="",se=!1,fe=(Pe)=>{if(se)return;se=!0,clearTimeout(ge),Y(Pe)},ge=setTimeout(()=>{Z.kill(),fe({error:"The folder dialog timed out"})},tk);Z.stdout.on("data",(Pe)=>{oe+=Pe.toString()}),Z.on("error",()=>fe({error:`Could not open the folder dialog (${j.cmd})`})),Z.on("close",()=>{let Pe=oe.trim().replace(/\/+$/,"");if(!Pe)return fe({cancelled:!0});if(!Qw(Pe)||!qp(Pe).isDirectory())return fe({error:"That selection is not a folder on disk"});fe({path:Pe})})})}var Jp=`<!doctype html>
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($dialog.SelectedPath) }`,Jp=[{binary:"zenity",args:["--file-selection","--directory",`--title=${Mo}`]},{binary:"kdialog",args:["--getexistingdirectory",".","--title",Mo]}],zp=(P,L)=>(L.PATH??"").split(uk).some((H)=>{if(H.length===0)return!1;try{let Y=Kp(pk(H,P));return Y.isFile()&&(Y.mode&73)!==0}catch{return!1}});function Bs(P,L){if(P==="darwin"||P==="win32")return!0;if(P!=="linux")return!1;if(!L.DISPLAY&&!L.WAYLAND_DISPLAY)return!1;return Jp.some((H)=>zp(H.binary,L))}function yk(P,L){if(P==="darwin")return{cmd:"osascript",args:["-e",mk]};if(P==="win32")return{cmd:"powershell.exe",args:["-NoProfile","-STA","-Command",gk]};let H=Jp.find((Y)=>zp(Y.binary,L));return H?{cmd:H.binary,args:H.args}:null}function Gs(P=process.platform,L=process.env){let H=yk(P,L);if(!H)return Promise.resolve({error:"No folder dialog is available on this system"});return new Promise((Y)=>{let Z=ck(H.cmd,H.args,{env:L,stdio:["ignore","pipe","pipe"]}),oe="",se=!1,me=(ke)=>{if(se)return;se=!0,clearTimeout(he),Y(ke)},he=setTimeout(()=>{Z.kill(),me({error:"The folder dialog timed out"})},fk);Z.stdout.on("data",(ke)=>{oe+=ke.toString()}),Z.on("error",()=>me({error:`Could not open the folder dialog (${H.cmd})`})),Z.on("close",()=>{let ke=oe.trim().replace(/\/+$/,"");if(!ke)return me({cancelled:!0});if(!dk(ke)||!Kp(ke).isDirectory())return me({error:"That selection is not a folder on disk"});me({path:ke})})})}var Wp=["en","ja","zh-CN"],Yp=["light","dark"],Uo=(P,L)=>P.includes(L),Zp=(P)=>typeof P==="object"&&P!==null&&!Array.isArray(P),Xp=(P)=>{let L=Zp(P)?P:{};return{...Uo(Wp,L.language)?{language:L.language}:{},...Uo(Yp,L.theme)?{theme:L.theme}:{}}},Qp=(P)=>{if(!Zp(P))return null;let L=Object.keys(P).every((Z)=>Z==="language"||Z==="theme"),H=P.language===void 0||Uo(Wp,P.language),Y=P.theme===void 0||Uo([...Yp,"auto"],P.theme);return L&&H&&Y?P:null},ef=(P,L)=>{let H=L.language??P.language,Y=L.theme==="auto"?void 0:L.theme??P.theme;return{...H?{language:H}:{},...Y?{theme:Y}:{}}};var nf=`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CC Safety Net</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22112%22%20fill%3D%22%2317161b%22%2F%3E%3Csvg%20x%3D%2240%22%20y%3D%2240%22%20width%3D%22432%22%20height%3D%22432%22%20viewBox%3D%22-172.38%20-172.38%20824.77%20824.77%22%3E%3Cg%20transform%3D%22rotate(45%20240%20240)%22%3E%3Crect%20x%3D%22-30%22%20y%3D%2214%22%20width%3D%22195%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22315%22%20y%3D%2214%22%20width%3D%22195%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22-30%22%20y%3D%2294%22%20width%3D%22115%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22235%22%20y%3D%2294%22%20width%3D%22170%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22155%22%20y%3D%22174%22%20width%3D%22170%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%2275%22%20y%3D%22254%22%20width%3D%22170%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22395%22%20y%3D%22254%22%20width%3D%22115%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22-30%22%20y%3D%22334%22%20width%3D%22195%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22315%22%20y%3D%22334%22%20width%3D%22195%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22-30%22%20y%3D%22414%22%20width%3D%22115%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%22235%22%20y%3D%22414%22%20width%3D%22170%22%20height%3D%2252%22%20rx%3D%229%22%20fill%3D%22%23f5f4f0%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%22155%22%20width%3D%2252%22%20height%3D%22170%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%2294%22%20y%3D%2275%22%20width%3D%2252%22%20height%3D%22170%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%2294%22%20y%3D%22395%22%20width%3D%2252%22%20height%3D%22115%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22174%22%20y%3D%22-30%22%20width%3D%2252%22%20height%3D%22195%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22174%22%20y%3D%22315%22%20width%3D%2252%22%20height%3D%22195%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22254%22%20y%3D%22-30%22%20width%3D%2252%22%20height%3D%22115%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22254%22%20y%3D%22235%22%20width%3D%2252%22%20height%3D%22170%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22334%22%20y%3D%22155%22%20width%3D%2252%22%20height%3D%22170%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22414%22%20y%3D%2275%22%20width%3D%2252%22%20height%3D%22170%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3Crect%20x%3D%22414%22%20y%3D%22395%22%20width%3D%2252%22%20height%3D%22115%22%20rx%3D%229%22%20fill%3D%22%23e5602a%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E%3C%2Fsvg%3E%0A">
+  <script id="ccsn-data" type="application/json"></script>
   <script>
-    (() => {
-      const stored = localStorage.getItem('cc-safety-net-theme');
-      if (stored === 'light' || stored === 'dark') document.documentElement.style.colorScheme = stored;
-    })();
+// src/gui/frontend/gui-data.ts
+var guiData = JSON.parse(document.getElementById("ccsn-data")?.textContent ?? "");
+
+// src/gui/frontend/preferences.ts
+var localeByLanguage = new Map([
+  ["en", "en"],
+  ["ja", "ja"],
+  ["zh", "zh-CN"]
+]);
+var resolveLocale = (saved, languages) => saved ?? languages.map((tag) => localeByLanguage.get(tag.toLowerCase().split("-")[0] ?? "")).find((locale) => locale !== undefined) ?? "en";
+
+// src/gui/frontend/head.ts
+document.documentElement.lang = resolveLocale(guiData.preferences.language, navigator.languages);
+if (guiData.preferences.theme)
+  document.documentElement.style.colorScheme = guiData.preferences.theme;
+
   </script>
   <style>
 :root {
@@ -555,6 +568,33 @@ strong {
 .sidebar-foot a:hover,
 .app-foot a:hover {
   color: var(--ink);
+}
+
+.language-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--faint);
+}
+
+.language-picker:hover,
+.language-picker:focus-within {
+  color: var(--ink);
+}
+
+.language-picker svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.language-picker select {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
 }
 
 .app-foot {
@@ -882,8 +922,7 @@ button.icon-only {
   padding: 0;
 }
 
-.link-button,
-.row-action {
+.link-button {
   flex: none;
   color: var(--muted);
   font-size: 13px;
@@ -892,13 +931,11 @@ button.icon-only {
   white-space: nowrap;
 }
 
-.link-button::after,
-.row-action::after {
+.link-button::after {
   content: ' →';
 }
 
-.link-button:hover,
-.list-row:hover .row-action {
+.link-button:hover {
   color: var(--ink);
 }
 
@@ -1710,16 +1747,23 @@ details[open] > summary::before,
   cursor: pointer;
 }
 
-.master-state::after {
-  content: 'Off';
+.master-state {
   color: var(--err-fg);
   font-size: 13px;
   font-weight: 500;
 }
 
-.master-switch:has(:checked) .master-state::after {
-  content: 'On';
+.master-state .state-on,
+.master-switch:has(:checked) .master-state .state-off {
+  display: none;
+}
+
+.master-switch:has(:checked) .master-state {
   color: var(--muted);
+}
+
+.master-switch:has(:checked) .master-state .state-on {
+  display: inline;
 }
 
 .is-off .section-sub {
@@ -2629,20 +2673,21 @@ button.chip:hover:not(:disabled) {
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <h1 class="brand-logo"><a class="brand-home" href="#overview" title="Overview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 476.62 104" role="img" aria-label="CC Safety Net"><defs><style>@font-face{font-family:'Exo 2 Kit';font-style:italic;font-weight:700;src:url(data:font/woff2;base64,d09GMgABAAAAAAbUAA8AAAAADAQAAAZ7AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGjYbgyQcVgZgP1NUQVRAAGwRCAqJMIdOCxgAATYCJAMsBCAFhDAHIBsHClEU84FMI2Xh/P0gqJpmz2glW7tm2AMGEwsNLDMfvC6JFAYQpPIEwhmU0xSaCF+QTsL/fr9W/1uXRBItlZA9tc/Z9Yv5Q0SSmDWGUAhNRJtlK9FLKKzDiVzMJj0vnDSdSSQEYLKYQBuCGLPALmhtxAISi2ZWHkV0ILcjDR6rs5GDaEcLyx1kdcyODZDVPebrJ2ugbWKILNkBQClYW9HvGxsiWjnNmOQ2JJovesQSRNmQRxoiskig7/FcAHZApkhZYgQ4vYi+qS95Gzs6m+iq/1ig/tdrUQqZrv4fjgwrgfpH/e7GW5n6Rzb9rL5X3/AAgsmcGyQaVq7JNiJbGiDQZxuRxpooiyzIdHCygPSC5IIkIFKwSFffp0/wUjYjKS5NoogLGOjtbnM8VaGhpYcTCWfSUjvZhhtRk4XySaxdpF961G+UqQ3YJJrZLFYS7HMtUh3GLHs+p7KqsoDrMJm1fKF2iC7aKbHDRFwSXCG+l/fnQdB25gYOKUdhafl0d8/Ev9X3TrQNCAYogYfEsePJ6XcDIkE+aQUGZDElS2BgChoenkQCb1eZHKGSOtroYoLZtB/wLvNdq75WT6sH1b3qBnWtukCdgz+U6igQShF/JUOyNCFZJfr1MiFZOyaLnIwFRmUW0AYPWrx061Lb+kxrvDXVyMy0tjTqLbHTwJjYnJjGp/YHQi8tc9z88su6/9Vng45g6C0jENnhfDGo+8Nhd0R+6HTjpbfquv/2rPrLr8/ST16b4dFbrrjDMAK3ZXovuy/TuPyG7Ib+QKjAcXM4rPsfvPHSjEsvu22Z87X3QmZQ3Fv3h13ul0IvGYFX7si+4vLbl7tefz+cf0NEFHQHQnb9D3+x/633mtcGb1txyzsfbFh3r8g+Gpy3czo9uns56BDzymeDRx1u9y2P/CLj4aXwT+UEQ48ZgUhkhfPGoK9H9QdeemmZQ/c/mtMY8MztbiPwRH5LJOJ0xLjd/Z4PFZ3Y2KYtKytYWYfM1o6jlwQ37O/v73Ps7++bmI0fbR0JDx8dmWNZVmJjm1AeGdoMne0IeN3GBh0HOR0H+47/9ql9Gn1m9n0WfSBpVlAV3nVM7PeauM3NbuRAaYXWwDZF2iOE1W3gy8gAWmccde8oddY6wmQ8F/50bf1ARjA/aBkrVUGtQ+mZVuBZ+mCJQ80mLVFUYBErNUGtRWlVmmNbxhaHh8ssJZYHzOfEQnHscF1eNIA2YKd06v4TI/YqqooRdgvH13JC60gb+dNZsyZgaeLjeTeYQgsIuaV6ZFg9EyySJdSi8LVsPNg1lNjs8IDyH5UCXAnVyeKiH6gIaBlPziUdcoFCeEFDY1VLvZSGhaPgkAJURRI/Etcax4TPRV3ADq+EqBCtdBkM8acG8n/WTmyMOum+94aU9/8kWIZ7JE1cEmziR2Lb9NVzFDEYBVzFT24KZagafAljfa6Nr4tkcvaRZg7DmKF1uBxVxJzJgMw2SeOKCqmtJbuMhakeWlnf0JhSETFCaifPzmNurIelamAwcovrEIBtbQEH3GHKZ1LEtMpIF1YNYgJVNa16jW9UBq5DCLa1PRzIPwZQuTI6s1ix6NIKmnp7RwtrwvDMtBSp1iS1Vk95QpnScY0vOaMZCCXYHVzJ/0V0Z4D0CrFjsjCpnT67jIWJMkZZz9CYUhExQmon72HF3qK6I/aC6qrHjZTrXjya2uRdsdfj2G8/WlVdm3VQeyi1af/KvcV1++0F1dUPfBzTGtEbvBoA6lkEIOU5eY+UL7TE7/0t2mL5EuCta2OSAD5Zdv4v/7v//0j7WSvBQguGTaGAOu3L1vj/3f/9qf1s+ZKzaorXNGQla2UJS+Vb5MgC4mUNGXIrGeJcdZG4FFMWsEz+oS7iw/pscwadRDFAVM3j1AUG/mu6Zh/brxcaWorkv2WoJI1PQy1s5V5RFi3mbBlqJYuJUBt5uArj2F4Xi9IvegbJKZJp8mhKaDVeephhBuikhAnaGKCXDtz46KWbHib2nScYYZzdbBj5hnWdjyG6RkVDTIDxdtE4PtYzzBjdFDCjVt/MOmzmahhjnF7zk0w2s56NbGKjCd5SzeVkczwA9lf2UEkVlRSwx9UIUAa4oSOESmYZI4wAOPjqFkwc9ODD9Cu/mrFxQx8+OoD8EJM8gfj645is5Ix30xt51CTtrKeDYQYD+g8zTDcD+NgsGmeDm+R1RP2rWpqtqT9BXclmNgA=) format('woff2')}</style></defs><svg x="0" y="0" width="96" height="96" viewBox="-172.38 -172.38 824.77 824.77"><g transform="rotate(45 240 240)"><rect x="-30" y="14" width="195" height="52" rx="9" fill="currentColor"/><rect x="315" y="14" width="195" height="52" rx="9" fill="currentColor"/><rect x="-30" y="94" width="115" height="52" rx="9" fill="currentColor"/><rect x="235" y="94" width="170" height="52" rx="9" fill="currentColor"/><rect x="155" y="174" width="170" height="52" rx="9" fill="currentColor"/><rect x="75" y="254" width="170" height="52" rx="9" fill="currentColor"/><rect x="395" y="254" width="115" height="52" rx="9" fill="currentColor"/><rect x="-30" y="334" width="195" height="52" rx="9" fill="currentColor"/><rect x="315" y="334" width="195" height="52" rx="9" fill="currentColor"/><rect x="-30" y="414" width="115" height="52" rx="9" fill="currentColor"/><rect x="235" y="414" width="170" height="52" rx="9" fill="currentColor"/><rect x="14" y="155" width="52" height="170" rx="9" fill="#e5602a"/><rect x="94" y="75" width="52" height="170" rx="9" fill="#e5602a"/><rect x="94" y="395" width="52" height="115" rx="9" fill="#e5602a"/><rect x="174" y="-30" width="52" height="195" rx="9" fill="#e5602a"/><rect x="174" y="315" width="52" height="195" rx="9" fill="#e5602a"/><rect x="254" y="-30" width="52" height="115" rx="9" fill="#e5602a"/><rect x="254" y="235" width="52" height="170" rx="9" fill="#e5602a"/><rect x="334" y="155" width="52" height="170" rx="9" fill="#e5602a"/><rect x="414" y="75" width="52" height="170" rx="9" fill="#e5602a"/><rect x="414" y="395" width="52" height="115" rx="9" fill="#e5602a"/></g></svg><text x="115.98" y="62.42" font-family="'Exo 2 Kit','Exo 2',sans-serif" font-style="italic" font-weight="700" font-size="56" letter-spacing="-0.56" fill="currentColor">CC Safety Net</text></svg>
+        <h1 class="brand-logo"><a class="brand-home" href="#overview" data-i18n-title="navOverview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 476.62 104" role="img" aria-label="CC Safety Net"><defs><style>@font-face{font-family:'Exo 2 Kit';font-style:italic;font-weight:700;src:url(data:font/woff2;base64,d09GMgABAAAAAAbUAA8AAAAADAQAAAZ7AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGjYbgyQcVgZgP1NUQVRAAGwRCAqJMIdOCxgAATYCJAMsBCAFhDAHIBsHClEU84FMI2Xh/P0gqJpmz2glW7tm2AMGEwsNLDMfvC6JFAYQpPIEwhmU0xSaCF+QTsL/fr9W/1uXRBItlZA9tc/Z9Yv5Q0SSmDWGUAhNRJtlK9FLKKzDiVzMJj0vnDSdSSQEYLKYQBuCGLPALmhtxAISi2ZWHkV0ILcjDR6rs5GDaEcLyx1kdcyODZDVPebrJ2ugbWKILNkBQClYW9HvGxsiWjnNmOQ2JJovesQSRNmQRxoiskig7/FcAHZApkhZYgQ4vYi+qS95Gzs6m+iq/1ig/tdrUQqZrv4fjgwrgfpH/e7GW5n6Rzb9rL5X3/AAgsmcGyQaVq7JNiJbGiDQZxuRxpooiyzIdHCygPSC5IIkIFKwSFffp0/wUjYjKS5NoogLGOjtbnM8VaGhpYcTCWfSUjvZhhtRk4XySaxdpF961G+UqQ3YJJrZLFYS7HMtUh3GLHs+p7KqsoDrMJm1fKF2iC7aKbHDRFwSXCG+l/fnQdB25gYOKUdhafl0d8/Ev9X3TrQNCAYogYfEsePJ6XcDIkE+aQUGZDElS2BgChoenkQCb1eZHKGSOtroYoLZtB/wLvNdq75WT6sH1b3qBnWtukCdgz+U6igQShF/JUOyNCFZJfr1MiFZOyaLnIwFRmUW0AYPWrx061Lb+kxrvDXVyMy0tjTqLbHTwJjYnJjGp/YHQi8tc9z88su6/9Vng45g6C0jENnhfDGo+8Nhd0R+6HTjpbfquv/2rPrLr8/ST16b4dFbrrjDMAK3ZXovuy/TuPyG7Ib+QKjAcXM4rPsfvPHSjEsvu22Z87X3QmZQ3Fv3h13ul0IvGYFX7si+4vLbl7tefz+cf0NEFHQHQnb9D3+x/633mtcGb1txyzsfbFh3r8g+Gpy3czo9uns56BDzymeDRx1u9y2P/CLj4aXwT+UEQ48ZgUhkhfPGoK9H9QdeemmZQ/c/mtMY8MztbiPwRH5LJOJ0xLjd/Z4PFZ3Y2KYtKytYWYfM1o6jlwQ37O/v73Ps7++bmI0fbR0JDx8dmWNZVmJjm1AeGdoMne0IeN3GBh0HOR0H+47/9ql9Gn1m9n0WfSBpVlAV3nVM7PeauM3NbuRAaYXWwDZF2iOE1W3gy8gAWmccde8oddY6wmQ8F/50bf1ARjA/aBkrVUGtQ+mZVuBZ+mCJQ80mLVFUYBErNUGtRWlVmmNbxhaHh8ssJZYHzOfEQnHscF1eNIA2YKd06v4TI/YqqooRdgvH13JC60gb+dNZsyZgaeLjeTeYQgsIuaV6ZFg9EyySJdSi8LVsPNg1lNjs8IDyH5UCXAnVyeKiH6gIaBlPziUdcoFCeEFDY1VLvZSGhaPgkAJURRI/Etcax4TPRV3ADq+EqBCtdBkM8acG8n/WTmyMOum+94aU9/8kWIZ7JE1cEmziR2Lb9NVzFDEYBVzFT24KZagafAljfa6Nr4tkcvaRZg7DmKF1uBxVxJzJgMw2SeOKCqmtJbuMhakeWlnf0JhSETFCaifPzmNurIelamAwcovrEIBtbQEH3GHKZ1LEtMpIF1YNYgJVNa16jW9UBq5DCLa1PRzIPwZQuTI6s1ix6NIKmnp7RwtrwvDMtBSp1iS1Vk95QpnScY0vOaMZCCXYHVzJ/0V0Z4D0CrFjsjCpnT67jIWJMkZZz9CYUhExQmon72HF3qK6I/aC6qrHjZTrXjya2uRdsdfj2G8/WlVdm3VQeyi1af/KvcV1++0F1dUPfBzTGtEbvBoA6lkEIOU5eY+UL7TE7/0t2mL5EuCta2OSAD5Zdv4v/7v//0j7WSvBQguGTaGAOu3L1vj/3f/9qf1s+ZKzaorXNGQla2UJS+Vb5MgC4mUNGXIrGeJcdZG4FFMWsEz+oS7iw/pscwadRDFAVM3j1AUG/mu6Zh/brxcaWorkv2WoJI1PQy1s5V5RFi3mbBlqJYuJUBt5uArj2F4Xi9IvegbJKZJp8mhKaDVeephhBuikhAnaGKCXDtz46KWbHib2nScYYZzdbBj5hnWdjyG6RkVDTIDxdtE4PtYzzBjdFDCjVt/MOmzmahhjnF7zk0w2s56NbGKjCd5SzeVkczwA9lf2UEkVlRSwx9UIUAa4oSOESmYZI4wAOPjqFkwc9ODD9Cu/mrFxQx8+OoD8EJM8gfj645is5Ix30xt51CTtrKeDYQYD+g8zTDcD+NgsGmeDm+R1RP2rWpqtqT9BXclmNgA=) format('woff2')}</style></defs><svg x="0" y="0" width="96" height="96" viewBox="-172.38 -172.38 824.77 824.77"><g transform="rotate(45 240 240)"><rect x="-30" y="14" width="195" height="52" rx="9" fill="currentColor"/><rect x="315" y="14" width="195" height="52" rx="9" fill="currentColor"/><rect x="-30" y="94" width="115" height="52" rx="9" fill="currentColor"/><rect x="235" y="94" width="170" height="52" rx="9" fill="currentColor"/><rect x="155" y="174" width="170" height="52" rx="9" fill="currentColor"/><rect x="75" y="254" width="170" height="52" rx="9" fill="currentColor"/><rect x="395" y="254" width="115" height="52" rx="9" fill="currentColor"/><rect x="-30" y="334" width="195" height="52" rx="9" fill="currentColor"/><rect x="315" y="334" width="195" height="52" rx="9" fill="currentColor"/><rect x="-30" y="414" width="115" height="52" rx="9" fill="currentColor"/><rect x="235" y="414" width="170" height="52" rx="9" fill="currentColor"/><rect x="14" y="155" width="52" height="170" rx="9" fill="#e5602a"/><rect x="94" y="75" width="52" height="170" rx="9" fill="#e5602a"/><rect x="94" y="395" width="52" height="115" rx="9" fill="#e5602a"/><rect x="174" y="-30" width="52" height="195" rx="9" fill="#e5602a"/><rect x="174" y="315" width="52" height="195" rx="9" fill="#e5602a"/><rect x="254" y="-30" width="52" height="115" rx="9" fill="#e5602a"/><rect x="254" y="235" width="52" height="170" rx="9" fill="#e5602a"/><rect x="334" y="155" width="52" height="170" rx="9" fill="#e5602a"/><rect x="414" y="75" width="52" height="170" rx="9" fill="#e5602a"/><rect x="414" y="395" width="52" height="115" rx="9" fill="#e5602a"/></g></svg><text x="115.98" y="62.42" font-family="'Exo 2 Kit','Exo 2',sans-serif" font-style="italic" font-weight="700" font-size="56" letter-spacing="-0.56" fill="currentColor">CC Safety Net</text></svg>
 </a></h1>
       </div>
-      <nav class="sidenav" aria-label="Sections">
-        <a href="#overview" data-nav="overview" title="Overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span class="sr-only-collapse">Overview</span></a>
-        <a href="#activity" data-nav="activity" title="Activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg><span class="sr-only-collapse">Activity</span></a>
-        <a href="#policy" data-nav="policy" title="Protections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"></path></svg><span class="sr-only-collapse">Protections</span><span class="nav-dirty" id="nav-dirty" hidden>Unsaved</span></a>
-        <a href="#rules" data-nav="rules" title="Custom rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4"></path><path d="M9 12h6M9 16h4"></path></svg><span class="sr-only-collapse">Custom rules</span></a>
-        <a href="#integrations" data-nav="integrations" title="Agents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0V8ZM12 17v5"></path></svg><span class="sr-only-collapse">Agents</span></a>
-        <a href="#settings" data-nav="settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"></path><circle cx="16" cy="8" r="2.2"></circle><circle cx="8" cy="16" r="2.2"></circle></svg><span class="sr-only-collapse">Settings</span></a>
+      <nav class="sidenav" data-i18n-aria-label="navSections">
+        <a href="#overview" data-nav="overview" data-i18n-title="navOverview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span class="sr-only-collapse" data-i18n="navOverview"></span></a>
+        <a href="#activity" data-nav="activity" data-i18n-title="navActivity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg><span class="sr-only-collapse" data-i18n="navActivity"></span></a>
+        <a href="#policy" data-nav="policy" data-i18n-title="navProtections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"></path></svg><span class="sr-only-collapse" data-i18n="navProtections"></span><span class="nav-dirty" id="nav-dirty" data-i18n="navUnsaved" hidden></span></a>
+        <a href="#rules" data-nav="rules" data-i18n-title="navCustomRules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4"></path><path d="M9 12h6M9 16h4"></path></svg><span class="sr-only-collapse" data-i18n="navCustomRules"></span></a>
+        <a href="#integrations" data-nav="integrations" data-i18n-title="navAgents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0V8ZM12 17v5"></path></svg><span class="sr-only-collapse" data-i18n="navAgents"></span></a>
+        <a href="#settings" data-nav="settings" data-i18n-title="navSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"></path><circle cx="16" cy="8" r="2.2"></circle><circle cx="8" cy="16" r="2.2"></circle></svg><span class="sr-only-collapse" data-i18n="navSettings"></span></a>
       </nav>
       <div class="sidebar-foot">
         <a href="https://github.com/kenryu42/cc-safety-net" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://ccsafetynet.com/docs" target="_blank" rel="noopener">Documentation</a>
+        <a href="https://ccsafetynet.com/docs" target="_blank" rel="noopener" data-i18n="documentation"></a>
+        <label class="language-picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z"></path></svg><select data-language-select data-i18n-aria-label="language"><option value="en" lang="en">English</option><option value="ja" lang="ja">日本語</option><option value="zh-CN" lang="zh-CN">简体中文</option></select></label>
       </div>
     </aside>
     <div class="content">
@@ -2652,26 +2697,26 @@ button.chip:hover:not(:disabled) {
         <section class="view" data-view="overview">
           <header class="page-head">
             <div>
-              <h2>Overview</h2>
-              <p>What CC Safety Net has been doing on this machine.</p>
+              <h2 data-i18n="navOverview"></h2>
+              <p data-i18n="overviewIntro"></p>
             </div>
           </header>
-          <div class="card status-card" id="status-card" aria-live="polite"><p class="muted">Loading…</p></div>
+          <div class="card status-card" id="status-card" aria-live="polite"><p class="muted" data-i18n="loading"></p></div>
           <section class="section" id="attention" hidden>
-            <div class="section-head"><h3 class="section-title">Needs attention</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="needsAttention"></h3></div>
             <ul class="card list" id="attention-list"></ul>
           </section>
           <div class="tiles" id="overview-tiles"></div>
           <section class="section">
             <div class="section-head">
-              <h3 class="section-title">Recent blocks</h3>
-              <a class="link-button" href="#activity">All activity</a>
+              <h3 class="section-title" data-i18n="recentBlocks"></h3>
+              <a class="link-button" href="#activity" data-i18n="allActivity"></a>
             </div>
             <div id="recent-blocks"></div>
           </section>
           <section class="section">
             <div class="section-head">
-              <h3 class="section-title" id="top-rules-title">Most-triggered rules</h3>
+              <h3 class="section-title" id="top-rules-title" data-i18n="topRules"></h3>
             </div>
             <div id="top-rules"></div>
           </section>
@@ -2684,59 +2729,59 @@ button.chip:hover:not(:disabled) {
         <section class="view" data-view="activity" hidden>
           <header class="page-head">
             <div>
-              <h2>Activity</h2>
-              <p>Commands your agents ran, newest first. Commands are secret-redacted when they are logged.</p>
+              <h2 data-i18n="navActivity"></h2>
+              <p data-i18n="activityIntro"></p>
             </div>
-            <button type="button" class="quiet icon-button" id="activity-refresh" aria-label="Refresh activity" title="Refresh activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
+            <button type="button" class="quiet icon-button" id="activity-refresh" data-i18n-aria-label="refreshActivity" data-i18n-title="refreshActivity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
           </header>
           <div class="toolbar">
-            <div class="pills" id="activity-decision" role="group" aria-label="Decision"></div>
+            <div class="pills" id="activity-decision" role="group" data-i18n-aria-label="decisionFilter"></div>
             <span class="toolbar-spacer"></span>
-            <label class="toolbar-search"><span class="sr-only">Search activity</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" id="activity-search" autocomplete="off" placeholder="Search commands or rule IDs"></label>
-            <label class="toolbar-select"><span class="sr-only">Agent</span><select id="activity-agent"></select></label>
-            <label class="toolbar-select"><span class="sr-only">Time window</span><select id="activity-days"></select></label>
+            <label class="toolbar-search"><span class="sr-only" data-i18n="searchActivity"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" id="activity-search" autocomplete="off" data-i18n-placeholder="searchActivityPlaceholder"></label>
+            <label class="toolbar-select"><span class="sr-only" data-i18n="agentFilter"></span><select id="activity-agent"></select></label>
+            <label class="toolbar-select"><span class="sr-only" data-i18n="timeWindow"></span><select id="activity-days"></select></label>
           </div>
           <div class="filter-line" id="activity-command-filter" hidden></div>
-          <div class="card list" id="activity-feed"><p class="empty">Loading activity…</p></div>
+          <div class="card list" id="activity-feed"><p class="empty" data-i18n="loadingActivity"></p></div>
           <p class="footnote" id="activity-count"></p>
         </section>
 
         <section class="view" data-view="policy" hidden>
           <header class="page-head">
             <div>
-              <h2>Protections</h2>
-              <p>Choose what CC Safety Net blocks. Changes apply after you save.</p>
+              <h2 data-i18n="navProtections"></h2>
+              <p data-i18n="policyIntro"></p>
             </div>
             <div class="page-actions">
-              <div class="pills" role="group" aria-label="Policy you are editing">
-                <button type="button" id="scope-user" aria-pressed="true">My policy</button>
-                <button type="button" id="project-draft-enter" aria-pressed="false">Project policy</button>
+              <div class="pills" role="group" data-i18n-aria-label="policyScope">
+                <button type="button" id="scope-user" aria-pressed="true" data-i18n="myPolicy"></button>
+                <button type="button" id="project-draft-enter" aria-pressed="false" data-i18n="projectPolicy"></button>
               </div>
-              <button type="button" id="tester-open" aria-haspopup="dialog">Test a command</button>
+              <button type="button" id="tester-open" aria-haspopup="dialog" data-i18n="testCommand"></button>
             </div>
           </header>
           <div class="project-bar" id="project-draft-bar" hidden>
             <div>
-              <strong>Editing the project policy</strong> <code id="project-draft-path"></code>
-              <p>Only settings tagged <span class="project-chip">Project</span> are written. Everything else keeps following each person's own policy. Click a Project tag to stop setting that field.</p>
+              <strong data-i18n="editingProjectPolicy"></strong> <code id="project-draft-path"></code>
+              <p data-i18n-html="projectBarHelp"></p>
             </div>
-            <button type="button" id="project-draft-change" hidden>Change folder…</button>
+            <button type="button" id="project-draft-change" data-i18n="changeFolder" hidden></button>
           </div>
           <p class="notice error" id="project-draft-diagnostics" hidden></p>
           <div class="recovery" id="recovery" hidden>
             <div>
-              <strong>Your policy file needs repair</strong>
-              <p>Repair keeps every valid setting and rewrites the file. If the JSON cannot be read at all, defaults are restored.</p>
+              <strong data-i18n="statusRepair"></strong>
+              <p data-i18n="repairHelp"></p>
               <p class="notice error" id="policy-errors"></p>
             </div>
-            <button class="primary" id="repair" type="button">Repair</button>
+            <button class="primary" id="repair" type="button" data-i18n="repair"></button>
           </div>
 
           <section class="section">
             <div class="section-head">
               <div>
-                <h3 class="section-title">Safety preset</h3>
-                <p class="section-sub">Each preset includes everything in the one before it.</p>
+                <h3 class="section-title" data-i18n="safetyPreset"></h3>
+                <p class="section-sub" data-i18n="safetyPresetSub"></p>
               </div>
               <span class="preset-status" id="safety-preset-status"></span>
               <span class="project-chip-slot" id="safety-level-chip"></span>
@@ -2744,7 +2789,7 @@ button.chip:hover:not(:disabled) {
             <div class="preset-grid" id="safety-level"></div>
             <p class="notice" id="environment-overrides" hidden></p>
             <details class="card disclosure">
-              <summary><span class="disclosure-title">Advanced settings</span><span class="disclosure-sub">Preset checks and linked worktrees</span></summary>
+              <summary><span class="disclosure-title" data-i18n="advancedSettings"></span><span class="disclosure-sub" data-i18n="advancedSettingsSub"></span></summary>
               <div class="disclosure-body">
                 <div id="safety-overrides"></div>
                 <div id="workflow"></div>
@@ -2753,23 +2798,23 @@ button.chip:hover:not(:disabled) {
           </section>
 
           <div class="toolbar policy-toolbar">
-            <label class="toolbar-search primary-search"><span class="sr-only">Search protections</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" id="policy-search" autocomplete="off" aria-keyshortcuts="/" placeholder="Type / to search by name, path or rule ID"></label>
-            <div class="pills" role="group" aria-label="Which protections to show">
-              <button type="button" data-policy-show="all" aria-pressed="true">All</button>
-              <button type="button" data-policy-show="changed" aria-pressed="false">Changed from default <span class="count" id="changed-count"></span></button>
+            <label class="toolbar-search primary-search"><span class="sr-only" data-i18n="searchProtections"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" id="policy-search" autocomplete="off" aria-keyshortcuts="/" data-i18n-placeholder="searchProtectionsPlaceholder"></label>
+            <div class="pills" role="group" data-i18n-aria-label="protectionsShown">
+              <button type="button" data-policy-show="all" aria-pressed="true" data-i18n="filterAll"></button>
+              <button type="button" data-policy-show="changed" aria-pressed="false"><span data-i18n="showChanged"></span> <span class="count" id="changed-count"></span></button>
             </div>
           </div>
 
           <section class="card panel" id="destructive-panel">
             <div class="panel-head">
               <div>
-                <h3 class="section-title" id="destructive-label">Command protection</h3>
+                <h3 class="section-title" id="destructive-label" data-i18n="commandProtection"></h3>
                 <p class="section-sub" id="destructive-command-summary"></p>
               </div>
               <div class="section-actions">
-                <button type="button" class="quiet" id="reset-rule-customizations">Reset all</button>
+                <button type="button" class="quiet" id="reset-rule-customizations" data-i18n="resetAll"></button>
                 <span class="project-chip-slot" id="destructive-enabled-chip"></span>
-                <label class="master-switch"><span class="master-state"></span><input type="checkbox" class="switch" id="destructive-enabled" aria-labelledby="destructive-label"></label>
+                <label class="master-switch"><span class="master-state"><span class="state-on" data-i18n="switchOn"></span><span class="state-off" data-i18n="switchOff"></span></span><input type="checkbox" class="switch" id="destructive-enabled" aria-labelledby="destructive-label"></label>
               </div>
             </div>
             <div class="panel-list" id="destructive-command-rules"></div>
@@ -2778,13 +2823,13 @@ button.chip:hover:not(:disabled) {
           <section class="card panel" id="secret-panel">
             <div class="panel-head">
               <div>
-                <h3 class="section-title" id="secret-label">Secret protection</h3>
+                <h3 class="section-title" id="secret-label" data-i18n="secretProtection"></h3>
                 <p class="section-sub" id="secret-summary"></p>
               </div>
               <div class="section-actions">
-                <button type="button" class="quiet" id="reset-secret-customizations">Reset all</button>
+                <button type="button" class="quiet" id="reset-secret-customizations" data-i18n="resetAll"></button>
                 <span class="project-chip-slot" id="secret-enabled-chip"></span>
-                <label class="master-switch"><span class="master-state"></span><input type="checkbox" class="switch" id="secret-enabled" aria-labelledby="secret-label"></label>
+                <label class="master-switch"><span class="master-state"><span class="state-on" data-i18n="switchOn"></span><span class="state-off" data-i18n="switchOff"></span></span><input type="checkbox" class="switch" id="secret-enabled" aria-labelledby="secret-label"></label>
               </div>
             </div>
             <div class="panel-list" id="secret-patterns"></div>
@@ -2793,29 +2838,29 @@ button.chip:hover:not(:disabled) {
           <section class="card panel">
             <div class="panel-head">
               <div>
-                <h3 class="section-title">Exceptions and extra paths</h3>
-                <p class="section-sub">Paths can be absolute or start with <code>~/</code>. Paste several lines to add many at once. Paths that cover your home directory are rejected.</p>
+                <h3 class="section-title" data-i18n="pathsTitle"></h3>
+                <p class="section-sub" data-i18n-html="pathsSub"></p>
               </div>
             </div>
             <div class="panel-rows">
               <div class="path-list">
-                <div class="path-list-head"><strong id="allow-paths-label">Allow recursive deletes in</strong><span class="count" id="allow-paths-count"></span><span class="project-chip-slot" id="allow-paths-chip"></span></div>
-                <p class="path-list-help">Recursive deletes inside these paths are not blocked, like a scratch folder under <code>/tmp</code>.</p>
-                <div class="input-row"><input type="text" class="mono" id="allow-paths-input" data-path-input="allow-paths" autocomplete="off" spellcheck="false" placeholder="/absolute/path or ~/path" aria-labelledby="allow-paths-label"><button type="button" id="allow-paths-add-button" data-path-add="allow-paths">Add</button></div>
+                <div class="path-list-head"><strong id="allow-paths-label" data-i18n="allowPathsLabel"></strong><span class="count" id="allow-paths-count"></span><span class="project-chip-slot" id="allow-paths-chip"></span></div>
+                <p class="path-list-help" data-i18n-html="allowPathsHelp"></p>
+                <div class="input-row"><input type="text" class="mono" id="allow-paths-input" data-path-input="allow-paths" autocomplete="off" spellcheck="false" data-i18n-placeholder="allowPathsPlaceholder" aria-labelledby="allow-paths-label"><button type="button" id="allow-paths-add-button" data-path-add="allow-paths" data-i18n="add"></button></div>
                 <p class="field-error" id="allow-paths-hint" hidden></p>
                 <ul class="paths" id="allow-paths-list"></ul>
               </div>
               <div class="path-list">
-                <div class="path-list-head"><strong id="deny-paths-label">Always block access to</strong><span class="count" id="deny-paths-count"></span><span class="project-chip-slot" id="deny-paths-chip"></span></div>
-                <p class="path-list-help">These paths and everything inside them are blocked while secret protection is on.</p>
-                <div class="input-row"><input type="text" class="mono" id="deny-paths-input" data-path-input="deny-paths" autocomplete="off" spellcheck="false" placeholder="path/to/protect" aria-labelledby="deny-paths-label"><button type="button" id="deny-paths-add-button" data-path-add="deny-paths">Add</button></div>
+                <div class="path-list-head"><strong id="deny-paths-label" data-i18n="denyPathsLabel"></strong><span class="count" id="deny-paths-count"></span><span class="project-chip-slot" id="deny-paths-chip"></span></div>
+                <p class="path-list-help" data-i18n="denyPathsHelp"></p>
+                <div class="input-row"><input type="text" class="mono" id="deny-paths-input" data-path-input="deny-paths" autocomplete="off" spellcheck="false" data-i18n-placeholder="denyPathsPlaceholder" aria-labelledby="deny-paths-label"><button type="button" id="deny-paths-add-button" data-path-add="deny-paths" data-i18n="add"></button></div>
                 <p class="field-error" id="deny-paths-hint" hidden></p>
                 <ul class="paths" id="deny-paths-list"></ul>
               </div>
               <div class="path-list">
-                <div class="path-list-head"><strong id="secret-allow-paths-label">Exempt from secret patterns</strong><span class="count" id="secret-allow-paths-count"></span><span class="project-chip-slot" id="secret-allow-paths-chip"></span></div>
-                <p class="path-list-help">Files, folders, or one file name under a folder such as <code>~/code/**/.env.local</code>. Deny paths and coding agent credentials still apply.</p>
-                <div class="input-row"><input type="text" class="mono" id="secret-allow-paths-input" data-path-input="secret-allow-paths" autocomplete="off" spellcheck="false" placeholder="~/code/**/.env.local" aria-labelledby="secret-allow-paths-label"><button type="button" id="secret-allow-paths-add-button" data-path-add="secret-allow-paths">Add</button></div>
+                <div class="path-list-head"><strong id="secret-allow-paths-label" data-i18n="secretAllowPathsLabel"></strong><span class="count" id="secret-allow-paths-count"></span><span class="project-chip-slot" id="secret-allow-paths-chip"></span></div>
+                <p class="path-list-help" data-i18n-html="secretAllowPathsHelp"></p>
+                <div class="input-row"><input type="text" class="mono" id="secret-allow-paths-input" data-path-input="secret-allow-paths" autocomplete="off" spellcheck="false" placeholder="~/code/**/.env.local" aria-labelledby="secret-allow-paths-label"><button type="button" id="secret-allow-paths-add-button" data-path-add="secret-allow-paths" data-i18n="add"></button></div>
                 <p class="field-error" id="secret-allow-paths-hint" hidden></p>
                 <ul class="paths" id="secret-allow-paths-list"></ul>
               </div>
@@ -2823,21 +2868,21 @@ button.chip:hover:not(:disabled) {
           </section>
 
           <details class="card disclosure">
-            <summary><span class="disclosure-title">Policy JSON</span><span class="disclosure-sub" id="raw-source">Read-only. Mirrors the settings above.</span></summary>
+            <summary><span class="disclosure-title" data-i18n="policyJson"></span><span class="disclosure-sub" id="raw-source" data-i18n="rawReadOnly"></span></summary>
             <div class="disclosure-body json-body">
               <button type="button" class="quiet" id="raw-copy"></button>
-              <textarea id="raw" aria-label="Policy JSON" aria-describedby="raw-source" readonly></textarea>
+              <textarea id="raw" data-i18n-aria-label="policyJson" aria-describedby="raw-source" readonly></textarea>
             </div>
           </details>
 
           <div class="savebar" id="policy-savebar" hidden>
             <div class="savebar-text">
-              <strong id="savebar-title">Unsaved changes</strong>
+              <strong id="savebar-title" data-i18n="unsavedChanges"></strong>
               <span id="savebar-summary"></span>
             </div>
             <div class="savebar-actions">
-              <button type="button" id="discard-changes">Discard</button>
-              <button type="button" class="primary" id="save">Save</button>
+              <button type="button" id="discard-changes" data-i18n="discard"></button>
+              <button type="button" class="primary" id="save" data-i18n="save"></button>
             </div>
           </div>
         </section>
@@ -2845,16 +2890,16 @@ button.chip:hover:not(:disabled) {
         <section class="view" data-view="rules" hidden>
           <header class="page-head">
             <div>
-              <h2>Custom rules</h2>
-              <p>Your own blocking rules from rulebooks, enforced on top of the built-in protections.</p>
+              <h2 data-i18n="navCustomRules"></h2>
+              <p data-i18n="rulesIntro"></p>
             </div>
-            <button type="button" class="quiet icon-button" id="rules-refresh" aria-label="Refresh custom rules" title="Refresh custom rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
+            <button type="button" class="quiet icon-button" id="rules-refresh" data-i18n-aria-label="refreshRules" data-i18n-title="refreshRules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
           </header>
           <section class="section" id="rules-diagnostics-panel" hidden>
             <div class="section-head">
               <div>
-                <h3 class="section-title">Problems</h3>
-                <p class="section-sub">An error means a rulebook was skipped and none of its rules are enforced.</p>
+                <h3 class="section-title" data-i18n="problems"></h3>
+                <p class="section-sub" data-i18n="problemsSub"></p>
               </div>
             </div>
             <div class="notices" id="rules-diagnostics"></div>
@@ -2862,50 +2907,50 @@ button.chip:hover:not(:disabled) {
           <section class="section">
             <div class="section-head">
               <div>
-                <h3 class="section-title">Rulebooks</h3>
-                <p class="section-sub">Read-only. Rules are shown as they are enforced.</p>
+                <h3 class="section-title" data-i18n="rulebooks"></h3>
+                <p class="section-sub" data-i18n="rulebooksSub"></p>
               </div>
             </div>
-            <div id="rules-list"><p class="empty">Loading rules…</p></div>
+            <div id="rules-list"><p class="empty" data-i18n="loadingRules"></p></div>
           </section>
           <section class="section" id="rules-composer-panel">
             <div class="section-head">
               <div>
-                <h3 class="section-title">Create a rule</h3>
-                <p class="section-sub">Describe the rule and copy a ready-made prompt for your coding agent. CC Safety Net does not write rulebooks itself.</p>
+                <h3 class="section-title" data-i18n="createRule"></h3>
+                <p class="section-sub" data-i18n="createRuleSub"></p>
               </div>
             </div>
             <div class="card pad">
               <div class="form-grid">
                 <div class="field">
-                  <span class="field-label">Applies to</span>
-                  <div class="pills" role="group" aria-label="Rule scope">
-                    <button type="button" data-rules-scope="project" aria-pressed="true">This project</button>
-                    <button type="button" data-rules-scope="user" aria-pressed="false">All projects</button>
+                  <span class="field-label" data-i18n="appliesTo"></span>
+                  <div class="pills" role="group" data-i18n-aria-label="ruleScope">
+                    <button type="button" data-rules-scope="project" aria-pressed="true" data-i18n="thisProject"></button>
+                    <button type="button" data-rules-scope="user" aria-pressed="false" data-i18n="allProjects"></button>
                   </div>
                 </div>
                 <div class="field" id="rules-project-path-field">
-                  <label class="field-label" id="rules-project-path-label" for="rules-project-path">Project folder</label>
+                  <label class="field-label" id="rules-project-path-label" for="rules-project-path" data-i18n="projectFolder"></label>
                   <div class="input-row">
                     <input type="text" class="mono" id="rules-project-path" spellcheck="false" autocomplete="off" aria-describedby="rules-project-path-hint">
-                    <button type="button" id="rules-choose-directory" hidden>Choose…</button>
+                    <button type="button" id="rules-choose-directory" data-i18n="chooseFolder" hidden></button>
                   </div>
-                  <small id="rules-project-path-hint">Where the rulebook is written. Defaults to the folder this GUI was started from.</small>
+                  <small id="rules-project-path-hint" data-i18n="projectFolderHint"></small>
                 </div>
                 <div class="field">
-                  <label class="field-label" id="rules-composer-label" for="rules-composer-input">What should be blocked?</label>
-                  <textarea id="rules-composer-input" spellcheck="false" placeholder="Block terraform destroy in this project" aria-describedby="rules-composer-hint"></textarea>
-                  <small id="rules-composer-hint">Rules match a command, its subcommands, and exact arguments, not file paths or patterns.</small>
+                  <label class="field-label" id="rules-composer-label" for="rules-composer-input" data-i18n="ruleRequest"></label>
+                  <textarea id="rules-composer-input" spellcheck="false" data-i18n-placeholder="ruleRequestPlaceholder" aria-describedby="rules-composer-hint"></textarea>
+                  <small id="rules-composer-hint" data-i18n="ruleRequestHint"></small>
                   <div class="chip-row">
-                    <span class="chip-row-label">Try:</span>
-                    <button type="button" class="chip" data-rules-example="read my package.json and suggest blocking rules">Suggest rules</button>
-                    <button type="button" class="chip" data-rules-example="set up rules to block all terraform destroy commands">Block a command</button>
-                    <button type="button" class="chip" data-rules-example="verify my rules and fix any errors">Verify rules</button>
+                    <span class="chip-row-label" data-i18n="tryExamples"></span>
+                    <button type="button" class="chip" data-rules-example="suggest" data-i18n="exampleSuggest"></button>
+                    <button type="button" class="chip" data-rules-example="block" data-i18n="exampleBlock"></button>
+                    <button type="button" class="chip" data-rules-example="verify" data-i18n="exampleVerify"></button>
                   </div>
                 </div>
               </div>
               <div class="form-actions">
-                <button type="button" class="primary" id="rules-copy-prompt">Copy prompt</button>
+                <button type="button" class="primary" id="rules-copy-prompt" data-i18n="copyPrompt"></button>
               </div>
             </div>
           </section>
@@ -2914,66 +2959,66 @@ button.chip:hover:not(:disabled) {
         <section class="view" data-view="integrations" hidden>
           <header class="page-head">
             <div>
-              <h2>Agents</h2>
-              <p>Install or remove the CC Safety Net hook for each coding agent on this machine.</p>
+              <h2 data-i18n="navAgents"></h2>
+              <p data-i18n="agentsIntro"></p>
             </div>
-            <button type="button" class="quiet icon-button" id="integrations-refresh" aria-label="Refresh agents" title="Refresh agents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
+            <button type="button" class="quiet icon-button" id="integrations-refresh" data-i18n-aria-label="refreshAgents" data-i18n-title="refreshAgents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg></button>
           </header>
-          <div class="agent-groups" id="integrations-list"><p class="empty">Checking agents…</p></div>
+          <div class="agent-groups" id="integrations-list"><p class="empty" data-i18n="checkingAgents"></p></div>
         </section>
 
         <section class="view" data-view="settings" hidden>
           <header class="page-head">
             <div>
-              <h2>Settings</h2>
-              <p>Appearance, log retention, file locations, and maintenance.</p>
+              <h2 data-i18n="navSettings"></h2>
+              <p data-i18n="settingsIntro"></p>
             </div>
           </header>
           <section class="section">
-            <div class="section-head"><h3 class="section-title">Appearance</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="appearance"></h3></div>
             <div class="card rows">
               <div class="setting-row">
-                <div class="setting-text"><strong>Theme</strong><small>Saved in this browser.</small></div>
-                <div class="pills" id="settings-theme" role="group" aria-label="Theme">
-                  <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
-                  <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
-                  <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+                <div class="setting-text"><strong data-i18n="theme"></strong><small data-i18n="preferenceHint"></small></div>
+                <div class="pills" id="settings-theme" role="group" data-i18n-aria-label="theme">
+                  <button type="button" data-theme-choice="auto" aria-pressed="true" data-i18n="themeAuto"></button>
+                  <button type="button" data-theme-choice="light" aria-pressed="false" data-i18n="themeLight"></button>
+                  <button type="button" data-theme-choice="dark" aria-pressed="false" data-i18n="themeDark"></button>
                 </div>
               </div>
             </div>
           </section>
           <section class="section">
-            <div class="section-head"><h3 class="section-title">Audit log</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="auditLog"></h3></div>
             <div class="card rows">
               <div class="setting-row">
-                <div class="setting-text"><label for="retention-days"><strong>Keep logs for</strong></label><small id="retention-note">Every checked command is logged. Lowering this deletes older entries, and Activity can only look back this far.</small></div>
-                <span class="retention-input"><input type="number" id="retention-days" min="1" max="365" step="1" inputmode="numeric" aria-describedby="retention-note"><span id="retention-unit">days</span></span>
+                <div class="setting-text"><label for="retention-days"><strong data-i18n="keepLogsFor"></strong></label><small id="retention-note" data-i18n="retentionNote"></small></div>
+                <span class="retention-input"><input type="number" id="retention-days" min="1" max="365" step="1" inputmode="numeric" aria-describedby="retention-note"><span id="retention-unit"></span></span>
               </div>
-              <div class="setting-row info"><span class="setting-label">Log folder</span><code id="logs-path"></code><button type="button" class="quiet small" data-copy-path="logs-path" aria-label="Copy the log folder path"></button></div>
+              <div class="setting-row info"><span class="setting-label" data-i18n="logFolder"></span><code id="logs-path"></code><button type="button" class="quiet small" data-copy-path="logs-path" data-i18n-aria-label="copyLogFolder"></button></div>
             </div>
           </section>
           <section class="section">
-            <div class="section-head"><h3 class="section-title">Files</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="files"></h3></div>
             <div class="card rows">
-              <div class="setting-row info"><span class="setting-label">Policy file</span><code id="policy-path"></code><button type="button" class="quiet small" data-copy-path="policy-path" aria-label="Copy the policy file path"></button></div>
-              <div class="setting-row info" id="project-policy-row" hidden><span class="setting-label">Project policy</span><code id="project-policy-path"></code><button type="button" class="quiet small" data-copy-path="project-policy-path" aria-label="Copy the project policy path"></button></div>
+              <div class="setting-row info"><span class="setting-label" data-i18n="policyFile"></span><code id="policy-path"></code><button type="button" class="quiet small" data-copy-path="policy-path" data-i18n-aria-label="copyPolicyPath"></button></div>
+              <div class="setting-row info" id="project-policy-row" hidden><span class="setting-label" data-i18n="projectPolicy"></span><code id="project-policy-path"></code><button type="button" class="quiet small" data-copy-path="project-policy-path" data-i18n-aria-label="copyProjectPolicyPath"></button></div>
             </div>
             <p class="notice" id="project-policy-notice" hidden></p>
           </section>
           <section class="section">
-            <div class="section-head"><h3 class="section-title">About</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="about"></h3></div>
             <div class="card rows">
               <div class="setting-row info"><span class="setting-label">CC Safety Net</span><code id="app-version"></code></div>
               <div class="setting-row info"><span class="setting-label">Node.js</span><code id="integrations-node-version"></code></div>
-              <div class="setting-row info"><span class="setting-label">Platform</span><code id="integrations-platform"></code></div>
+              <div class="setting-row info"><span class="setting-label" data-i18n="platform"></span><code id="integrations-platform"></code></div>
             </div>
           </section>
           <section class="section">
-            <div class="section-head"><h3 class="section-title">Danger zone</h3></div>
+            <div class="section-head"><h3 class="section-title" data-i18n="dangerZone"></h3></div>
             <div class="card rows">
               <div class="setting-row">
-                <div class="setting-text"><strong>Reset policy</strong><small>Replace your policy file with the defaults. This cannot be undone.</small></div>
-                <button type="button" class="danger-quiet" id="reset">Reset policy</button>
+                <div class="setting-text"><strong data-i18n="resetPolicy"></strong><small data-i18n="resetPolicyHelp"></small></div>
+                <button type="button" class="danger-quiet" id="reset" data-i18n="resetPolicy"></button>
               </div>
             </div>
           </section>
@@ -2981,7 +3026,8 @@ button.chip:hover:not(:disabled) {
       </main>
       <footer class="app-foot">
         <a href="https://github.com/kenryu42/cc-safety-net" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://ccsafetynet.com/docs" target="_blank" rel="noopener">Documentation</a>
+        <a href="https://ccsafetynet.com/docs" target="_blank" rel="noopener" data-i18n="documentation"></a>
+        <label class="language-picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z"></path></svg><select data-language-select data-i18n-aria-label="language"><option value="en" lang="en">English</option><option value="ja" lang="ja">日本語</option><option value="zh-CN" lang="zh-CN">简体中文</option></select></label>
       </footer>
     </div>
   </div>
@@ -2990,7 +3036,7 @@ button.chip:hover:not(:disabled) {
       <strong id="toast-title"></strong>
       <p id="toast-detail" hidden></p>
     </div>
-    <button type="button" class="quiet icon-only" id="toast-close" aria-label="Dismiss message">✕</button>
+    <button type="button" class="quiet icon-only" id="toast-close" data-i18n-aria-label="dismissMessage">✕</button>
   </div>
   <div class="rule-example-popover" id="rule-example-popover" popover="auto" role="dialog" aria-labelledby="rule-example-title" aria-describedby="rule-example-command">
     <span class="rule-example-label" id="rule-example-label"></span>
@@ -3005,41 +3051,1321 @@ button.chip:hover:not(:disabled) {
       <div class="dialog-rows" id="confirm-dialog-rows" hidden></div>
       <p class="dialog-detail"><code id="confirm-dialog-detail"></code></p>
       <div class="dialog-actions">
-        <button type="submit" id="confirm-dialog-cancel" value="cancel">Cancel</button>
+        <button type="submit" id="confirm-dialog-cancel" value="cancel" data-i18n="cancel"></button>
         <button type="submit" class="danger" id="confirm-dialog-confirm" value="confirm"></button>
       </div>
     </form>
   </dialog>
   <dialog class="confirm-dialog tester-dialog" id="tester-dialog" aria-labelledby="tester-label" aria-describedby="tester-help">
     <form id="tester-form">
-      <h2 id="tester-label">Test a command</h2>
-      <p id="tester-help">Checks a command against the Protections settings, including unsaved changes and custom rules. Nothing is run.</p>
+      <h2 id="tester-label" data-i18n="testCommand"></h2>
+      <p id="tester-help" data-i18n="testerHelp"></p>
       <div class="input-row">
         <label class="prompt-field"><span class="prompt" aria-hidden="true">$</span><input type="text" id="tester-input" class="mono" autocomplete="off" spellcheck="false" placeholder="git push --force" aria-labelledby="tester-label"></label>
-        <button type="submit" class="primary" id="tester-run">Test</button>
+        <button type="submit" class="primary" id="tester-run" data-i18n="test"></button>
       </div>
       <div id="tester-result" class="notice" aria-live="polite" hidden></div>
       <div class="dialog-actions">
-        <button type="button" id="tester-close">Close</button>
+        <button type="button" id="tester-close" data-i18n="close"></button>
       </div>
     </form>
   </dialog>
   <dialog class="confirm-dialog report-dialog" id="report-dialog" aria-labelledby="report-dialog-title" aria-describedby="report-dialog-body">
     <form method="dialog">
-      <h2 id="report-dialog-title">Report a false positive</h2>
-      <p id="report-dialog-body">This opens a prefilled public GitHub issue form. Nothing is sent until you submit it there. Paths were replaced with <code>&lt;project&gt;</code> and <code>~</code>; edit anything else you would rather not publish.</p>
-      <label class="report-field"><span>Why should it have been allowed? (optional)</span><textarea id="report-why" placeholder="What was the agent trying to do, and what makes the command safe there?"></textarea></label>
-      <label class="report-field"><span>Title</span><input id="report-title" type="text" spellcheck="false"></label>
-      <label class="report-field"><span>Blocked command</span><textarea id="report-command" spellcheck="false"></textarea></label>
-      <label class="report-field"><span>Audit log entry</span><textarea id="report-entry" spellcheck="false"></textarea></label>
+      <h2 id="report-dialog-title" data-i18n="reportDialogTitle"></h2>
+      <p id="report-dialog-body" data-i18n-html="reportDialogBody"></p>
+      <label class="report-field"><span data-i18n="reportWhy"></span><textarea id="report-why" data-i18n-placeholder="reportWhyPlaceholder"></textarea></label>
+      <label class="report-field"><span data-i18n="reportTitleField"></span><input id="report-title" type="text" spellcheck="false"></label>
+      <label class="report-field"><span data-i18n="reportCommandField"></span><textarea id="report-command" spellcheck="false"></textarea></label>
+      <label class="report-field"><span data-i18n="reportEntryField"></span><textarea id="report-entry" spellcheck="false"></textarea></label>
       <div class="dialog-actions">
-        <button type="submit" id="report-dialog-cancel" value="cancel">Cancel</button>
-        <button type="submit" class="primary" id="report-dialog-open" value="report">Open GitHub form</button>
+        <button type="submit" id="report-dialog-cancel" value="cancel" data-i18n="cancel"></button>
+        <button type="submit" class="primary" id="report-dialog-open" value="report" data-i18n="openGitHubForm"></button>
       </div>
     </form>
   </dialog>
-  <script id="ccsn-data" type="application/json"></script>
   <script>
+// src/gui/frontend/gui-data.ts
+var guiData = JSON.parse(document.getElementById("ccsn-data")?.textContent ?? "");
+
+// src/gui/frontend/locales/en.ts
+var count = (value) => value.toLocaleString("en");
+var plural = (value, one, many) => \`\${count(value)} \${value === 1 ? one : many}\`;
+var days = (value) => plural(value, "day", "days");
+var en = {
+  navSections: "Sections",
+  navOverview: "Overview",
+  navActivity: "Activity",
+  navProtections: "Protections",
+  navCustomRules: "Custom rules",
+  navAgents: "Agents",
+  navSettings: "Settings",
+  navUnsaved: "Unsaved",
+  documentation: "Documentation",
+  loading: "Loading…",
+  dismissMessage: "Dismiss message",
+  cancel: "Cancel",
+  close: "Close",
+  copy: "Copy",
+  copied: "Copied",
+  copyFailed: "Copy failed",
+  add: "Add",
+  reset: "Reset",
+  resetAll: "Reset all",
+  repair: "Repair",
+  save: "Save",
+  discard: "Discard",
+  savingStatus: "Saving…",
+  saveFailed: "Save failed",
+  reloadPage: "Reload the page.",
+  unknownValue: "unknown",
+  requestFailed: (status) => \`Request failed (status \${status}).\`,
+  switchOn: "On",
+  switchOff: "Off",
+  stateOn: "on",
+  stateOff: "off",
+  stateDefault: "default",
+  listSeparator: ", ",
+  settingChange: (name, value) => \`\${name}: \${value}\`,
+  dayUnit: (value) => value === 1 ? "day" : "days",
+  dayCount: days,
+  lastDays: (value) => \`last \${days(value)}\`,
+  lastDaysOption: (value) => \`Last \${days(value)}\`,
+  ruleCount: (value) => plural(value, "rule", "rules"),
+  blockCount: (value) => plural(value, "block", "blocks"),
+  pathCount: (value) => plural(value, "path", "paths"),
+  justNow: "just now",
+  today: "Today",
+  yesterday: "Yesterday",
+  overviewIntro: "What CC Safety Net has been doing on this machine.",
+  needsAttention: "Needs attention",
+  recentBlocks: "Recent blocks",
+  allActivity: "All activity",
+  topRules: "Most-triggered rules",
+  statusRepair: "Your policy file needs repair",
+  statusCheckingAgents: "Checking your agents…",
+  statusNoAgent: "Not protecting any agent yet",
+  statusPartlyProtected: "Partly protected",
+  statusProtected: "Protected",
+  commandProtectionIsOff: "Command protection is off",
+  secretProtectionIsOff: "Secret protection is off",
+  secretProtectionIsOn: "Secret protection on",
+  presetFact: (preset, customized) => \`\${preset} preset\${customized ? ", customized" : ""}\`,
+  commandRulesOn: (value) => \`\${count(value)} command rules on\`,
+  hookActiveIn: (agents) => \`Hook active in \${agents}\`,
+  agentCount: (value) => plural(value, "agent", "agents"),
+  installHook: "Install a hook",
+  configure: "Configure",
+  review: "Review",
+  fix: "Fix",
+  releaseNotes: "Release notes",
+  hookDisabledAttention: (agent) => \`\${agent} is detected but its hook is disabled.\`,
+  suspectAttention: (blocks, window2) => \`\${plural(blocks, "block", "blocks")} in the last \${days(window2)} \${blocks === 1 ? "looks" : "look"} like a false positive.\`,
+  guardErrorAttention: (errors, window2) => \`\${plural(errors, "guard error", "guard errors")} in the last \${days(window2)}: commands blocked because evaluation failed, not by policy.\`,
+  updateAttention: (version) => \`Version \${version} is available.\`,
+  tileBlocked: "Blocked",
+  tileChecked: "Commands checked",
+  perDayChart: (noun, values) => \`\${noun} per day, oldest to newest: \${values}\`,
+  nothingBlocked: (window2) => \`Nothing was blocked in the last \${days(window2)}.\`,
+  noCommandRecorded: "(no command recorded)",
+  guardError: "guard error",
+  noRuleBlocked: "No rule has blocked anything yet.",
+  couldNotLoadActivity: (error) => \`Could not load activity: \${error}\`,
+  starEvidence: (blocked, window2) => \`CC Safety Net has blocked <strong>\${count(blocked)}</strong> risky \${blocked === 1 ? "command" : "commands"} on this machine in the last \${days(window2)}.\`,
+  starIfSaved: "If that saved your work, star the project on GitHub.",
+  starIfUseful: "If CC Safety Net is useful to you, star it on GitHub.",
+  starOnGitHub: "Star on GitHub",
+  starButtonLabel: "Star CC Safety Net on GitHub",
+  starLinkLabel: "Star CC Safety Net on GitHub (opens github.com)",
+  starred: "Starred. Thank you.",
+  starredLabel: "CC Safety Net starred on GitHub",
+  activityIntro: "Commands your agents ran, newest first. Commands are secret-redacted when they are logged.",
+  refreshActivity: "Refresh activity",
+  decisionFilter: "Decision",
+  searchActivity: "Search activity",
+  searchActivityPlaceholder: "Search commands or rule IDs",
+  agentFilter: "Agent",
+  timeWindow: "Time window",
+  loadingActivity: "Loading activity…",
+  decisionBlocked: "Blocked",
+  decisionAllowed: "Allowed",
+  decisionError: "Error",
+  filterErrors: "Errors",
+  filterSuspect: "Likely false positive",
+  filterAll: "All",
+  allAgents: "All agents",
+  showingBlocksOf: "Showing blocks of",
+  showAllBlocks: "Show all blocks",
+  noFilterMatch: "Nothing matches these filters.",
+  showAllActivity: "Show all activity",
+  noLogEntries: "No audit log entries match.",
+  showingEntries: (shown, total, window2) => \`Showing \${count(shown)} of \${plural(total, "entry", "entries")} from the last \${days(window2)}.\`,
+  activityTruncated: "Only the newest 500 entries of each decision are listed. Older entries still count toward the totals.",
+  unreadableLogs: (files) => \`\${plural(files, "log file", "log files")} could not be read, so this list is incomplete.\`,
+  detailFullCommand: "Full command",
+  detailReason: "Reason",
+  detailRule: "Rule",
+  detailFolder: "Folder",
+  detailTime: "Time",
+  showCustomRule: "Show this custom rule",
+  showProtection: "Show this protection",
+  reportFalsePositive: "Report false positive",
+  blockInFuture: "Block this in future",
+  copyLogEntry: "Copy log entry",
+  notAvailable: "Not available",
+  reportTooLong: "Report too long to prefill",
+  reportFieldCopied: (fields, fieldCount) => fieldCount === 1 ? \`The \${fields} was copied to your clipboard. Paste it into the form on GitHub.\` : \`The \${fields} were copied to your clipboard. Paste them into the form on GitHub.\`,
+  reportFieldLeftOut: (fields, fieldCount) => \`The \${fields} \${fieldCount === 1 ? "was" : "were"} left out. Copy the log entry from Activity and paste it into the form on GitHub.\`,
+  reportFieldJoiner: " and ",
+  reportNameTitle: "title",
+  reportNameExpected: "explanation",
+  reportNameCommand: "command",
+  reportNameEntry: "log entry",
+  reportDialogTitle: "Report a false positive",
+  reportDialogBody: "This opens a prefilled public GitHub issue form. Nothing is sent until you submit it there. Paths were replaced with <code>&lt;project&gt;</code> and <code>~</code>; edit anything else you would rather not publish.",
+  reportWhy: "Why should it have been allowed? (optional)",
+  reportWhyPlaceholder: "What was the agent trying to do, and what makes the command safe there?",
+  reportTitleField: "Title",
+  reportCommandField: "Blocked command",
+  reportEntryField: "Audit log entry",
+  openGitHubForm: "Open GitHub form",
+  policyIntro: "Choose what CC Safety Net blocks. Changes apply after you save.",
+  policyScope: "Policy you are editing",
+  myPolicy: "My policy",
+  projectPolicy: "Project policy",
+  testCommand: "Test a command",
+  editingProjectPolicy: "Editing the project policy",
+  projectBarHelp: \`Only settings tagged <span class="project-chip">Project</span> are written. Everything else keeps following each person's own policy. Click a Project tag to stop setting that field.\`,
+  changeFolder: "Change folder…",
+  repairHelp: "Repair keeps every valid setting and rewrites the file. If the JSON cannot be read at all, defaults are restored.",
+  safetyPreset: "Safety preset",
+  safetyPresetSub: "Each preset includes everything in the one before it.",
+  advancedSettings: "Advanced settings",
+  advancedSettingsSub: "Individual checks and linked worktrees",
+  searchProtections: "Search protections",
+  searchProtectionsPlaceholder: "Type / to search by name, path or rule ID",
+  protectionsShown: "Which protections to show",
+  showChanged: "Changed from default",
+  commandProtection: "Command protection",
+  secretProtection: "Secret protection",
+  pathsTitle: "Exceptions and extra paths",
+  pathsSub: "Paths can be absolute or start with <code>~/</code>. Paste several lines to add many at once. Paths that cover your home directory are rejected.",
+  allowPathsLabel: "Allow recursive deletes in",
+  allowPathsHelp: "Recursive deletes inside these paths are not blocked, like a scratch folder under <code>/tmp</code>.",
+  allowPathsPlaceholder: "/absolute/path or ~/path",
+  denyPathsLabel: "Always block access to",
+  denyPathsHelp: "These paths and everything inside them are blocked while secret protection is on.",
+  denyPathsPlaceholder: "path/to/protect",
+  secretAllowPathsLabel: "Paths exempt from secret patterns",
+  secretAllowPathsHelp: "Files, folders, or one file name under a folder such as <code>~/code/**/.env.local</code>. Deny paths and coding agent credentials stay protected.",
+  policyJson: "Policy JSON",
+  rawReadOnly: "Read-only. Mirrors the settings above.",
+  rawOnDisk: "The file as it is on disk.",
+  rawProjectFields: (path) => \`Only the fields set by this project. Written to \${path}.\`,
+  unsavedChanges: "Unsaved changes",
+  unsavedChangeCount: (changes) => plural(changes, "unsaved change", "unsaved changes"),
+  changeSeparator: "; ",
+  moreChanges: (changes) => \`; and \${count(changes)} more\`,
+  reviewAndApply: "Review and apply",
+  presetStandard: "Standard",
+  presetStandardDescription: "Blocks recognizable destructive commands and reading sensitive files. Recommended for normal coding.",
+  presetStrict: "Strict",
+  presetStrictDescription: "Also blocks commands it cannot fully parse and listing sensitive paths. Occasional false positives on advanced shell.",
+  presetParanoid: "Paranoid",
+  presetParanoidDescription: "Also blocks rm -rf inside your project and interpreter one-liners. Expect more false positives. Use it for untrusted agents or high-stakes repos.",
+  capabilityFailClosed: "Fail closed",
+  capabilityFailClosedDescription: "Block commands the parser cannot fully understand.",
+  capabilityParanoidRm: "Paranoid rm -rf checks",
+  capabilityParanoidRmDescription: "Block rm -rf inside the project, except temp paths.",
+  capabilityParanoidInterpreters: "Paranoid interpreters",
+  capabilityParanoidInterpretersDescription: "Block interpreter one-liners such as python -c.",
+  presetLabel: "Preset",
+  presetCustomized: (preset) => \`\${preset}, customized\`,
+  fromPresetOption: (enabled) => \`From preset (\${enabled ? "on" : "off"})\`,
+  fromPreset: "from preset",
+  forcedOn: "forced on",
+  forcedOff: "forced off",
+  alwaysOn: "Always on",
+  alwaysOff: "Always off",
+  cannotTurnOff: "can't be turned off",
+  worktreeDiscard: "Allow discarding local changes in linked git worktrees",
+  worktreeDiscardHelp: "Only relaxes the discard checks inside linked worktrees.",
+  worktreeChange: "Discarding changes in linked worktrees",
+  allowed: "allowed",
+  blocked: "blocked",
+  allowPathsChange: "Allowed delete paths",
+  denyPathsChange: "Always-blocked paths",
+  secretAllowPathsChange: "Secret pattern exemptions",
+  pathsAdded: (paths) => \`\${count(paths)} added\`,
+  pathsRemoved: (paths) => \`\${count(paths)} removed\`,
+  changedByYou: "Changed by you",
+  forcedInAdvanced: (capability, enabled) => \`\${capability} forced \${enabled ? "on" : "off"} in Advanced\`,
+  setByEnvironment: "Set by environment",
+  setByEnvironmentVariable: (variable) => \`Set by environment: \${variable}\`,
+  needsPreset: (preset) => \`Needs the \${preset} preset\`,
+  offByDefault: "Off by default",
+  offCount: (rules) => \`\${count(rules)} off\`,
+  commandRuleSummary: (on, off, always) => \`\${count(on)} on · \${count(off)} off · \${count(always)} always on\`,
+  commandProtectionOffSummary: "Off. Built-in rules are not enforced; catastrophic and custom rules still apply. Your rule settings are kept.",
+  secretRuleSummary: (on, off) => \`\${count(on)} on · \${count(off)} off\`,
+  secretProtectionOffSummary: "Off. Sensitive files and deny paths are not blocked. Your rule settings and paths are kept.",
+  noCommandProtectionMatch: "No command protections match.",
+  noSecretProtectionMatch: "No secret protections match.",
+  aboutRule: (rule) => \`About \${rule}\`,
+  protectedPaths: "Protected paths",
+  protectedPathsFor: (rule) => \`Protected paths for \${rule}\`,
+  toggleGroup: (group) => \`Turn all \${group} on or off\`,
+  toggleAll: "Turn all on or off",
+  secretCategoryBasename: "Sensitive file names",
+  secretCategoryPattern: "Sensitive file name patterns",
+  secretCategoryHomePath: "Sensitive home folders",
+  secretCategoryVariant: "Key file name variants",
+  secretCategoryExtension: "Sensitive file extensions",
+  secretCategoryExtensionPattern: "Sensitive extension patterns",
+  secretCategoryCredential: "Coding agent credentials",
+  secretCategoryConfig: "Coding agent settings",
+  inheritedChip: "Inherited",
+  projectChip: "Project",
+  projectChipTitle: "Set by this project. Click to stop setting it.",
+  projectChipLabel: (field) => \`Set by project: \${field}. Activate to inherit again.\`,
+  commandProtectionOffBanner: "Command protection is off: built-in destructive command rules are not enforced. Catastrophic and custom rules still apply.",
+  secretProtectionOffBanner: "Secret protection is off: sensitive files and deny paths are not blocked.",
+  fallbackConfigBanner: (reason) => \`A fallback configuration is being enforced: \${reason}\`,
+  openProtections: "Open Protections",
+  environmentRaises: (variables) => \`An environment variable raises protection beyond these settings: \${variables}\`,
+  removePath: (path) => \`Remove \${path}\`,
+  notAdded: (paths, error) => \`Not added: \${paths}. \${error}\`,
+  alreadyListed: (paths) => \`Already listed: \${paths}\`,
+  previewFailed: "Preview failed",
+  couldNotTest: (error) => \`Could not test this command: \${error}\`,
+  testerAllowed: "<strong>Allowed.</strong> No rule blocks this command.",
+  createRuleToBlock: "Create a rule to block it",
+  testerBlocked: (rule) => rule ? \`<strong>Blocked</strong> by \${rule}.\` : "<strong>Blocked</strong>.",
+  blockedPart: "Blocked part:",
+  testerHelp: "Checks a command against the Protections settings, including unsaved changes and custom rules. Nothing is run.",
+  test: "Test",
+  notCreatedYet: " (not created yet)",
+  projectPolicyChanges: "The project policy changes these settings:",
+  restoredDraft: "Restored your unsaved changes",
+  couldNotLoadPolicy: "Could not load your policy",
+  projectPolicyUnavailable: "Project policy unavailable",
+  repairFirst: "Repair your policy first",
+  repairBeforeProject: "Your own policy file must be repaired before you can edit a project policy.",
+  policyNotLoaded: "Your policy has not loaded yet",
+  discardUnsavedTitle: "Discard unsaved changes?",
+  discardBeforeProject: "A project policy starts from your saved policy. Save your changes first, or discard them here.",
+  discardChanges: "Discard changes",
+  discardDraftTitle: "Discard this project draft?",
+  discardDraft: "Discard draft",
+  switchFolderDiscards: "Switching folders discards this draft.",
+  folderPickerFailed: "Could not open the folder picker",
+  projectChangesUnwritten: "Your project changes have not been written anywhere yet.",
+  backToOwnPolicy: "Back to your own policy",
+  discardDraftChangesTitle: "Discard changes to this draft?",
+  discardDraftChangesBody: "The draft goes back to the settings this project already has.",
+  changesDiscarded: "Changes discarded",
+  projectDraftReloaded: "Project draft reloaded",
+  projectFolderChanged: "The project folder changed",
+  projectFolderChangedBody: "The draft was reloaded for the new folder. Review it again before applying.",
+  invalidProjectFile: "The existing project policy file is invalid and will be replaced.",
+  noEffectiveChange: "No change to the effective policy.",
+  diffSetting: "Setting",
+  diffNow: "Now",
+  diffAfter: "After",
+  unset: "(unset)",
+  reviewFailed: "Review failed",
+  reviewAgain: "Review again",
+  draftChangedDuringReview: "The draft changed while the review was loading.",
+  applyProjectTitle: "Apply this project policy?",
+  applyProjectBody: "Everyone who works in this project gets these settings on top of their own policy.",
+  applyProject: "Apply project policy",
+  applyingStatus: "Applying…",
+  applyFailed: "Apply failed",
+  projectApplied: "Project policy applied",
+  repairBeforeSaving: "Repair your policy before saving",
+  policySaved: "Policy saved",
+  discardUnsavedBody: "Every change since your last save will be undone.",
+  discardingStatus: "Discarding…",
+  repairTitle: "Repair your policy file?",
+  repairBody: "Valid settings are kept and invalid ones are dropped. If the JSON cannot be read at all, defaults are restored.",
+  repairingStatus: "Repairing…",
+  repairFailed: "Repair failed",
+  policyRepaired: "Policy repaired",
+  nothingToReset: "Nothing to reset: every rule already uses its default",
+  resetRulesTitle: "Reset every rule to its default?",
+  resetRulesBody: (secret) => \`All \${secret ? "secret" : "command"} rules go back to the setting their preset gives them. You can still discard before saving.\`,
+  resetRules: "Reset rules",
+  turnOffSecretTitle: "Turn off secret protection?",
+  turnOffCommandTitle: "Turn off command protection?",
+  turnOffSecretBody: "Sensitive files, coding agent credentials, and deny paths stop being blocked until you turn this back on.",
+  turnOffCommandBody: "Built-in destructive git, filesystem, and execution rules stop blocking commands until you turn this back on.",
+  catastrophicStillApply: "Catastrophic and custom rules still apply.",
+  turnOff: "Turn off",
+  rulesIntro: "Your own blocking rules from rulebooks, enforced on top of the built-in protections.",
+  refreshRules: "Refresh custom rules",
+  problems: "Problems",
+  problemsSub: "An error means a rulebook was skipped and none of its rules are enforced.",
+  rulebooks: "Rulebooks",
+  rulebooksSub: "Read-only. Rules are shown as they are enforced.",
+  loadingRules: "Loading rules…",
+  createRule: "Create a rule",
+  createRuleSub: "Describe the rule and copy a ready-made prompt for your coding agent. CC Safety Net does not write rulebooks itself.",
+  appliesTo: "Applies to",
+  ruleScope: "Rule scope",
+  thisProject: "This project",
+  allProjects: "All projects",
+  projectFolder: "Project folder",
+  chooseFolder: "Choose…",
+  projectFolderHint: "Where the rulebook is written. Defaults to the folder this GUI was started from.",
+  ruleRequest: "What should be blocked?",
+  ruleRequestPlaceholder: "Block terraform destroy in this project",
+  ruleRequestHint: "Rules match a command, its subcommands, and exact arguments, not file paths or patterns.",
+  tryExamples: "Try:",
+  exampleSuggest: "Suggest rules",
+  exampleSuggestRequest: "read my package.json and suggest blocking rules",
+  exampleBlock: "Block a command",
+  exampleBlockRequest: "set up rules to block all terraform destroy commands",
+  exampleVerify: "Verify rules",
+  exampleVerifyRequest: "verify my rules and fix any errors",
+  copyPrompt: "Copy prompt",
+  allRulebooksSkipped: "Every rulebook was skipped because of errors, so no custom rule is enforced. See Problems above.",
+  noCustomRules: "No custom rules yet. Use <strong>Create a rule</strong> below, or run <code>npx -y cc-safety-net rule init</code>.",
+  blocksWhenArgument: "Blocks when any of these arguments is present:",
+  customRuleMissing: (rule) => \`\${rule} is not in any rulebook\`,
+  couldNotLoadRules: (error) => \`Could not load rules: \${error}\`,
+  folderPickerUnavailable: "The folder picker is not available",
+  typeFolderInstead: (error) => \`\${error}. Type the project folder instead.\`,
+  rulesNotLoaded: "Rules have not loaded yet",
+  refreshAndRetry: "Click Refresh and try again.",
+  describeRuleFirst: "Describe what should be blocked first",
+  enterProjectFolder: "Enter the project folder the rule belongs to",
+  promptCopied: "Prompt copied",
+  pasteIntoAgent: "Paste it into your coding agent.",
+  agentsIntro: "Install or remove the CC Safety Net hook for each coding agent on this machine.",
+  refreshAgents: "Refresh agents",
+  checkingAgents: "Checking agents…",
+  hookInstalled: "Hook installed",
+  hookDisabled: "Hook disabled",
+  hookStatusUnknown: "Status unknown: its settings file could not be read",
+  uninstalling: "Uninstalling…",
+  installing: "Installing…",
+  uninstall: "Uninstall",
+  enable: "Enable",
+  install: "Install",
+  notDetected: "Not detected",
+  installedAgents: "Installed",
+  detectedAgents: "Detected on this machine",
+  noHookYet: "No agent has the hook yet. Install it for each agent you use; until then its commands are not checked.",
+  missingAgents: "Not detected on this machine",
+  couldNotCheckAgents: (error) => \`Could not check agents: \${error}\`,
+  installFailed: "Install failed",
+  uninstallFailed: "Uninstall failed",
+  settingsIntro: "Appearance, log retention, file locations, and maintenance.",
+  appearance: "Appearance",
+  theme: "Theme",
+  themeAuto: "Auto",
+  themeLight: "Light",
+  themeDark: "Dark",
+  preferenceHint: "Remembered on this computer.",
+  language: "Language",
+  preferenceSaveFailed: "Could not save this preference",
+  auditLog: "Audit log",
+  keepLogsFor: "Keep logs for",
+  retentionNote: "Every checked command is logged. Lowering this deletes older entries, and Activity can only look back this far.",
+  logFolder: "Log folder",
+  copyLogFolder: "Copy the log folder path",
+  files: "Files",
+  policyFile: "Policy file",
+  copyPolicyPath: "Copy the policy file path",
+  copyProjectPolicyPath: "Copy the project policy path",
+  about: "About",
+  platform: "Platform",
+  dangerZone: "Danger zone",
+  resetPolicy: "Reset policy",
+  resetPolicyHelp: "Replace your policy file with the defaults. This cannot be undone.",
+  repairInProtectionsFirst: "Repair your policy file in Protections first.",
+  leaveProjectDraftFirst: "Apply or leave your project policy draft first.",
+  saveProtectionsFirst: "Save or discard your unsaved Protections changes first.",
+  retentionRange: (min, max) => \`Enter a whole number of days from \${count(min)} to \${count(max)}.\`,
+  retentionUnchanged: "Retention unchanged",
+  shortenRetentionTitle: (window2) => \`Keep logs for only \${days(window2)}?\`,
+  shortenRetentionBody: (window2) => \`Log entries older than \${days(window2)} are deleted on the next cleanup and cannot be recovered.\`,
+  shortenRetention: "Shorten retention",
+  retentionSaved: (window2) => \`Logs are now kept for \${days(window2)}\`,
+  resetUnavailable: "Reset unavailable",
+  resetPolicyTitle: "Reset your policy?",
+  resetPolicyBody: "Your policy file is replaced with the defaults. Every customization is lost.",
+  resettingStatus: "Resetting…",
+  resetFailed: "Reset failed",
+  policyReset: "Policy reset to the defaults"
+};
+
+// src/gui/frontend/locales/ja.ts
+var count2 = (value) => value.toLocaleString("ja");
+var days2 = (value) => \`\${count2(value)} 日間\`;
+var ja = {
+  navSections: "セクション",
+  navOverview: "概要",
+  navActivity: "アクティビティ",
+  navProtections: "保護",
+  navCustomRules: "カスタムルール",
+  navAgents: "エージェント",
+  navSettings: "設定",
+  navUnsaved: "未保存",
+  documentation: "ドキュメント",
+  loading: "読み込み中…",
+  dismissMessage: "メッセージを閉じる",
+  cancel: "キャンセル",
+  close: "閉じる",
+  copy: "コピー",
+  copied: "コピーしました",
+  copyFailed: "コピーできませんでした",
+  add: "追加",
+  reset: "リセット",
+  resetAll: "すべてリセット",
+  repair: "修復",
+  save: "保存",
+  discard: "破棄",
+  savingStatus: "保存中…",
+  saveFailed: "保存できませんでした",
+  reloadPage: "ページを再読み込みしてください。",
+  unknownValue: "不明",
+  requestFailed: (status) => \`リクエストに失敗しました（ステータス \${status}）。\`,
+  switchOn: "オン",
+  switchOff: "オフ",
+  stateOn: "オン",
+  stateOff: "オフ",
+  stateDefault: "既定",
+  listSeparator: "、",
+  settingChange: (name, value) => \`\${name}：\${value}\`,
+  dayUnit: () => "日",
+  dayCount: days2,
+  lastDays: (value) => \`過去 \${days2(value)}\`,
+  lastDaysOption: (value) => \`過去 \${days2(value)}\`,
+  ruleCount: (value) => \`\${count2(value)} 件のルール\`,
+  blockCount: (value) => \`\${count2(value)} 件のブロック\`,
+  pathCount: (value) => \`\${count2(value)} 件のパス\`,
+  justNow: "たった今",
+  today: "今日",
+  yesterday: "昨日",
+  overviewIntro: "このマシンでの CC Safety Net の動作状況です。",
+  needsAttention: "要確認",
+  recentBlocks: "最近のブロック",
+  allActivity: "すべてのアクティビティ",
+  topRules: "ブロックの多いルール",
+  statusRepair: "ポリシーファイルの修復が必要です",
+  statusCheckingAgents: "エージェントを確認中…",
+  statusNoAgent: "まだどのエージェントも保護していません",
+  statusPartlyProtected: "一部のみ保護されています",
+  statusProtected: "保護されています",
+  commandProtectionIsOff: "コマンド保護はオフです",
+  secretProtectionIsOff: "シークレット保護はオフです",
+  secretProtectionIsOn: "シークレット保護オン",
+  presetFact: (preset, customized) => \`\${preset} プリセット\${customized ? "（カスタマイズ済み）" : ""}\`,
+  commandRulesOn: (value) => \`コマンドルール \${count2(value)} 件がオン\`,
+  hookActiveIn: (agents) => \`\${agents} でフックが有効\`,
+  agentCount: (value) => \`\${count2(value)} 個のエージェント\`,
+  installHook: "フックをインストール",
+  configure: "設定する",
+  review: "確認",
+  fix: "修正",
+  releaseNotes: "リリースノート",
+  hookDisabledAttention: (agent) => \`\${agent} を検出しましたが、フックが無効です。\`,
+  suspectAttention: (blocks, window2) => \`過去 \${days2(window2)}のブロックのうち \${count2(blocks)} 件は誤検知の可能性があります。\`,
+  guardErrorAttention: (errors, window2) => \`過去 \${days2(window2)}にガードエラーが \${count2(errors)} 件ありました。ポリシーではなく、評価の失敗によってブロックされたコマンドです。\`,
+  updateAttention: (version) => \`バージョン \${version} が利用可能です。\`,
+  tileBlocked: "ブロック",
+  tileChecked: "チェックしたコマンド",
+  perDayChart: (noun, values) => \`1 日ごとの\${noun}（古い順）：\${values}\`,
+  nothingBlocked: (window2) => \`過去 \${days2(window2)}にブロックされたものはありません。\`,
+  noCommandRecorded: "（コマンドの記録なし）",
+  guardError: "ガードエラー",
+  noRuleBlocked: "まだどのルールもブロックしていません。",
+  couldNotLoadActivity: (error) => \`アクティビティを読み込めませんでした：\${error}\`,
+  starEvidence: (blocked, window2) => \`CC Safety Net は過去 \${days2(window2)}に、このマシンで危険なコマンドを <strong>\${count2(blocked)}</strong> 件ブロックしました。\`,
+  starIfSaved: "これで作業が守られたなら、GitHub でスターをお願いします。",
+  starIfUseful: "CC Safety Net が役に立ったら、GitHub でスターをお願いします。",
+  starOnGitHub: "GitHub でスター",
+  starButtonLabel: "GitHub で CC Safety Net にスターを付ける",
+  starLinkLabel: "GitHub で CC Safety Net にスターを付ける（github.com を開きます）",
+  starred: "スターを付けました。ありがとうございます。",
+  starredLabel: "GitHub で CC Safety Net にスター済み",
+  activityIntro: "エージェントが実行したコマンドを新しい順に表示します。コマンド内のシークレットは、ログに記録する時点でマスクします。",
+  refreshActivity: "アクティビティを更新",
+  decisionFilter: "判定",
+  searchActivity: "アクティビティを検索",
+  searchActivityPlaceholder: "コマンドまたはルール ID で検索",
+  agentFilter: "エージェント",
+  timeWindow: "期間",
+  loadingActivity: "アクティビティを読み込み中…",
+  decisionBlocked: "ブロック",
+  decisionAllowed: "許可",
+  decisionError: "エラー",
+  filterErrors: "エラー",
+  filterSuspect: "誤検知の可能性",
+  filterAll: "すべて",
+  allAgents: "すべてのエージェント",
+  showingBlocksOf: "次のコマンドのブロックを表示中：",
+  showAllBlocks: "すべてのブロックを表示",
+  noFilterMatch: "この絞り込み条件に一致する項目はありません。",
+  showAllActivity: "すべてのアクティビティを表示",
+  noLogEntries: "一致する監査ログのエントリはありません。",
+  showingEntries: (shown, total, window2) => \`過去 \${days2(window2)}の \${count2(total)} 件中 \${count2(shown)} 件を表示しています。\`,
+  activityTruncated: "判定ごとに新しいほうから 500 件だけを表示します。それより古いエントリも合計には含まれます。",
+  unreadableLogs: (files) => \`\${count2(files)} 件のログファイルを読み込めなかったため、この一覧は不完全です。\`,
+  detailFullCommand: "コマンド全体",
+  detailReason: "理由",
+  detailRule: "ルール",
+  detailFolder: "フォルダー",
+  detailTime: "日時",
+  showCustomRule: "このカスタムルールを表示",
+  showProtection: "この保護を表示",
+  reportFalsePositive: "誤検知を報告",
+  blockInFuture: "今後はブロックする",
+  copyLogEntry: "ログエントリをコピー",
+  notAvailable: "利用できません",
+  reportTooLong: "報告が長すぎて事前入力できません",
+  reportFieldCopied: (fields) => \`\${fields}をクリップボードにコピーしました。GitHub のフォームに貼り付けてください。\`,
+  reportFieldLeftOut: (fields) => \`\${fields}は含めていません。アクティビティからログエントリをコピーし、GitHub のフォームに貼り付けてください。\`,
+  reportFieldJoiner: "と",
+  reportNameTitle: "タイトル",
+  reportNameExpected: "説明",
+  reportNameCommand: "コマンド",
+  reportNameEntry: "ログエントリ",
+  reportDialogTitle: "誤検知を報告",
+  reportDialogBody: "入力済みの公開 GitHub Issue フォームを開きます。そこで送信するまで何も送信されません。パスは <code>&lt;project&gt;</code> と <code>~</code> に置き換えてあります。それ以外に公開したくない内容があれば編集してください。",
+  reportWhy: "許可されるべきだった理由（任意）",
+  reportWhyPlaceholder: "エージェントは何をしようとしていて、なぜその場面ではこのコマンドが安全なのですか？",
+  reportTitleField: "タイトル",
+  reportCommandField: "ブロックされたコマンド",
+  reportEntryField: "監査ログのエントリ",
+  openGitHubForm: "GitHub のフォームを開く",
+  policyIntro: "CC Safety Net がブロックする対象を選びます。変更は保存後に反映されます。",
+  policyScope: "編集中のポリシー",
+  myPolicy: "自分のポリシー",
+  projectPolicy: "プロジェクトポリシー",
+  testCommand: "コマンドをテスト",
+  editingProjectPolicy: "プロジェクトポリシーを編集中",
+  projectBarHelp: '<span class="project-chip">プロジェクト</span> タグの付いた設定だけが書き込まれます。それ以外の設定は引き続き各自のポリシーに従います。プロジェクトタグをクリックすると、その項目の設定を解除します。',
+  changeFolder: "フォルダーを変更…",
+  repairHelp: "修復すると、有効な設定をすべて残してファイルを書き直します。JSON をまったく読み取れない場合は既定値に戻します。",
+  safetyPreset: "安全プリセット",
+  safetyPresetSub: "各プリセットは、1 つ前のプリセットの内容をすべて含みます。",
+  advancedSettings: "詳細設定",
+  advancedSettingsSub: "個別のチェックとリンクされたワークツリー",
+  searchProtections: "保護を検索",
+  searchProtectionsPlaceholder: "/ キーで名前・パス・ルール ID を検索",
+  protectionsShown: "表示する保護",
+  showChanged: "既定から変更",
+  commandProtection: "コマンド保護",
+  secretProtection: "シークレット保護",
+  pathsTitle: "例外と追加のパス",
+  pathsSub: "パスは絶対パスか <code>~/</code> で始まるパスで指定します。複数行を貼り付けるとまとめて追加できます。ホームディレクトリ全体を含むパスは受け付けません。",
+  allowPathsLabel: "再帰削除を許可する場所",
+  allowPathsHelp: "これらのパス内での再帰削除はブロックしません。<code>/tmp</code> 以下の作業用フォルダーなどに使います。",
+  allowPathsPlaceholder: "/absolute/path または ~/path",
+  denyPathsLabel: "常にアクセスをブロックする場所",
+  denyPathsHelp: "シークレット保護がオンの間は、これらのパスとその配下をすべてブロックします。",
+  denyPathsPlaceholder: "path/to/protect",
+  secretAllowPathsLabel: "シークレットパターンの対象外とするパス",
+  secretAllowPathsHelp: "ファイル、フォルダー、または <code>~/code/**/.env.local</code> のようなフォルダー配下のファイル名を指定します。拒否パスとコーディングエージェントの資格情報は引き続き保護されます。",
+  policyJson: "ポリシー JSON",
+  rawReadOnly: "読み取り専用。上の設定を反映しています。",
+  rawOnDisk: "ディスク上のファイルそのままです。",
+  rawProjectFields: (path) => \`このプロジェクトが設定する項目だけです。\${path} に書き込みます。\`,
+  unsavedChanges: "未保存の変更",
+  unsavedChangeCount: (changes) => \`\${count2(changes)} 件の未保存の変更\`,
+  changeSeparator: "／",
+  moreChanges: (changes) => \`／ほか \${count2(changes)} 件\`,
+  reviewAndApply: "確認して適用",
+  presetStandard: "Standard",
+  presetStandardDescription: "認識できる破壊的コマンドと機密ファイルの読み取りをブロックします。通常の開発におすすめです。",
+  presetStrict: "Strict",
+  presetStrictDescription: "完全には解析できないコマンドと機密パスの一覧表示もブロックします。高度なシェル操作でときどき誤検知があります。",
+  presetParanoid: "Paranoid",
+  presetParanoidDescription: "プロジェクト内の rm -rf とインタープリターの 1 行コードもブロックします。誤検知が増えるため、信頼できないエージェントや重要なリポジトリに使ってください。",
+  capabilityFailClosed: "フェイルクローズ",
+  capabilityFailClosedDescription: "パーサーが完全に理解できないコマンドをブロックします。",
+  capabilityParanoidRm: "rm -rf の Paranoid チェック",
+  capabilityParanoidRmDescription: "一時パスを除き、プロジェクト内の rm -rf をブロックします。",
+  capabilityParanoidInterpreters: "インタープリターの Paranoid チェック",
+  capabilityParanoidInterpretersDescription: "python -c などのインタープリターの 1 行コードをブロックします。",
+  presetLabel: "安全プリセット",
+  presetCustomized: (preset) => \`\${preset}（カスタマイズ済み）\`,
+  fromPresetOption: (enabled) => \`プリセットに従う（\${enabled ? "オン" : "オフ"}）\`,
+  fromPreset: "プリセットに従う",
+  forcedOn: "常にオン",
+  forcedOff: "常にオフ",
+  alwaysOn: "常にオン",
+  alwaysOff: "常にオフ",
+  cannotTurnOff: "オフにできません",
+  worktreeDiscard: "リンクされた Git ワークツリーでのローカル変更の破棄を許可",
+  worktreeDiscardHelp: "リンクされたワークツリー内の破棄チェックだけを緩和します。",
+  worktreeChange: "リンクされたワークツリーでの変更の破棄",
+  allowed: "許可",
+  blocked: "ブロック",
+  allowPathsChange: "削除を許可するパス",
+  denyPathsChange: "常にブロックするパス",
+  secretAllowPathsChange: "シークレットパターンの対象外",
+  pathsAdded: (paths) => \`\${count2(paths)} 件追加\`,
+  pathsRemoved: (paths) => \`\${count2(paths)} 件削除\`,
+  changedByYou: "自分で変更",
+  forcedInAdvanced: (capability, enabled) => \`詳細設定で「\${capability}」を常に\${enabled ? "オン" : "オフ"}\`,
+  setByEnvironment: "環境変数で設定",
+  setByEnvironmentVariable: (variable) => \`環境変数で設定：\${variable}\`,
+  needsPreset: (preset) => \`\${preset} プリセットが必要\`,
+  offByDefault: "既定でオフ",
+  offCount: (rules) => \`\${count2(rules)} 件オフ\`,
+  commandRuleSummary: (on, off, always) => \`オン \${count2(on)} 件 · オフ \${count2(off)} 件 · 常にオン \${count2(always)} 件\`,
+  commandProtectionOffSummary: "オフ。組み込みルールは適用されません。致命的な操作に対するルールとカスタムルールは引き続き適用されます。ルールの設定は保持されます。",
+  secretRuleSummary: (on, off) => \`オン \${count2(on)} 件 · オフ \${count2(off)} 件\`,
+  secretProtectionOffSummary: "オフ。機密ファイルと拒否パスはブロックされません。ルールの設定とパスは保持されます。",
+  noCommandProtectionMatch: "一致するコマンド保護はありません。",
+  noSecretProtectionMatch: "一致するシークレット保護はありません。",
+  aboutRule: (rule) => \`\${rule} について\`,
+  protectedPaths: "保護されるパス",
+  protectedPathsFor: (rule) => \`\${rule} で保護されるパス\`,
+  toggleGroup: (group) => \`\${group}をすべてオンまたはオフにする\`,
+  toggleAll: "すべてオンまたはオフにする",
+  secretCategoryBasename: "機密ファイル名",
+  secretCategoryPattern: "機密ファイル名のパターン",
+  secretCategoryHomePath: "ホーム内の機密フォルダー",
+  secretCategoryVariant: "鍵ファイル名のバリエーション",
+  secretCategoryExtension: "機密ファイルの拡張子",
+  secretCategoryExtensionPattern: "機密ファイルの拡張子パターン",
+  secretCategoryCredential: "コーディングエージェントの資格情報",
+  secretCategoryConfig: "コーディングエージェントの設定",
+  inheritedChip: "継承",
+  projectChip: "プロジェクト",
+  projectChipTitle: "このプロジェクトで設定中。クリックすると設定を解除します。",
+  projectChipLabel: (field) => \`プロジェクトで設定中：\${field}。選択すると継承に戻ります。\`,
+  commandProtectionOffBanner: "コマンド保護はオフです。組み込みの破壊的コマンドのルールは適用されません。致命的な操作に対するルールとカスタムルールは引き続き適用されます。",
+  secretProtectionOffBanner: "シークレット保護はオフです。機密ファイルと拒否パスはブロックされません。",
+  fallbackConfigBanner: (reason) => \`フォールバックの設定を適用しています：\${reason}\`,
+  openProtections: "保護を開く",
+  environmentRaises: (variables) => \`環境変数により、これらの設定以上に保護が強化されています：\${variables}\`,
+  removePath: (path) => \`\${path} を削除\`,
+  notAdded: (paths, error) => \`追加しませんでした：\${paths}。\${error}\`,
+  alreadyListed: (paths) => \`すでに登録済み：\${paths}\`,
+  previewFailed: "プレビューできませんでした",
+  couldNotTest: (error) => \`このコマンドをテストできませんでした：\${error}\`,
+  testerAllowed: "<strong>許可。</strong>このコマンドをブロックするルールはありません。",
+  createRuleToBlock: "ブロックするルールを作成",
+  testerBlocked: (rule) => rule ? \`<strong>ブロック</strong>（\${rule}）。\` : "<strong>ブロック</strong>。",
+  blockedPart: "ブロックされた部分：",
+  testerHelp: "未保存の変更とカスタムルールを含め、保護の設定に照らしてコマンドをチェックします。何も実行しません。",
+  test: "テスト",
+  notCreatedYet: "（未作成）",
+  projectPolicyChanges: "プロジェクトポリシーにより、次の設定が変わります：",
+  restoredDraft: "未保存の変更を復元しました",
+  couldNotLoadPolicy: "ポリシーを読み込めませんでした",
+  projectPolicyUnavailable: "プロジェクトポリシーを利用できません",
+  repairFirst: "先にポリシーを修復してください",
+  repairBeforeProject: "プロジェクトポリシーを編集する前に、自分のポリシーファイルを修復する必要があります。",
+  policyNotLoaded: "ポリシーがまだ読み込まれていません",
+  discardUnsavedTitle: "未保存の変更を破棄しますか？",
+  discardBeforeProject: "プロジェクトポリシーは保存済みのポリシーから始まります。先に変更を保存するか、ここで破棄してください。",
+  discardChanges: "変更を破棄",
+  discardDraftTitle: "このプロジェクトの下書きを破棄しますか？",
+  discardDraft: "下書きを破棄",
+  switchFolderDiscards: "フォルダーを切り替えると、この下書きは破棄されます。",
+  folderPickerFailed: "フォルダー選択を開けませんでした",
+  projectChangesUnwritten: "プロジェクトの変更はまだどこにも書き込まれていません。",
+  backToOwnPolicy: "自分のポリシーに戻りました",
+  discardDraftChangesTitle: "この下書きへの変更を破棄しますか？",
+  discardDraftChangesBody: "下書きを、このプロジェクトの現在の設定に戻します。",
+  changesDiscarded: "変更を破棄しました",
+  projectDraftReloaded: "プロジェクトの下書きを再読み込みしました",
+  projectFolderChanged: "プロジェクトフォルダーが変わりました",
+  projectFolderChangedBody: "新しいフォルダー用に下書きを再読み込みしました。適用する前にもう一度確認してください。",
+  invalidProjectFile: "既存のプロジェクトポリシーファイルは無効なため、置き換えられます。",
+  noEffectiveChange: "実効ポリシーに変更はありません。",
+  diffSetting: "設定",
+  diffNow: "現在",
+  diffAfter: "適用後",
+  unset: "（未設定）",
+  reviewFailed: "確認できませんでした",
+  reviewAgain: "もう一度確認してください",
+  draftChangedDuringReview: "確認内容の読み込み中に下書きが変更されました。",
+  applyProjectTitle: "このプロジェクトポリシーを適用しますか？",
+  applyProjectBody: "このプロジェクトで作業する全員に、各自のポリシーに加えてこれらの設定が適用されます。",
+  applyProject: "プロジェクトポリシーを適用",
+  applyingStatus: "適用中…",
+  applyFailed: "適用できませんでした",
+  projectApplied: "プロジェクトポリシーを適用しました",
+  repairBeforeSaving: "保存する前にポリシーを修復してください",
+  policySaved: "ポリシーを保存しました",
+  discardUnsavedBody: "最後に保存してからの変更はすべて元に戻ります。",
+  discardingStatus: "破棄中…",
+  repairTitle: "ポリシーファイルを修復しますか？",
+  repairBody: "有効な設定は残し、無効な設定は取り除きます。JSON をまったく読み取れない場合は既定値に戻します。",
+  repairingStatus: "修復中…",
+  repairFailed: "修復できませんでした",
+  policyRepaired: "ポリシーを修復しました",
+  nothingToReset: "リセットするものはありません。すべてのルールが既定のままです",
+  resetRulesTitle: "すべてのルールを既定に戻しますか？",
+  resetRulesBody: (secret) => \`すべての\${secret ? "シークレット" : "コマンド"}ルールがプリセットの設定に戻ります。保存する前なら破棄できます。\`,
+  resetRules: "ルールをリセット",
+  turnOffSecretTitle: "シークレット保護をオフにしますか？",
+  turnOffCommandTitle: "コマンド保護をオフにしますか？",
+  turnOffSecretBody: "オンに戻すまで、機密ファイル、コーディングエージェントの資格情報、拒否パスはブロックされなくなります。",
+  turnOffCommandBody: "オンに戻すまで、git、ファイルシステム、実行に関する組み込みの破壊的コマンドのルールはコマンドをブロックしなくなります。",
+  catastrophicStillApply: "致命的な操作に対するルールとカスタムルールは引き続き適用されます。",
+  turnOff: "オフにする",
+  rulesIntro: "ルールブックで定義した独自のブロックルールです。組み込みの保護に加えて適用されます。",
+  refreshRules: "カスタムルールを更新",
+  problems: "問題",
+  problemsSub: "エラーのあるルールブックはスキップされ、そのルールは 1 つも適用されません。",
+  rulebooks: "ルールブック一覧",
+  rulebooksSub: "読み取り専用です。実際に適用される状態でルールを表示します。",
+  loadingRules: "ルールを読み込み中…",
+  createRule: "ルールを作成",
+  createRuleSub: "ルールを説明すると、コーディングエージェント向けのプロンプトをコピーできます。CC Safety Net 自体はルールブックを書きません。",
+  appliesTo: "適用範囲",
+  ruleScope: "ルールの範囲",
+  thisProject: "このプロジェクト",
+  allProjects: "すべてのプロジェクト",
+  projectFolder: "プロジェクトフォルダー",
+  chooseFolder: "選択…",
+  projectFolderHint: "ルールブックの書き込み先です。既定ではこの GUI を起動したフォルダーです。",
+  ruleRequest: "何をブロックしますか？",
+  ruleRequestPlaceholder: "このプロジェクトで terraform destroy をブロック",
+  ruleRequestHint: "ルールが照合するのは、コマンド、そのサブコマンド、完全一致の引数です。ファイルパスやパターンは照合しません。",
+  tryExamples: "例：",
+  exampleSuggest: "ルールを提案",
+  exampleSuggestRequest: "package.json を読んで、ブロックすべきルールを提案して",
+  exampleBlock: "コマンドをブロック",
+  exampleBlockRequest: "terraform destroy コマンドをすべてブロックするルールを設定して",
+  exampleVerify: "ルールを検証",
+  exampleVerifyRequest: "ルールを検証して、エラーがあれば修正して",
+  copyPrompt: "プロンプトをコピー",
+  allRulebooksSkipped: "すべてのルールブックがエラーでスキップされたため、カスタムルールは適用されていません。上の「問題」を確認してください。",
+  noCustomRules: "カスタムルールはまだありません。下の<strong>ルールを作成</strong>を使うか、<code>npx -y cc-safety-net rule init</code> を実行してください。",
+  blocksWhenArgument: "次の引数のいずれかがあるとブロックします：",
+  customRuleMissing: (rule) => \`\${rule} はどのルールブックにもありません\`,
+  couldNotLoadRules: (error) => \`ルールを読み込めませんでした：\${error}\`,
+  folderPickerUnavailable: "フォルダー選択を利用できません",
+  typeFolderInstead: (error) => \`\${error}。代わりにプロジェクトフォルダーを入力してください。\`,
+  rulesNotLoaded: "ルールがまだ読み込まれていません",
+  refreshAndRetry: "更新してからもう一度お試しください。",
+  describeRuleFirst: "先にブロックする内容を説明してください",
+  enterProjectFolder: "ルールを置くプロジェクトフォルダーを入力してください",
+  promptCopied: "プロンプトをコピーしました",
+  pasteIntoAgent: "コーディングエージェントに貼り付けてください。",
+  agentsIntro: "このマシンの各コーディングエージェントに、CC Safety Net のフックをインストールまたは削除します。",
+  refreshAgents: "エージェントを更新",
+  checkingAgents: "エージェントを確認中…",
+  hookInstalled: "フックをインストール済み",
+  hookDisabled: "フック無効",
+  hookStatusUnknown: "状態不明。設定ファイルを読み取れませんでした",
+  uninstalling: "アンインストール中…",
+  installing: "インストール中…",
+  uninstall: "アンインストール",
+  enable: "有効にする",
+  install: "インストール",
+  notDetected: "未検出",
+  installedAgents: "インストール済み",
+  detectedAgents: "このマシンで検出",
+  noHookYet: "まだどのエージェントにもフックがありません。使うエージェントごとにインストールしてください。インストールするまで、そのエージェントのコマンドはチェックされません。",
+  missingAgents: "このマシンで未検出",
+  couldNotCheckAgents: (error) => \`エージェントを確認できませんでした：\${error}\`,
+  installFailed: "インストールできませんでした",
+  uninstallFailed: "アンインストールできませんでした",
+  settingsIntro: "外観、ログの保持期間、ファイルの場所、メンテナンス。",
+  appearance: "外観",
+  theme: "テーマ",
+  themeAuto: "自動",
+  themeLight: "ライト",
+  themeDark: "ダーク",
+  preferenceHint: "このコンピューターに保存されます。",
+  language: "言語",
+  preferenceSaveFailed: "この設定を保存できませんでした",
+  auditLog: "監査ログ",
+  keepLogsFor: "ログの保持期間",
+  retentionNote: "チェックしたコマンドはすべて記録されます。短くすると古いエントリが削除され、アクティビティもこの期間までしか遡れません。",
+  logFolder: "ログフォルダー",
+  copyLogFolder: "ログフォルダーのパスをコピー",
+  files: "ファイル",
+  policyFile: "ポリシーファイル",
+  copyPolicyPath: "ポリシーファイルのパスをコピー",
+  copyProjectPolicyPath: "プロジェクトポリシーのパスをコピー",
+  about: "このアプリについて",
+  platform: "プラットフォーム",
+  dangerZone: "危険な操作",
+  resetPolicy: "ポリシーをリセット",
+  resetPolicyHelp: "ポリシーファイルを既定値に置き換えます。元に戻せません。",
+  repairInProtectionsFirst: "先に「保護」でポリシーファイルを修復してください。",
+  leaveProjectDraftFirst: "先にプロジェクトポリシーの下書きを適用するか、終了してください。",
+  saveProtectionsFirst: "先に「保護」の未保存の変更を保存するか、破棄してください。",
+  retentionRange: (min, max) => \`\${count2(min)}〜\${count2(max)} の整数で日数を入力してください。\`,
+  retentionUnchanged: "保持期間は変更されていません",
+  shortenRetentionTitle: (window2) => \`ログの保持期間を \${days2(window2)}に短縮しますか？\`,
+  shortenRetentionBody: (window2) => \`\${days2(window2)}より古いログエントリは次回のクリーンアップで削除され、復元できません。\`,
+  shortenRetention: "保持期間を短縮",
+  retentionSaved: (window2) => \`ログの保持期間を \${days2(window2)}にしました\`,
+  resetUnavailable: "リセットできません",
+  resetPolicyTitle: "ポリシーをリセットしますか？",
+  resetPolicyBody: "ポリシーファイルが既定値に置き換わり、カスタマイズはすべて失われます。",
+  resettingStatus: "リセット中…",
+  resetFailed: "リセットできませんでした",
+  policyReset: "ポリシーを既定値にリセットしました"
+};
+
+// src/gui/frontend/locales/zh-CN.ts
+var count3 = (value) => value.toLocaleString("zh-CN");
+var days3 = (value) => \`\${count3(value)} 天\`;
+var zhCN = {
+  navSections: "视图",
+  navOverview: "概览",
+  navActivity: "活动",
+  navProtections: "保护",
+  navCustomRules: "自定义规则",
+  navAgents: "智能体",
+  navSettings: "设置",
+  navUnsaved: "未保存",
+  documentation: "文档",
+  loading: "加载中…",
+  dismissMessage: "关闭消息",
+  cancel: "取消",
+  close: "关闭",
+  copy: "复制",
+  copied: "已复制",
+  copyFailed: "复制失败",
+  add: "添加",
+  reset: "重置",
+  resetAll: "全部重置",
+  repair: "修复",
+  save: "保存",
+  discard: "丢弃",
+  savingStatus: "保存中…",
+  saveFailed: "保存失败",
+  reloadPage: "请重新加载页面。",
+  unknownValue: "未知",
+  requestFailed: (status) => \`请求失败（状态码 \${status}）。\`,
+  switchOn: "开",
+  switchOff: "关",
+  stateOn: "开启",
+  stateOff: "关闭",
+  stateDefault: "默认",
+  listSeparator: "、",
+  settingChange: (name, value) => \`\${name}：\${value}\`,
+  dayUnit: () => "天",
+  dayCount: days3,
+  lastDays: (value) => \`最近 \${days3(value)}\`,
+  lastDaysOption: (value) => \`最近 \${days3(value)}\`,
+  ruleCount: (value) => \`\${count3(value)} 条规则\`,
+  blockCount: (value) => \`\${count3(value)} 次阻止\`,
+  pathCount: (value) => \`\${count3(value)} 个路径\`,
+  justNow: "刚刚",
+  today: "今天",
+  yesterday: "昨天",
+  overviewIntro: "CC Safety Net 在本机上的运行情况。",
+  needsAttention: "需要处理",
+  recentBlocks: "最近阻止",
+  allActivity: "全部活动",
+  topRules: "触发最多的规则",
+  statusRepair: "策略文件需要修复",
+  statusCheckingAgents: "正在检查智能体…",
+  statusNoAgent: "尚未保护任何智能体",
+  statusPartlyProtected: "部分受保护",
+  statusProtected: "已受保护",
+  commandProtectionIsOff: "命令保护已关闭",
+  secretProtectionIsOff: "机密保护已关闭",
+  secretProtectionIsOn: "机密保护已开启",
+  presetFact: (preset, customized) => \`\${preset} 预设\${customized ? "（已自定义）" : ""}\`,
+  commandRulesOn: (value) => \`已开启 \${count3(value)} 条命令规则\`,
+  hookActiveIn: (agents) => \`已在 \${agents} 中启用 hook\`,
+  agentCount: (value) => \`\${count3(value)} 个智能体\`,
+  installHook: "安装 hook",
+  configure: "配置",
+  review: "查看",
+  fix: "修复",
+  releaseNotes: "发布说明",
+  hookDisabledAttention: (agent) => \`已检测到 \${agent}，但其 hook 已禁用。\`,
+  suspectAttention: (blocks, window2) => \`最近 \${days3(window2)}内有 \${count3(blocks)} 次阻止疑似误报。\`,
+  guardErrorAttention: (errors, window2) => \`最近 \${days3(window2)}内有 \${count3(errors)} 个防护错误。这些命令因评估失败被阻止，不是被策略阻止。\`,
+  updateAttention: (version) => \`\${version} 版本已发布。\`,
+  tileBlocked: "已阻止",
+  tileChecked: "已检查命令",
+  perDayChart: (noun, values) => \`\${noun}（每日，从旧到新）：\${values}\`,
+  nothingBlocked: (window2) => \`最近 \${days3(window2)}内没有阻止记录。\`,
+  noCommandRecorded: "（未记录命令）",
+  guardError: "防护错误",
+  noRuleBlocked: "还没有规则触发过阻止。",
+  couldNotLoadActivity: (error) => \`无法加载活动：\${error}\`,
+  starEvidence: (blocked, window2) => \`最近 \${days3(window2)}内，CC Safety Net 在本机上阻止了 <strong>\${count3(blocked)}</strong> 条危险命令。\`,
+  starIfSaved: "如果这帮你保住了工作，欢迎在 GitHub 上为项目加星。",
+  starIfUseful: "如果 CC Safety Net 对你有用，欢迎在 GitHub 上加星。",
+  starOnGitHub: "在 GitHub 上加星",
+  starButtonLabel: "在 GitHub 上为 CC Safety Net 加星",
+  starLinkLabel: "在 GitHub 上为 CC Safety Net 加星（打开 github.com）",
+  starred: "已加星，谢谢。",
+  starredLabel: "已在 GitHub 上为 CC Safety Net 加星",
+  activityIntro: "智能体运行过的命令，最新的在前。命令写入日志前会做机密脱敏。",
+  refreshActivity: "刷新活动",
+  decisionFilter: "判定",
+  searchActivity: "搜索活动",
+  searchActivityPlaceholder: "搜索命令或规则 ID",
+  agentFilter: "智能体",
+  timeWindow: "时间窗口",
+  loadingActivity: "正在加载活动…",
+  decisionBlocked: "已阻止",
+  decisionAllowed: "已允许",
+  decisionError: "错误",
+  filterErrors: "错误",
+  filterSuspect: "疑似误报",
+  filterAll: "全部",
+  allAgents: "全部智能体",
+  showingBlocksOf: "只显示此命令的阻止记录：",
+  showAllBlocks: "显示全部阻止记录",
+  noFilterMatch: "没有符合过滤条件的记录。",
+  showAllActivity: "显示全部活动",
+  noLogEntries: "没有匹配的审计日志条目。",
+  showingEntries: (shown, total, window2) => \`显示最近 \${days3(window2)}内 \${count3(total)} 个条目中的 \${count3(shown)} 个。\`,
+  activityTruncated: "每种判定只列出最新的 500 个条目。更早的条目仍计入总数。",
+  unreadableLogs: (files) => \`有 \${count3(files)} 个日志文件无法读取，此列表不完整。\`,
+  detailFullCommand: "完整命令",
+  detailReason: "原因",
+  detailRule: "规则",
+  detailFolder: "目录",
+  detailTime: "时间",
+  showCustomRule: "查看此自定义规则",
+  showProtection: "查看此项保护",
+  reportFalsePositive: "报告误报",
+  blockInFuture: "以后阻止此命令",
+  copyLogEntry: "复制日志条目",
+  notAvailable: "不可用",
+  reportTooLong: "报告过长，无法预填",
+  reportFieldCopied: (fields) => \`\${fields}已复制到剪贴板。请粘贴到 GitHub 上的表单中。\`,
+  reportFieldLeftOut: (fields) => \`\${fields}已省略。请在活动视图中复制日志条目，粘贴到 GitHub 上的表单中。\`,
+  reportFieldJoiner: "和",
+  reportNameTitle: "标题",
+  reportNameExpected: "说明",
+  reportNameCommand: "命令",
+  reportNameEntry: "日志条目",
+  reportDialogTitle: "报告误报",
+  reportDialogBody: "这会打开一个预填好的公开 GitHub issue 表单。在那里提交之前，不会发送任何内容。路径已替换为 <code>&lt;project&gt;</code> 和 <code>~</code>。其他不想公开的内容请自行修改。",
+  reportWhy: "为什么应该允许？（可选）",
+  reportWhyPlaceholder: "智能体当时想做什么？为什么这条命令在那里是安全的？",
+  reportTitleField: "标题",
+  reportCommandField: "被阻止的命令",
+  reportEntryField: "审计日志条目",
+  openGitHubForm: "打开 GitHub 表单",
+  policyIntro: "选择 CC Safety Net 要阻止的内容。保存后生效。",
+  policyScope: "正在编辑的策略",
+  myPolicy: "我的策略",
+  projectPolicy: "项目策略",
+  testCommand: "测试命令",
+  editingProjectPolicy: "正在编辑项目策略",
+  projectBarHelp: '只写入标记为 <span class="project-chip">项目</span> 的设置。其余设置仍遵循每个人自己的策略。点击“项目”标记可取消设置该字段。',
+  changeFolder: "更改目录…",
+  repairHelp: "修复会保留所有有效设置并重写文件。如果 JSON 完全无法读取，则恢复默认值。",
+  safetyPreset: "安全预设",
+  safetyPresetSub: "每个预设都包含前一个预设的全部内容。",
+  advancedSettings: "高级设置",
+  advancedSettingsSub: "单项检查和 linked worktree",
+  searchProtections: "搜索保护",
+  searchProtectionsPlaceholder: "按 / 搜索名称、路径或规则 ID",
+  protectionsShown: "要显示的保护",
+  showChanged: "与默认值不同",
+  commandProtection: "命令保护",
+  secretProtection: "机密保护",
+  pathsTitle: "例外和额外路径",
+  pathsSub: "路径可以是绝对路径，也可以以 <code>~/</code> 开头。粘贴多行可一次添加多个。覆盖主目录的路径会被拒绝。",
+  allowPathsLabel: "允许递归删除的路径",
+  allowPathsHelp: "这些路径内的递归删除不会被阻止，例如 <code>/tmp</code> 下的临时目录。",
+  allowPathsPlaceholder: "/absolute/path 或 ~/path",
+  denyPathsLabel: "始终阻止访问的路径",
+  denyPathsHelp: "机密保护开启时，这些路径及其下的所有内容都会被阻止。",
+  denyPathsPlaceholder: "path/to/protect",
+  secretAllowPathsLabel: "不受机密模式约束的路径",
+  secretAllowPathsHelp: "文件、目录，或某个目录下的单个文件名，例如 <code>~/code/**/.env.local</code>。拒绝路径和编码智能体凭证的保护仍然生效。",
+  policyJson: "策略 JSON",
+  rawReadOnly: "只读，与上方设置保持一致。",
+  rawOnDisk: "磁盘上的原始文件内容。",
+  rawProjectFields: (path) => \`只包含此项目设置的字段，写入 \${path}。\`,
+  unsavedChanges: "未保存的更改",
+  unsavedChangeCount: (changes) => \`\${count3(changes)} 项未保存的更改\`,
+  changeSeparator: "；",
+  moreChanges: (changes) => \`；另有 \${count3(changes)} 项\`,
+  reviewAndApply: "复核并应用",
+  presetStandard: "Standard",
+  presetStandardDescription: "阻止可识别的破坏性命令和对敏感文件的读取。推荐日常开发使用。",
+  presetStrict: "Strict",
+  presetStrictDescription: "还会阻止无法完全解析的命令和列出敏感路径的操作。复杂的 shell 写法偶尔会误报。",
+  presetParanoid: "Paranoid",
+  presetParanoidDescription: "还会阻止项目内的 rm -rf 和解释器单行命令。误报会更多，适合不受信任的智能体或高风险仓库。",
+  capabilityFailClosed: "Fail closed",
+  capabilityFailClosedDescription: "阻止解析器无法完全理解的命令。",
+  capabilityParanoidRm: "Paranoid rm -rf 检查",
+  capabilityParanoidRmDescription: "阻止项目内的 rm -rf，临时路径除外。",
+  capabilityParanoidInterpreters: "Paranoid 解释器检查",
+  capabilityParanoidInterpretersDescription: "阻止 python -c 等解释器单行命令。",
+  presetLabel: "预设",
+  presetCustomized: (preset) => \`\${preset}（已自定义）\`,
+  fromPresetOption: (enabled) => \`跟随预设（\${enabled ? "开启" : "关闭"}）\`,
+  fromPreset: "跟随预设",
+  forcedOn: "强制开启",
+  forcedOff: "强制关闭",
+  alwaysOn: "始终开启",
+  alwaysOff: "始终关闭",
+  cannotTurnOff: "无法关闭",
+  worktreeDiscard: "允许在 git linked worktree 中丢弃本地更改",
+  worktreeDiscardHelp: "只放宽 linked worktree 内的丢弃检查。",
+  worktreeChange: "在 linked worktree 中丢弃更改",
+  allowed: "允许",
+  blocked: "阻止",
+  allowPathsChange: "允许删除的路径",
+  denyPathsChange: "始终阻止的路径",
+  secretAllowPathsChange: "机密模式豁免",
+  pathsAdded: (paths) => \`添加 \${count3(paths)} 个\`,
+  pathsRemoved: (paths) => \`移除 \${count3(paths)} 个\`,
+  changedByYou: "由你更改",
+  forcedInAdvanced: (capability, enabled) => \`\${capability} 已在高级设置中强制\${enabled ? "开启" : "关闭"}\`,
+  setByEnvironment: "由环境变量设置",
+  setByEnvironmentVariable: (variable) => \`由环境变量设置：\${variable}\`,
+  needsPreset: (preset) => \`需要 \${preset} 预设\`,
+  offByDefault: "默认关闭",
+  offCount: (rules) => \`\${count3(rules)} 条已关闭\`,
+  commandRuleSummary: (on, off, always) => \`开启 \${count3(on)} 条 · 关闭 \${count3(off)} 条 · 始终开启 \${count3(always)} 条\`,
+  commandProtectionOffSummary: "已关闭。内置规则不再生效，灾难性规则和自定义规则仍然生效。规则设置会保留。",
+  secretRuleSummary: (on, off) => \`开启 \${count3(on)} 条 · 关闭 \${count3(off)} 条\`,
+  secretProtectionOffSummary: "已关闭。不再阻止敏感文件和拒绝路径。规则设置和路径会保留。",
+  noCommandProtectionMatch: "没有匹配的命令保护规则。",
+  noSecretProtectionMatch: "没有匹配的机密保护规则。",
+  aboutRule: (rule) => \`关于 \${rule}\`,
+  protectedPaths: "受保护的路径",
+  protectedPathsFor: (rule) => \`\${rule} 保护的路径\`,
+  toggleGroup: (group) => \`开启或关闭“\${group}”中的全部规则\`,
+  toggleAll: "全部开启或关闭",
+  secretCategoryBasename: "敏感文件名",
+  secretCategoryPattern: "敏感文件名模式",
+  secretCategoryHomePath: "主目录中的敏感目录",
+  secretCategoryVariant: "密钥文件名变体",
+  secretCategoryExtension: "敏感文件扩展名",
+  secretCategoryExtensionPattern: "敏感扩展名模式",
+  secretCategoryCredential: "编码智能体凭证",
+  secretCategoryConfig: "编码智能体设置",
+  inheritedChip: "继承",
+  projectChip: "项目",
+  projectChipTitle: "由此项目设置。点击可取消设置。",
+  projectChipLabel: (field) => \`由项目设置：\${field}。激活后恢复继承。\`,
+  commandProtectionOffBanner: "命令保护已关闭，内置的破坏性命令规则不再生效。灾难性规则和自定义规则仍然生效。",
+  secretProtectionOffBanner: "机密保护已关闭，不再阻止敏感文件和拒绝路径。",
+  fallbackConfigBanner: (reason) => \`正在执行 fallback 配置：\${reason}\`,
+  openProtections: "打开保护视图",
+  environmentRaises: (variables) => \`环境变量把保护强度提高到了这些设置之上：\${variables}\`,
+  removePath: (path) => \`移除 \${path}\`,
+  notAdded: (paths, error) => \`未添加：\${paths}。\${error}\`,
+  alreadyListed: (paths) => \`已在列表中：\${paths}\`,
+  previewFailed: "预览失败",
+  couldNotTest: (error) => \`无法测试此命令：\${error}\`,
+  testerAllowed: "<strong>允许。</strong>没有规则阻止此命令。",
+  createRuleToBlock: "创建规则阻止它",
+  testerBlocked: (rule) => rule ? \`<strong>已阻止</strong>，触发规则 \${rule}。\` : "<strong>已阻止</strong>。",
+  blockedPart: "被阻止的部分：",
+  testerHelp: "按保护设置检查命令，包括未保存的更改和自定义规则。不会实际运行。",
+  test: "测试",
+  notCreatedYet: "（尚未创建）",
+  projectPolicyChanges: "项目策略会更改以下设置：",
+  restoredDraft: "已恢复未保存的更改",
+  couldNotLoadPolicy: "无法加载策略",
+  projectPolicyUnavailable: "项目策略不可用",
+  repairFirst: "请先修复你的策略",
+  repairBeforeProject: "编辑项目策略前，必须先修复你自己的策略文件。",
+  policyNotLoaded: "策略尚未加载",
+  discardUnsavedTitle: "丢弃未保存的更改？",
+  discardBeforeProject: "项目策略以你已保存的策略为起点。请先保存更改，或在此丢弃。",
+  discardChanges: "丢弃更改",
+  discardDraftTitle: "丢弃此项目草稿？",
+  discardDraft: "丢弃草稿",
+  switchFolderDiscards: "切换目录会丢弃此草稿。",
+  folderPickerFailed: "无法打开目录选择器",
+  projectChangesUnwritten: "项目更改尚未写入任何文件。",
+  backToOwnPolicy: "已返回你自己的策略",
+  discardDraftChangesTitle: "丢弃对此草稿的更改？",
+  discardDraftChangesBody: "草稿将恢复为此项目现有的设置。",
+  changesDiscarded: "已丢弃更改",
+  projectDraftReloaded: "已重新加载项目草稿",
+  projectFolderChanged: "项目目录已更改",
+  projectFolderChangedBody: "已按新目录重新加载草稿。应用前请再次复核。",
+  invalidProjectFile: "现有的项目策略文件无效，将被替换。",
+  noEffectiveChange: "生效策略没有变化。",
+  diffSetting: "设置",
+  diffNow: "当前",
+  diffAfter: "应用后",
+  unset: "（未设置）",
+  reviewFailed: "复核失败",
+  reviewAgain: "重新复核",
+  draftChangedDuringReview: "复核结果加载期间，草稿发生了变化。",
+  applyProjectTitle: "应用此项目策略？",
+  applyProjectBody: "此项目中的每个人都会在自己策略的基础上叠加这些设置。",
+  applyProject: "应用项目策略",
+  applyingStatus: "应用中…",
+  applyFailed: "应用失败",
+  projectApplied: "已应用项目策略",
+  repairBeforeSaving: "请先修复策略再保存",
+  policySaved: "策略已保存",
+  discardUnsavedBody: "自上次保存以来的所有更改都将撤销。",
+  discardingStatus: "丢弃中…",
+  repairTitle: "修复策略文件？",
+  repairBody: "保留有效设置，丢弃无效设置。如果 JSON 完全无法读取，则恢复默认值。",
+  repairingStatus: "修复中…",
+  repairFailed: "修复失败",
+  policyRepaired: "策略已修复",
+  nothingToReset: "无需重置，所有规则都已使用默认值",
+  resetRulesTitle: "将所有规则重置为默认值？",
+  resetRulesBody: (secret) => \`所有\${secret ? "机密" : "命令"}规则都将恢复为预设给出的设置。保存前仍可丢弃。\`,
+  resetRules: "重置规则",
+  turnOffSecretTitle: "关闭机密保护？",
+  turnOffCommandTitle: "关闭命令保护？",
+  turnOffSecretBody: "在重新开启之前，不再阻止敏感文件、编码智能体凭证和拒绝路径。",
+  turnOffCommandBody: "在重新开启之前，内置的破坏性 git、文件系统和执行规则不再阻止命令。",
+  catastrophicStillApply: "灾难性规则和自定义规则仍然生效。",
+  turnOff: "关闭",
+  rulesIntro: "你在 rulebook 中编写的阻止规则，在内置保护之外额外执行。",
+  refreshRules: "刷新自定义规则",
+  problems: "问题",
+  problemsSub: "出现错误表示该 rulebook 已被跳过，其中的规则都不会执行。",
+  rulebooks: "Rulebook",
+  rulebooksSub: "只读。按实际执行的方式显示规则。",
+  loadingRules: "正在加载规则…",
+  createRule: "创建规则",
+  createRuleSub: "描述规则，然后复制一段现成的 prompt 交给编码智能体。CC Safety Net 本身不会写入 rulebook。",
+  appliesTo: "适用范围",
+  ruleScope: "规则范围",
+  thisProject: "此项目",
+  allProjects: "所有项目",
+  projectFolder: "项目目录",
+  chooseFolder: "选择…",
+  projectFolderHint: "rulebook 的写入位置。默认为启动此 GUI 的目录。",
+  ruleRequest: "要阻止什么？",
+  ruleRequestPlaceholder: "在此项目中阻止 terraform destroy",
+  ruleRequestHint: "规则匹配命令、子命令和精确参数，不匹配文件路径或模式。",
+  tryExamples: "试试：",
+  exampleSuggest: "推荐规则",
+  exampleSuggestRequest: "阅读我的 package.json，推荐要阻止的规则",
+  exampleBlock: "阻止命令",
+  exampleBlockRequest: "设置规则，阻止所有 terraform destroy 命令",
+  exampleVerify: "验证规则",
+  exampleVerifyRequest: "验证我的规则并修复所有错误",
+  copyPrompt: "复制 prompt",
+  allRulebooksSkipped: "所有 rulebook 都因错误被跳过，没有任何自定义规则生效。请查看上方的“问题”。",
+  noCustomRules: "还没有自定义规则。使用下方的<strong>创建规则</strong>，或运行 <code>npx -y cc-safety-net rule init</code>。",
+  blocksWhenArgument: "出现以下任一参数时阻止：",
+  customRuleMissing: (rule) => \`\${rule} 不在任何 rulebook 中\`,
+  couldNotLoadRules: (error) => \`无法加载规则：\${error}\`,
+  folderPickerUnavailable: "目录选择器不可用",
+  typeFolderInstead: (error) => \`\${error}。请手动输入项目目录。\`,
+  rulesNotLoaded: "规则尚未加载",
+  refreshAndRetry: "请点击刷新后重试。",
+  describeRuleFirst: "请先描述要阻止的内容",
+  enterProjectFolder: "请输入规则所属的项目目录",
+  promptCopied: "已复制 prompt",
+  pasteIntoAgent: "请将其粘贴到编码智能体中。",
+  agentsIntro: "为本机上的每个编码智能体安装或卸载 CC Safety Net hook。",
+  refreshAgents: "刷新智能体",
+  checkingAgents: "正在检查智能体…",
+  hookInstalled: "已安装 hook",
+  hookDisabled: "已禁用 hook",
+  hookStatusUnknown: "状态未知，无法读取其设置文件",
+  uninstalling: "正在卸载…",
+  installing: "正在安装…",
+  uninstall: "卸载",
+  enable: "启用",
+  install: "安装",
+  notDetected: "未检测到",
+  installedAgents: "已安装",
+  detectedAgents: "本机已检测到",
+  noHookYet: "还没有智能体安装 hook。请为你使用的每个智能体安装。未安装的智能体，其命令不会受到检查。",
+  missingAgents: "本机未检测到",
+  couldNotCheckAgents: (error) => \`无法检查智能体：\${error}\`,
+  installFailed: "安装失败",
+  uninstallFailed: "卸载失败",
+  settingsIntro: "外观、日志保留、文件位置和维护。",
+  appearance: "外观",
+  theme: "主题",
+  themeAuto: "自动",
+  themeLight: "浅色",
+  themeDark: "深色",
+  preferenceHint: "保存在本机。",
+  language: "语言",
+  preferenceSaveFailed: "无法保存此偏好设置",
+  auditLog: "审计日志",
+  keepLogsFor: "日志保留期",
+  retentionNote: "每条检查过的命令都会记入日志。缩短保留期会删除较早的条目，活动视图也只能回溯到这个范围。",
+  logFolder: "日志目录",
+  copyLogFolder: "复制日志目录路径",
+  files: "文件",
+  policyFile: "策略文件",
+  copyPolicyPath: "复制策略文件路径",
+  copyProjectPolicyPath: "复制项目策略路径",
+  about: "关于",
+  platform: "平台",
+  dangerZone: "危险操作",
+  resetPolicy: "重置策略",
+  resetPolicyHelp: "用默认值替换策略文件。此操作无法撤销。",
+  repairInProtectionsFirst: "请先在保护视图中修复策略文件。",
+  leaveProjectDraftFirst: "请先应用或退出项目策略草稿。",
+  saveProtectionsFirst: "请先保存或丢弃保护视图中未保存的更改。",
+  retentionRange: (min, max) => \`请输入 \${count3(min)} 到 \${count3(max)} 之间的整数天数。\`,
+  retentionUnchanged: "保留期未更改",
+  shortenRetentionTitle: (window2) => \`日志只保留 \${days3(window2)}？\`,
+  shortenRetentionBody: (window2) => \`早于 \${days3(window2)}的日志条目将在下次清理时删除，且无法恢复。\`,
+  shortenRetention: "缩短保留期",
+  retentionSaved: (window2) => \`日志保留期已改为 \${days3(window2)}\`,
+  resetUnavailable: "无法重置",
+  resetPolicyTitle: "重置策略？",
+  resetPolicyBody: "策略文件将替换为默认值，所有自定义设置都会丢失。",
+  resettingStatus: "重置中…",
+  resetFailed: "重置失败",
+  policyReset: "策略已重置为默认值"
+};
+
+// src/gui/frontend/preferences.ts
+var locales = ["en", "ja", "zh-CN"];
+var localeByLanguage = new Map([
+  ["en", "en"],
+  ["ja", "ja"],
+  ["zh", "zh-CN"]
+]);
+var resolveLocale = (saved, languages) => saved ?? languages.map((tag) => localeByLanguage.get(tag.toLowerCase().split("-")[0] ?? "")).find((locale) => locale !== undefined) ?? "en";
+
+// src/gui/frontend/i18n.ts
+var locale = resolveLocale(guiData.preferences.language, navigator.languages);
+var t = { en, ja, "zh-CN": zhCN }[locale];
+var formatCount = (value) => value.toLocaleString(locale);
+var formatDateTime = (ts) => new Date(ts).toLocaleString(locale);
+var formatClockTime = (ts) => new Date(ts).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+var relativeTimeFormat = new Intl.RelativeTimeFormat(locale, {
+  numeric: "always",
+  style: "narrow"
+});
+var formatRelativeTime = (ts) => {
+  const minutes = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (!Number.isFinite(minutes))
+    return "";
+  if (minutes >= 1440)
+    return relativeTimeFormat.format(-Math.floor(minutes / 1440), "day");
+  if (minutes >= 60)
+    return relativeTimeFormat.format(-Math.floor(minutes / 60), "hour");
+  if (minutes >= 1)
+    return relativeTimeFormat.format(-minutes, "minute");
+  return t.justNow;
+};
+var formatDayHeading = (ts) => {
+  const date = new Date(ts).toDateString();
+  if (date === new Date().toDateString())
+    return t.today;
+  if (date === new Date(Date.now() - 86400000).toDateString())
+    return t.yesterday;
+  return new Date(ts).toLocaleDateString(locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+};
+
 // src/hosts/catalog.ts
 var DEEPSEEK_HARNESS_NPM_PROBE = [
   "npx",
@@ -3277,9 +4603,8 @@ var shared = {
 var emit = (name) => document.dispatchEvent(new Event(\`ccsn:\${name}\`));
 var on = (name, listener) => document.addEventListener(\`ccsn:\${name}\`, listener);
 var qs = (id) => document.getElementById(id);
-var sessionToken = () => JSON.parse(qs("ccsn-data").textContent).token;
 var requestJson = async (path, init = {}) => {
-  const token = sessionToken();
+  const token = guiData.token;
   try {
     const response = await fetch(\`\${path}\${path.includes("?") ? "&" : "?"}token=\${encodeURIComponent(token)}\`, {
       ...init,
@@ -3306,7 +4631,7 @@ var requestJson = async (path, init = {}) => {
   }
 };
 var errorText = (result) => result.error ?? (Array.isArray(result.data?.errors) && result.data.errors.length ? result.data.errors.join(\`
-\`) : null) ?? result.data?.error ?? \`Request failed (status \${result.status}).\`;
+\`) : null) ?? result.data?.error ?? t.requestFailed(result.status);
 var isWriteSuccess = (result) => result.ok && !(Array.isArray(result.data?.errors) && result.data.errors.length > 0);
 var escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;",
@@ -3326,6 +4651,16 @@ var notify = (title, kind = "info", detail = "") => {
   if (kind === "ok")
     notifyTimer = setTimeout(() => notify(""), 4000);
 };
+var savePreference = async (update) => {
+  const result = await requestJson("/api/preferences", {
+    method: "POST",
+    body: JSON.stringify(update)
+  });
+  const saved = isWriteSuccess(result);
+  if (!saved)
+    notify(t.preferenceSaveFailed, "error", errorText(result));
+  return saved;
+};
 var icons = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2"></path></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>',
@@ -3337,14 +4672,14 @@ var showingCopied = new WeakSet;
 var copyText = async (button, text) => {
   const copied = await navigator.clipboard.writeText(text).then(() => true, () => false);
   if (!copied) {
-    notify("Copy failed", "error");
+    notify(t.copyFailed, "error");
     return;
   }
   if (showingCopied.has(button))
     return;
   showingCopied.add(button);
   const label = button.innerHTML;
-  button.innerHTML = \`\${icons.check}<span>Copied</span>\`;
+  button.innerHTML = \`\${icons.check}<span>\${escapeHtml(t.copied)}</span>\`;
   setTimeout(() => {
     button.innerHTML = label;
     showingCopied.delete(button);
@@ -3398,21 +4733,6 @@ var confirmDialog = (options) => new Promise((resolve) => {
 });
 
 // src/audit/display.ts
-var formatRelativeTime = (value) => {
-  const diff = Date.now() - new Date(value).getTime();
-  if (!Number.isFinite(diff))
-    return "";
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  if (days > 0)
-    return \`\${days}d ago\`;
-  if (hours > 0)
-    return \`\${hours}h ago\`;
-  if (minutes > 0)
-    return \`\${minutes}m ago\`;
-  return "just now";
-};
 var commandSignature = (source) => {
   const tokens = (source ?? "").trim().split(/\\s+/).filter((token) => token && !/^[A-Za-z_][A-Za-z0-9_]*=/.test(token));
   const binary = tokens[0]?.split("/").pop();
@@ -3436,9 +4756,6 @@ var MAX_AUDIT_RETENTION_DAYS = 365;
 
 // src/gui/frontend/format.ts
 var repoUrl = "https://github.com/kenryu42/cc-safety-net";
-var formatCount = (value) => value.toLocaleString("en-US");
-var plural = (count, noun, pluralNoun = \`\${noun}s\`) => \`\${formatCount(count)} \${count === 1 ? noun : pluralNoun}\`;
-var dayCount = (days) => plural(days, "day");
 var viewHash = (view, fields) => {
   const params = new URLSearchParams(fields.filter(([, value, fallback]) => value !== fallback).map(([key, value]) => [key, value]));
   return params.size > 0 ? \`\${view}?\${params}\` : view;
@@ -3537,38 +4854,119 @@ var groupIntegrations = (rows) => ({
   available: rows.filter((row) => row.status !== "active" && row.version !== null),
   missing: rows.filter((row) => row.status !== "active" && row.version === null)
 });
-var attentionItems = (facts) => [
+var attentionItems = (facts, t) => [
   ...(facts.targets ?? []).filter((row) => row.status === "disabled").map((row) => ({
-    text: \`\${row.label} is detected but its hook is disabled.\`,
+    text: t.hookDisabledAttention(row.label),
     href: "#integrations"
   })),
   facts.suspects > 0 ? {
-    text: \`\${plural(facts.suspects, "block")} in the last \${dayCount(facts.days)} \${facts.suspects === 1 ? "looks" : "look"} like a false positive.\`,
+    text: t.suspectAttention(facts.suspects, facts.days),
     href: "#activity?decision=suspect"
   } : null,
   facts.errors > 0 ? {
-    text: \`\${plural(facts.errors, "guard error")} in the last \${dayCount(facts.days)}: commands blocked because evaluation failed, not by policy.\`,
+    text: t.guardErrorAttention(facts.errors, facts.days),
     href: "#activity?decision=error"
   } : null,
-  facts.update?.updateAvailable ? { text: \`Version \${facts.update.latestVersion} is available.\`, href: \`\${repoUrl}/releases\` } : null
+  facts.update?.updateAvailable ? {
+    text: t.updateAttention(facts.update.latestVersion ?? ""),
+    href: \`\${repoUrl}/releases\`
+  } : null
 ].filter((item) => item !== null);
+
+// src/gui/frontend/policy-summary.ts
+var safetyLevels = (t) => ({
+  standard: [t.presetStandard, t.presetStandardDescription],
+  strict: [t.presetStrict, t.presetStrictDescription],
+  paranoid: [t.presetParanoid, t.presetParanoidDescription]
+});
+var capabilityNames = (t) => ({
+  fail_closed: [t.capabilityFailClosed, t.capabilityFailClosedDescription],
+  paranoid_rm: [t.capabilityParanoidRm, t.capabilityParanoidRmDescription],
+  paranoid_interpreters: [
+    t.capabilityParanoidInterpreters,
+    t.capabilityParanoidInterpretersDescription
+  ]
+});
+var levelName = (level, t) => safetyLevels(t)[level][0];
+var tierForRule = (rule) => !rule.activationCapability ? "normal" : rule.activationCapability === "fail_closed" ? "strict" : "paranoid";
+var commandRuleGroups = (rules, t) => {
+  const alwaysOn = rules.filter((rule) => rule.catastrophic);
+  const configurable = rules.filter((rule) => !rule.catastrophic);
+  return [
+    ...alwaysOn.length > 0 ? [{ key: "always-on", title: t.alwaysOn, rules: alwaysOn }] : [],
+    ...[...new Set(configurable.map((rule) => rule.category))].map((category) => ({
+      key: category,
+      title: category,
+      rules: configurable.filter((rule) => rule.category === category)
+    }))
+  ];
+};
+var policyFiltersFromParams = (params) => ({
+  query: params.get("q") ?? "",
+  changedOnly: params.get("show") === "changed"
+});
+var policyHash = (filters) => viewHash("policy", [
+  ["q", filters.query, ""],
+  ["show", filters.changedOnly ? "changed" : "all", "all"]
+]);
+var ruleNote = (rule, effective, capabilities, t) => {
+  const capability = rule.activationCapability;
+  if (effective.source === "rule_override")
+    return t.changedByYou;
+  if (effective.source === "capability_override" && capability)
+    return t.forcedInAdvanced(capabilityNames(t)[capability][0], effective.enabled);
+  if (effective.source === "environment") {
+    const source = [...capability ? capabilities[capability]?.sources ?? [] : []].reverse().find((item) => item.startsWith("env "));
+    return source ? t.setByEnvironmentVariable(source.slice(4)) : t.setByEnvironment;
+  }
+  if (effective.enabled || effective.source === "master_disabled")
+    return null;
+  return t.needsPreset(tierForRule(rule) === "strict" ? t.presetStrict : t.presetParanoid);
+};
+var policyChanges = (saved, draft, labels, t) => {
+  const onOff = (value) => value ? t.stateOn : t.stateOff;
+  const capabilities = capabilityNames(t);
+  const overrideChanges = (before, after) => [...new Set([...Object.keys(before), ...Object.keys(after)])].filter((id) => before[id] !== after[id]).map((id) => t.settingChange(labels[id] ?? id, after[id] === undefined ? t.stateDefault : onOff(after[id] === "on")));
+  const pathChanges = (name, before, after) => {
+    const added = after.filter((path) => !before.includes(path)).length;
+    const removed = before.filter((path) => !after.includes(path)).length;
+    if (added === 0 && removed === 0)
+      return null;
+    return t.settingChange(name, [added ? t.pathsAdded(added) : "", removed ? t.pathsRemoved(removed) : ""].filter(Boolean).join(t.listSeparator));
+  };
+  return [
+    saved.safety.level === draft.safety.level ? null : t.settingChange(t.presetLabel, \`\${levelName(saved.safety.level, t)} → \${levelName(draft.safety.level, t)}\`),
+    ...Object.keys(capabilities).filter((key) => saved.safety.overrides[key] !== draft.safety.overrides[key]).map((key) => {
+      const value = draft.safety.overrides[key];
+      return t.settingChange(capabilities[key][0], value === undefined ? t.fromPreset : value ? t.forcedOn : t.forcedOff);
+    }),
+    saved.workflow.worktree_mode === draft.workflow.worktree_mode ? null : t.settingChange(t.worktreeChange, draft.workflow.worktree_mode ? t.allowed : t.blocked),
+    saved.destructive_command_protection.enabled === draft.destructive_command_protection.enabled ? null : t.settingChange(t.commandProtection, onOff(draft.destructive_command_protection.enabled)),
+    saved.secret_protection.enabled === draft.secret_protection.enabled ? null : t.settingChange(t.secretProtection, onOff(draft.secret_protection.enabled)),
+    ...overrideChanges(saved.destructive_command_protection.overrides, draft.destructive_command_protection.overrides),
+    ...overrideChanges(saved.secret_protection.overrides, draft.secret_protection.overrides),
+    pathChanges(t.allowPathsChange, saved.destructive_command_protection.allow_paths, draft.destructive_command_protection.allow_paths),
+    pathChanges(t.denyPathsChange, saved.secret_protection.deny_paths, draft.secret_protection.deny_paths),
+    pathChanges(t.secretAllowPathsChange, saved.secret_protection.allow_paths, draft.secret_protection.allow_paths)
+  ].filter((change) => change !== null);
+};
 
 // src/gui/frontend/views/integrations.ts
 var targets = null;
 var busy = new Set;
 var integrationTargets = () => targets;
 var statusText = (row) => ({
-  active: "Hook installed",
-  disabled: "Hook disabled",
+  active: t.hookInstalled,
+  disabled: t.hookDisabled,
   "not-installed": "",
-  "not-inspected": "Status unknown: its settings file could not be read"
+  "not-inspected": t.hookStatusUnknown
 })[row.status];
 var rowHtml = (row) => {
   const uninstall = row.status === "active";
-  const action = row.version === null ? "" : \`<button type="button" data-integration-action="\${uninstall ? "uninstall" : "install"}" data-integration-target="\${escapeHtml(row.target)}"\${busy.has(row.target) ? " disabled" : ""}>\${busy.has(row.target) ? uninstall ? "Uninstalling…" : "Installing…" : uninstall ? "Uninstall" : row.status === "disabled" ? "Enable" : "Install"}</button>\`;
+  const action = row.version === null ? "" : \`<button type="button" data-integration-action="\${uninstall ? "uninstall" : "install"}" data-integration-target="\${escapeHtml(row.target)}"\${busy.has(row.target) ? " disabled" : ""}>\${busy.has(row.target) ? uninstall ? t.uninstalling : t.installing : uninstall ? t.uninstall : row.status === "disabled" ? t.enable : t.install}</button>\`;
   return \`<li class="setting-row agent-row">
     <span class="agent-name">\${escapeHtml(row.label)}</span>
-    <span class="agent-version"\${row.version === null ? "" : \` title="v\${escapeHtml(row.version)}"\`}>\${row.version === null ? "Not detected" : \`v\${escapeHtml(row.version)}\`}</span>
+    <span class="agent-version"\${row.version === null ? "" : \` title="v\${escapeHtml(row.version)}"\`}>\${row.version === null ? t.notDetected : \`v\${escapeHtml(row.version)}\`}</span>
     <span class="agent-status \${row.status}">\${statusText(row)}</span>
     <span class="agent-action">\${action}</span>
     \${row.note ? \`<p class="notice \${row.note.kind}">\${escapeHtml(row.note.text)}</p>\` : ""}
@@ -3579,16 +4977,16 @@ var render = () => {
   if (!targets)
     return;
   const groups = groupIntegrations(targets);
-  qs("integrations-list").innerHTML = groupHtml("Installed", groups.installed) + groupHtml("Detected on this machine", groups.available, groups.installed.length === 0 ? "No agent has the hook yet. Install it for each agent you use; until then its commands are not checked." : "") + (groups.missing.length === 0 ? "" : \`<details class="section missing-agents"><summary>Not detected on this machine <span class="count">\${groups.missing.length}</span></summary><ul class="card rows">\${groups.missing.map(rowHtml).join("")}</ul></details>\`);
+  qs("integrations-list").innerHTML = groupHtml(t.installedAgents, groups.installed) + groupHtml(t.detectedAgents, groups.available, groups.installed.length === 0 ? t.noHookYet : "") + (groups.missing.length === 0 ? "" : \`<details class="section missing-agents"><summary>\${t.missingAgents} <span class="count">\${groups.missing.length}</span></summary><ul class="card rows">\${groups.missing.map(rowHtml).join("")}</ul></details>\`);
 };
 var loadIntegrations = async () => {
   const result = await requestJson("/api/integrations");
   if (!result.ok || !Array.isArray(result.data?.targets)) {
-    qs("integrations-list").innerHTML = \`<p class="empty">Could not check agents: \${escapeHtml(errorText(result))}</p>\`;
+    qs("integrations-list").innerHTML = \`<p class="empty">\${escapeHtml(t.couldNotCheckAgents(errorText(result)))}</p>\`;
     return;
   }
   targets = result.data.targets;
-  qs("integrations-node-version").textContent = result.data.system.nodeVersion ?? "unknown";
+  qs("integrations-node-version").textContent = result.data.system.nodeVersion ?? t.unknownValue;
   qs("integrations-platform").textContent = result.data.system.platform;
   render();
   emit("integrations");
@@ -3616,7 +5014,7 @@ var runAction = async (button) => {
     text: ok ? result.data.output : result.data?.output || errorText(result)
   };
   if (!ok)
-    notify(action === "install" ? "Install failed" : "Uninstall failed", "error");
+    notify(action === "install" ? t.installFailed : t.uninstallFailed, "error");
   render();
   emit("integrations");
 };
@@ -3643,26 +5041,26 @@ var renderStatusCard = () => {
   const active = (targets ?? []).filter((row) => row.status === "active");
   const policy = loaded.policy;
   const off = [
-    policy.destructive_command_protection.enabled ? null : "Command protection is off",
-    policy.secret_protection.enabled ? null : "Secret protection is off"
+    policy.destructive_command_protection.enabled ? null : t.commandProtectionIsOff,
+    policy.secret_protection.enabled ? null : t.secretProtectionIsOff
   ].filter((text) => text !== null);
-  const headline = loaded.errors.length > 0 ? "Your policy file needs repair" : !targets ? "Checking your agents…" : active.length === 0 ? "Not checking any agent yet" : off.length > 0 ? "Partly protected" : "Protected";
+  const noAgent = loaded.errors.length === 0 && targets !== null && active.length === 0;
+  const headline = loaded.errors.length > 0 ? t.statusRepair : !targets ? t.statusCheckingAgents : noAgent ? t.statusNoAgent : off.length > 0 ? t.statusPartlyProtected : t.statusProtected;
   const customized = (loaded.preview?.counts.effectiveCustomizations ?? 0) > 0 || Object.entries(policy.safety.overrides).some(([key, value]) => value !== SAFETY_LEVEL_CAPABILITIES[policy.safety.level][key]);
-  const level = policy.safety.level[0]?.toUpperCase() + policy.safety.level.slice(1);
   const facts = [
-    \`\${level} preset\${customized ? ", customized" : ""}\`,
+    t.presetFact(levelName(policy.safety.level, t), customized),
     ...off.length > 0 ? off : [
-      loaded.preview ? \`\${loaded.preview.counts.enabled} command rules on\` : null,
-      "Secret protection on"
+      loaded.preview ? t.commandRulesOn(loaded.preview.counts.enabled) : null,
+      t.secretProtectionIsOn
     ],
-    active.length > 0 ? \`Hook active in \${active.length <= 3 ? active.map((row) => row.label).join(", ") : plural(active.length, "agent")}\` : null
+    active.length > 0 ? t.hookActiveIn(active.length <= 3 ? active.map((row) => row.label).join(t.listSeparator) : t.agentCount(active.length)) : null
   ].filter((text) => text !== null);
-  const [actionHref, actionLabel] = headline === "Not checking any agent yet" ? ["#integrations", "Install a hook"] : ["#policy", loaded.errors.length > 0 ? "Repair" : "Configure"];
+  const [actionHref, actionLabel] = noAgent ? ["#integrations", t.installHook] : ["#policy", loaded.errors.length > 0 ? t.repair : t.configure];
   qs("status-card").innerHTML = \`<div>
       <p class="status-headline">\${escapeHtml(headline)}</p>
       <p class="status-facts">\${facts.map(escapeHtml).join(" · ")}</p>
     </div>
-    <a class="link-button" href="\${actionHref}">\${actionLabel}</a>\`;
+    <a class="link-button" href="\${actionHref}">\${escapeHtml(actionLabel)}</a>\`;
 };
 var renderAttention = () => {
   const items = attentionItems({
@@ -3671,13 +5069,13 @@ var renderAttention = () => {
     errors: feed?.counts.errors ?? 0,
     suspects: feed ? findSuspectEntries(feed.entries).size : 0,
     days: feed?.days ?? OVERVIEW_DAYS
-  });
+  }, t);
   qs("attention").hidden = items.length === 0;
-  qs("attention-list").innerHTML = items.map((item) => \`<li><a class="list-row attention-row" href="\${escapeHtml(item.href)}"\${item.href.startsWith("#") ? "" : ' target="_blank" rel="noopener"'}><span>\${escapeHtml(item.text)}</span><span class="row-action">\${item.href.startsWith("#activity") ? "Review" : item.href.startsWith("#") ? "Fix" : "Release notes"}</span></a></li>\`).join("");
+  qs("attention-list").innerHTML = items.map((item) => \`<li class="list-row attention-row"><span>\${escapeHtml(item.text)}</span><a class="link-button" href="\${escapeHtml(item.href)}"\${item.href.startsWith("#") ? "" : ' target="_blank" rel="noopener"'}>\${escapeHtml(item.href.startsWith("#activity") ? t.review : item.href.startsWith("#") ? t.fix : t.releaseNotes)}</a></li>\`).join("");
 };
 var sparkline = (byDay, noun) => {
   const max = Math.max(...byDay, 1);
-  return \`<div class="tile-spark" role="img" aria-label="\${escapeHtml(\`\${noun} per day, oldest to newest: \${byDay.join(", ")}\`)}">\${byDay.map((count) => \`<span class="spark-bar\${count === 0 ? " spark-zero" : ""}" style="height:\${count === 0 ? 2 : Math.max(3, Math.round(count / max * 36))}px" title="\${formatCount(count)}"></span>\`).join("")}</div>\`;
+  return \`<div class="tile-spark" role="img" aria-label="\${escapeHtml(t.perDayChart(noun, byDay.map(formatCount).join(t.listSeparator)))}">\${byDay.map((count) => \`<span class="spark-bar\${count === 0 ? " spark-zero" : ""}" style="height:\${count === 0 ? 2 : Math.max(3, Math.round(count / max * 36))}px" title="\${formatCount(count)}"></span>\`).join("")}</div>\`;
 };
 var ruleHref = (ruleId) => ruleId.startsWith("custom.") ? \`#rules?focus=\${encodeURIComponent(ruleId)}\` : \`#activity?q=\${encodeURIComponent(ruleId)}\`;
 var renderActivity = () => {
@@ -3685,27 +5083,27 @@ var renderActivity = () => {
     return;
   const loaded = feed;
   qs("overview-tiles").innerHTML = [
-    [loaded.counts.blocked, "Blocked", loaded.counts.blockedByDay],
-    [loaded.totalInWindow, "Commands checked", loaded.counts.analyzedByDay]
-  ].map(([value, label, byDay]) => \`<div class="tile"><div><strong>\${formatCount(value)}</strong><span>\${label} · last \${dayCount(loaded.days)}</span></div>\${sparkline(byDay, label)}</div>\`).join("");
+    [loaded.counts.blocked, t.tileBlocked, loaded.counts.blockedByDay],
+    [loaded.totalInWindow, t.tileChecked, loaded.counts.analyzedByDay]
+  ].map(([value, label, byDay]) => \`<div class="tile"><div><strong>\${formatCount(value)}</strong><span>\${escapeHtml(\`\${label} · \${t.lastDays(loaded.days)}\`)}</span></div>\${sparkline(byDay, label)}</div>\`).join("");
   const blocks = loaded.entries.filter((entry) => entry.decision !== "allow").slice(0, 8);
-  qs("recent-blocks").innerHTML = blocks.length === 0 ? \`<p class="empty">Nothing was blocked in the last \${dayCount(loaded.days)}.</p>\` : \`<ul class="card list">\${blocks.map((entry) => \`<li><a class="list-row compact-row" href="\${entry.ruleId ? ruleHref(entry.ruleId) : "#activity"}">
+  qs("recent-blocks").innerHTML = blocks.length === 0 ? \`<p class="empty">\${escapeHtml(t.nothingBlocked(loaded.days))}</p>\` : \`<ul class="card list">\${blocks.map((entry) => \`<li><a class="list-row compact-row" href="\${entry.ruleId ? ruleHref(entry.ruleId) : "#activity"}">
               <time datetime="\${escapeHtml(entry.ts)}">\${escapeHtml(formatRelativeTime(entry.ts))}</time>
               <span class="feed-agent">\${escapeHtml(entry.agent && entry.agent !== "unknown" ? agentLabels[entry.agent] ?? entry.agent : "")}</span>
-              <code class="feed-command">\${escapeHtml(entry.segment || entry.command || "(no command recorded)")}</code>
-              <span class="feed-rule">\${escapeHtml(entry.failureStage ? "guard error" : entry.ruleId ?? "")}</span>
+              <code class="feed-command">\${escapeHtml(entry.segment || entry.command || t.noCommandRecorded)}</code>
+              <span class="feed-rule">\${escapeHtml(entry.failureStage ? t.guardError : entry.ruleId ?? "")}</span>
             </a></li>\`).join("")}</ul>\`;
   const top = Object.entries(loaded.counts.rules).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  qs("top-rules-title").textContent = \`Most-triggered rules · last \${dayCount(loaded.days)}\`;
-  qs("top-rules").innerHTML = top.length === 0 ? '<p class="empty">No rule has blocked anything yet.</p>' : \`<ul class="card list">\${top.map(([ruleId, count]) => \`<li><a class="list-row rule-count-row" href="\${ruleHref(ruleId)}">
+  qs("top-rules-title").textContent = \`\${t.topRules} · \${t.lastDays(loaded.days)}\`;
+  qs("top-rules").innerHTML = top.length === 0 ? \`<p class="empty">\${escapeHtml(t.noRuleBlocked)}</p>\` : \`<ul class="card list">\${top.map(([ruleId, count]) => \`<li><a class="list-row rule-count-row" href="\${ruleHref(ruleId)}">
               <code class="rule-label">\${escapeHtml(ruleId)}</code>
-              <span class="count">\${plural(count, "block")}</span>
+              <span class="count">\${escapeHtml(t.blockCount(count))}</span>
             </a></li>\`).join("")}</ul>\`;
 };
 var loadOverview = async () => {
   const result = await requestJson(\`/api/activity?days=\${Math.min(OVERVIEW_DAYS, retentionDays())}\`);
   if (!result.ok || !result.data) {
-    qs("recent-blocks").innerHTML = \`<p class="empty">Could not load activity: \${escapeHtml(errorText(result))}</p>\`;
+    qs("recent-blocks").innerHTML = \`<p class="empty">\${escapeHtml(t.couldNotLoadActivity(errorText(result)))}</p>\`;
     return;
   }
   feed = result.data;
@@ -3724,18 +5122,18 @@ var starIcons = {
 var starContext = { starCount: null, blockedTotal: 0 };
 var starCountHtml = (count) => typeof count === "number" ? \`<span class="star-count">\${count >= 1000 ? \`\${(count / 1000).toFixed(1).replace(/\\.0$/, "")}k\` : count}</span>\` : "";
 var renderStarPitch = (starred) => {
-  const evidence = starContext.blockedTotal > 0 ? \`CC Safety Net has blocked <strong>\${formatCount(starContext.blockedTotal)}</strong> risky \${starContext.blockedTotal === 1 ? "command" : "commands"} on this machine in the last \${escapeHtml(dayCount(retentionDays()))}.\` : "";
-  qs("star-pitch-text").innerHTML = starred ? evidence : evidence ? \`\${evidence} If it saved your work, star it on GitHub.\` : "If CC Safety Net is useful to you, star it on GitHub.";
+  const evidence = starContext.blockedTotal > 0 ? t.starEvidence(starContext.blockedTotal, retentionDays()) : "";
+  qs("star-pitch-text").innerHTML = starred ? evidence : evidence ? \`\${evidence} \${t.starIfSaved}\` : t.starIfUseful;
 };
 var renderStarLink = (href) => {
-  qs("star-slot").innerHTML = \`<a class="star-cta" href="\${escapeHtml(href)}" target="_blank" rel="noopener" aria-label="Star CC Safety Net on GitHub (opens github.com)"><span class="star-icon" aria-hidden="true">\${starIcons.outline}</span><span class="star-label">Star on GitHub</span>\${starCountHtml(starContext.starCount)}</a>\`;
+  qs("star-slot").innerHTML = \`<a class="star-cta" href="\${escapeHtml(href)}" target="_blank" rel="noopener" aria-label="\${escapeHtml(t.starLinkLabel)}"><span class="star-icon" aria-hidden="true">\${starIcons.outline}</span><span class="star-label">\${escapeHtml(t.starOnGitHub)}</span>\${starCountHtml(starContext.starCount)}</a>\`;
   qs("star-row").hidden = false;
 };
 var loadStarContext = async () => {
   const result = await requestJson("/api/star/context");
   starContext = result.ok && result.data ? result.data : { starCount: null, blockedTotal: 0 };
   renderStarPitch(false);
-  qs("star-slot").innerHTML = \`<button type="button" class="star-cta" aria-label="Star CC Safety Net on GitHub"><span class="star-icon" aria-hidden="true">\${starIcons.outline}</span><span class="star-label">Star on GitHub</span>\${starCountHtml(starContext.starCount)}</button>\`;
+  qs("star-slot").innerHTML = \`<button type="button" class="star-cta" aria-label="\${escapeHtml(t.starButtonLabel)}"><span class="star-icon" aria-hidden="true">\${starIcons.outline}</span><span class="star-label">\${escapeHtml(t.starOnGitHub)}</span>\${starCountHtml(starContext.starCount)}</button>\`;
   qs("star-row").hidden = false;
 };
 var starRepo = async (button) => {
@@ -3746,8 +5144,8 @@ var starRepo = async (button) => {
     return;
   }
   button.querySelector(".star-icon").innerHTML = starIcons.filled;
-  button.querySelector(".star-label").textContent = "Starred. Thank you.";
-  button.setAttribute("aria-label", "CC Safety Net starred on GitHub");
+  button.querySelector(".star-label").textContent = t.starred;
+  button.setAttribute("aria-label", t.starredLabel);
   button.classList.add("starred");
   renderStarPitch(true);
 };
@@ -3779,52 +5177,45 @@ var knownRuleIds = () => new Set([
   ...shared.policy?.destructiveCommandRules ?? [],
   ...shared.policy?.secretPatterns ?? []
 ].map((rule) => rule.id));
-var decisionLabel = (entry) => entry.failureStage ? "Error" : entry.decision === "allow" ? "Allowed" : "Blocked";
-var timeLabel = (ts) => new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-var dayLabel = (ts) => {
-  const date = new Date(ts).toDateString();
-  if (date === new Date().toDateString())
-    return "Today";
-  if (date === new Date(Date.now() - 86400000).toDateString())
-    return "Yesterday";
-  return new Date(ts).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric"
-  });
+var decisionLabel = (entry) => entry.failureStage ? t.decisionError : entry.decision === "allow" ? t.decisionAllowed : t.decisionBlocked;
+var reportFieldNames = {
+  title: t.reportNameTitle,
+  expected: t.reportNameExpected,
+  command: t.reportNameCommand,
+  entry: t.reportNameEntry
 };
-var ruleLink = (ruleId) => ruleId.startsWith("custom.") ? \`<a class="rule-id" href="#rules?focus=\${encodeURIComponent(ruleId)}" title="Show this custom rule">\${escapeHtml(ruleId)}</a>\` : knownRuleIds().has(ruleId) ? \`<a class="rule-id" href="#policy?q=\${encodeURIComponent(ruleId)}" title="Show this protection">\${escapeHtml(ruleId)}</a>\` : \`<code class="rule-id">\${escapeHtml(ruleId)}</code>\`;
+var ruleLink = (ruleId) => ruleId.startsWith("custom.") ? \`<a class="rule-id" href="#rules?focus=\${encodeURIComponent(ruleId)}" title="\${escapeHtml(t.showCustomRule)}">\${escapeHtml(ruleId)}</a>\` : knownRuleIds().has(ruleId) ? \`<a class="rule-id" href="#policy?q=\${encodeURIComponent(ruleId)}" title="\${escapeHtml(t.showProtection)}">\${escapeHtml(ruleId)}</a>\` : \`<code class="rule-id">\${escapeHtml(ruleId)}</code>\`;
 var entryCommand = (entry) => entry.segment || entry.command || "";
 var feedRowHtml = (entry, index) => {
   const blocked = entry.decision !== "allow";
   const command = entryCommand(entry);
   const agent = entry.agent && entry.agent !== "unknown" ? agentLabels[entry.agent] ?? entry.agent : "";
   const detailRows = [
-    entry.command && entry.command !== command ? ["Full command", \`<code class="block">\${escapeHtml(entry.command)}</code>\`] : null,
-    entry.reason && entry.reason !== "allowed" ? ["Reason", escapeHtml(entry.reason)] : null,
-    entry.ruleId ? ["Rule", ruleLink(entry.ruleId)] : null,
-    entry.cwd ? ["Folder", \`<code>\${escapeHtml(entry.cwd)}</code>\`] : null,
+    entry.command && entry.command !== command ? [t.detailFullCommand, \`<code class="block">\${escapeHtml(entry.command)}</code>\`] : null,
+    entry.reason && entry.reason !== "allowed" ? [t.detailReason, escapeHtml(entry.reason)] : null,
+    entry.ruleId ? [t.detailRule, ruleLink(entry.ruleId)] : null,
+    entry.cwd ? [t.detailFolder, \`<code>\${escapeHtml(entry.cwd)}</code>\`] : null,
     [
-      "Time",
-      \`\${escapeHtml(new Date(entry.ts).toLocaleString("en-US"))} (\${formatRelativeTime(entry.ts)})\`
+      t.detailTime,
+      \`\${escapeHtml(formatDateTime(entry.ts))} (\${escapeHtml(formatRelativeTime(entry.ts))})\`
     ]
   ].filter((row) => row !== null);
   return \`<li class="feed-row">
     <button type="button" class="feed-summary" aria-expanded="false" aria-controls="feed-detail-\${index}">
       <span class="chevron" aria-hidden="true"></span>
-      <time datetime="\${escapeHtml(entry.ts)}">\${escapeHtml(timeLabel(entry.ts))}</time>
+      <time datetime="\${escapeHtml(entry.ts)}">\${escapeHtml(formatClockTime(entry.ts))}</time>
       <span class="decision \${entry.failureStage ? "error" : blocked ? "deny" : "allow"}">\${decisionLabel(entry)}</span>
       <span class="feed-agent">\${escapeHtml(agent)}</span>
-      <code class="feed-command">\${escapeHtml(command || "(no command recorded)")}</code>
+      <code class="feed-command">\${escapeHtml(command || t.noCommandRecorded)}</code>
       <span class="feed-rule">\${escapeHtml(entry.ruleId ?? "")}</span>
     </button>
     <div class="feed-detail" id="feed-detail-\${index}" hidden>
-      <code class="block detail-command">\${escapeHtml(command || "(no command recorded)")}</code>
+      <code class="block detail-command">\${escapeHtml(command || t.noCommandRecorded)}</code>
       <div class="detail-actions">
-        \${blocked ? \`<button type="button" class="primary" data-report-fp="\${index}">Report false positive</button>\` : \`<button type="button" class="primary" data-block-future="\${index}">Block this in future</button>\`}
-        <button type="button" data-log-copy="\${index}">\${icons.copy}<span>Copy log entry</span></button>
+        \${blocked ? \`<button type="button" class="primary" data-report-fp="\${index}">\${escapeHtml(t.reportFalsePositive)}</button>\` : \`<button type="button" class="primary" data-block-future="\${index}">\${escapeHtml(t.blockInFuture)}</button>\`}
+        <button type="button" data-log-copy="\${index}">\${icons.copy}<span>\${escapeHtml(t.copyLogEntry)}</span></button>
       </div>
-      <dl class="detail-rows">\${detailRows.map(([term, value]) => \`<div><dt>\${term}</dt><dd>\${value}</dd></div>\`).join("")}</dl>
+      <dl class="detail-rows">\${detailRows.map(([term, value]) => \`<div><dt>\${escapeHtml(term)}</dt><dd>\${value}</dd></div>\`).join("")}</dl>
     </div>
   </li>\`;
 };
@@ -3832,17 +5223,17 @@ var renderControls = () => {
   if (!activity)
     return;
   const loaded = activity;
-  const segment = (value, label, count) => \`<button type="button" data-activity-decision="\${value}" aria-pressed="\${filters.decision === value}">\${label} <span class="count">\${formatCount(count)}</span></button>\`;
+  const segment = (value, label, count) => \`<button type="button" data-activity-decision="\${value}" aria-pressed="\${filters.decision === value}">\${escapeHtml(label)} <span class="count">\${formatCount(count)}</span></button>\`;
   qs("activity-decision").innerHTML = [
-    segment("deny", "Blocked", loaded.counts.blocked),
-    segment("allow", "Allowed", loaded.counts.allowed),
-    ...loaded.counts.errors > 0 ? [segment("error", "Errors", loaded.counts.errors)] : [],
-    ...suspects.size > 0 ? [segment("suspect", "Likely false positive", suspects.size)] : [],
-    segment("all", "All", loaded.totalInWindow)
+    segment("deny", t.decisionBlocked, loaded.counts.blocked),
+    segment("allow", t.decisionAllowed, loaded.counts.allowed),
+    ...loaded.counts.errors > 0 ? [segment("error", t.filterErrors, loaded.counts.errors)] : [],
+    ...suspects.size > 0 ? [segment("suspect", t.filterSuspect, suspects.size)] : [],
+    segment("all", t.filterAll, loaded.totalInWindow)
   ].join("");
   const agentNames = Object.keys(loaded.counts.agents).filter((name) => name !== "unknown").sort();
   qs("activity-agent").innerHTML = [
-    '<option value="all">All agents</option>',
+    \`<option value="all">\${escapeHtml(t.allAgents)}</option>\`,
     ...agentNames.map((name) => \`<option value="\${escapeHtml(name)}">\${escapeHtml(agentLabels[name] ?? name)} (\${formatCount(loaded.counts.agents[name] ?? 0)})</option>\`)
   ].join("");
   qs("activity-agent").value = filters.agent;
@@ -3850,17 +5241,17 @@ var renderControls = () => {
   const retained = retentionDays();
   qs("activity-days").innerHTML = [
     ...new Set([...[7, 30, 90, 180, 365].filter((days) => days < retained), retained, loaded.days])
-  ].sort((left, right) => left - right).map((days) => \`<option value="\${days}">Last \${dayCount(days)}</option>\`).join("");
+  ].sort((left, right) => left - right).map((days) => \`<option value="\${days}">\${escapeHtml(t.lastDaysOption(days))}</option>\`).join("");
   qs("activity-days").value = String(loaded.days);
   qs("activity-command-filter").hidden = !filters.command;
-  qs("activity-command-filter").innerHTML = filters.command ? \`Showing blocks of <code>\${escapeHtml(filters.command)}</code> <button type="button" class="quiet" data-clear-command>Show all blocks</button>\` : "";
+  qs("activity-command-filter").innerHTML = filters.command ? \`\${escapeHtml(t.showingBlocksOf)} <code>\${escapeHtml(filters.command)}</code> <button type="button" class="quiet" data-clear-command>\${escapeHtml(t.showAllBlocks)}</button>\` : "";
 };
 var emptyMessage = () => {
   if (filters.query || filters.command || filters.agent !== "all")
-    return "Nothing matches these filters.";
+    return escapeHtml(t.noFilterMatch);
   if (filters.decision === "deny")
-    return \`Nothing was blocked in the last \${dayCount(activity?.days ?? filters.days)}. <button type="button" class="quiet" data-activity-decision="all">Show all activity</button>\`;
-  return "No audit log entries match.";
+    return \`\${escapeHtml(t.nothingBlocked(activity?.days ?? filters.days))} <button type="button" class="quiet" data-activity-decision="all">\${escapeHtml(t.showAllActivity)}</button>\`;
+  return escapeHtml(t.noLogEntries);
 };
 var renderFeed = () => {
   if (!activity)
@@ -3868,27 +5259,27 @@ var renderFeed = () => {
   const entries = visibleEntries(activity.entries, filters, suspects);
   renderedEntries = entries;
   qs("activity-feed").innerHTML = entries.length === 0 ? \`<p class="empty">\${emptyMessage()}</p>\` : entries.map((entry, index) => {
-    const label = dayLabel(entry.ts);
+    const label = formatDayHeading(entry.ts);
     const previous = entries[index - 1];
-    const heading = previous && dayLabel(previous.ts) === label ? "" : \`\${index === 0 ? "" : "</ul>"}<h4 class="day-heading">\${escapeHtml(label)}</h4><ul class="feed-list">\`;
+    const heading = previous && formatDayHeading(previous.ts) === label ? "" : \`\${index === 0 ? "" : "</ul>"}<h4 class="day-heading">\${escapeHtml(label)}</h4><ul class="feed-list">\`;
     return heading + feedRowHtml(entry, index);
   }).join("") + "</ul>";
   qs("activity-count").textContent = [
-    \`Showing \${formatCount(entries.length)} of \${plural(activity.totalInWindow, "entry", "entries")} from the last \${dayCount(activity.days)}.\`,
-    activity.truncated ? "Only the newest 500 entries of each decision are loaded; narrow the time window to see older ones." : "",
-    activity.unreadable > 0 ? \`\${plural(activity.unreadable, "log file")} could not be read, so this list is incomplete.\` : ""
+    t.showingEntries(entries.length, activity.totalInWindow, activity.days),
+    activity.truncated ? t.activityTruncated : "",
+    activity.unreadable > 0 ? t.unreadableLogs(activity.unreadable) : ""
   ].filter(Boolean).join(" ");
 };
 var loadActivity = async () => {
   const result = await requestJson(\`/api/activity?days=\${filters.days}\`);
   if (!result.ok || !result.data) {
-    qs("activity-feed").innerHTML = \`<p class="empty">Could not load activity: \${escapeHtml(errorText(result))}</p>\`;
+    qs("activity-feed").innerHTML = \`<p class="empty">\${escapeHtml(t.couldNotLoadActivity(errorText(result)))}</p>\`;
     qs("activity-count").textContent = "";
     return;
   }
   activity = result.data;
   suspects = findSuspectEntries(activity.entries);
-  showPath("logs-path", activity.logsDir ?? "", activity.logsDir ? "" : "Not available");
+  showPath("logs-path", activity.logsDir ?? "", activity.logsDir ? "" : t.notAvailable);
   if (filters.agent !== "all" && !(filters.agent in activity.counts.agents))
     filters.agent = "all";
   if (filters.decision === "error" && activity.counts.errors === 0)
@@ -3946,8 +5337,8 @@ var openFalsePositiveForm = async () => {
   window.open(request.url, "_blank", "noopener");
   if (!copying)
     return;
-  const names = request.dropped.join(" and ");
-  notify("Report too long to prefill", "error", await copying ? \`The \${names} was copied to your clipboard. Paste it into the form on GitHub.\` : \`The \${names} was left out. Copy the log entry from Activity and paste it into the form on GitHub.\`);
+  const names = request.dropped.map((field) => reportFieldNames[field] ?? field).join(t.reportFieldJoiner);
+  notify(t.reportTooLong, "error", await copying ? t.reportFieldCopied(names, request.dropped.length) : t.reportFieldLeftOut(names, request.dropped.length));
 };
 var initActivity = () => {
   on("policy", () => {
@@ -4114,107 +5505,23 @@ var seedProjectDraft = (data) => {
   };
 };
 
-// src/gui/frontend/policy-summary.ts
-var safetyLevels = {
-  standard: [
-    "Standard",
-    "Blocks recognizable destructive commands and reading sensitive files. Recommended for normal coding."
-  ],
-  strict: [
-    "Strict",
-    "Also blocks commands it cannot fully parse and listing sensitive paths. Occasional false positives on advanced shell."
-  ],
-  paranoid: [
-    "Paranoid",
-    "Also blocks rm -rf inside your project and interpreter one-liners. Expect friction; for untrusted agents or high-stakes repos."
-  ]
-};
-var capabilityNames = {
-  fail_closed: ["Fail closed", "Block commands the parser cannot fully understand."],
-  paranoid_rm: ["Paranoid rm -rf checks", "Block rm -rf inside the project, except temp paths."],
-  paranoid_interpreters: [
-    "Paranoid interpreters",
-    "Block interpreter one-liners such as python -c."
-  ]
-};
-var levelName = (level) => safetyLevels[level][0];
-var tierForRule = (rule) => !rule.activationCapability ? "normal" : rule.activationCapability === "fail_closed" ? "strict" : "paranoid";
-var commandRuleGroups = (rules) => {
-  const alwaysOn = rules.filter((rule) => rule.catastrophic);
-  const configurable = rules.filter((rule) => !rule.catastrophic);
-  return [
-    ...alwaysOn.length > 0 ? [{ key: "always-on", title: "Always on", rules: alwaysOn }] : [],
-    ...[...new Set(configurable.map((rule) => rule.category))].map((category) => ({
-      key: category,
-      title: category,
-      rules: configurable.filter((rule) => rule.category === category)
-    }))
-  ];
-};
-var policyFiltersFromParams = (params) => ({
-  query: params.get("q") ?? "",
-  changedOnly: params.get("show") === "changed"
-});
-var policyHash = (filters) => viewHash("policy", [
-  ["q", filters.query, ""],
-  ["show", filters.changedOnly ? "changed" : "all", "all"]
-]);
-var ruleNote = (rule, effective, capabilities) => {
-  const capability = rule.activationCapability;
-  if (effective.source === "rule_override")
-    return "Changed by you";
-  if (effective.source === "capability_override" && capability)
-    return \`\${capabilityNames[capability][0]} forced \${effective.enabled ? "on" : "off"} in Advanced\`;
-  if (effective.source === "environment") {
-    const source = [...capability ? capabilities[capability]?.sources ?? [] : []].reverse().find((item) => item.startsWith("env "));
-    return source ? \`Set by environment: \${source.slice(4)}\` : "Set by environment";
-  }
-  if (effective.enabled || effective.source === "master_disabled")
-    return null;
-  return \`Needs the \${tierForRule(rule) === "strict" ? "Strict" : "Paranoid"} preset\`;
-};
-var policyChanges = (saved, draft, labels) => {
-  const onOff = (value) => value ? "on" : "off";
-  const overrideChanges = (before, after) => [...new Set([...Object.keys(before), ...Object.keys(after)])].filter((id) => before[id] !== after[id]).map((id) => \`\${labels[id] ?? id}: \${after[id] ?? "default"}\`);
-  const pathChanges = (name, before, after) => {
-    const added = after.filter((path) => !before.includes(path)).length;
-    const removed = before.filter((path) => !after.includes(path)).length;
-    if (added === 0 && removed === 0)
-      return null;
-    return \`\${name}: \${[added ? \`\${added} added\` : "", removed ? \`\${removed} removed\` : ""].filter(Boolean).join(", ")}\`;
-  };
-  return [
-    saved.safety.level === draft.safety.level ? null : \`Preset: \${levelName(saved.safety.level)} → \${levelName(draft.safety.level)}\`,
-    ...Object.keys(capabilityNames).filter((key) => saved.safety.overrides[key] !== draft.safety.overrides[key]).map((key) => {
-      const value = draft.safety.overrides[key];
-      return \`\${capabilityNames[key][0]}: \${value === undefined ? "from preset" : value ? "forced on" : "forced off"}\`;
-    }),
-    saved.workflow.worktree_mode === draft.workflow.worktree_mode ? null : \`Discarding changes in linked worktrees: \${draft.workflow.worktree_mode ? "allowed" : "blocked"}\`,
-    saved.destructive_command_protection.enabled === draft.destructive_command_protection.enabled ? null : \`Command protection: \${onOff(draft.destructive_command_protection.enabled)}\`,
-    saved.secret_protection.enabled === draft.secret_protection.enabled ? null : \`Secret protection: \${onOff(draft.secret_protection.enabled)}\`,
-    ...overrideChanges(saved.destructive_command_protection.overrides, draft.destructive_command_protection.overrides),
-    ...overrideChanges(saved.secret_protection.overrides, draft.secret_protection.overrides),
-    pathChanges("Allowed delete paths", saved.destructive_command_protection.allow_paths, draft.destructive_command_protection.allow_paths),
-    pathChanges("Always-blocked paths", saved.secret_protection.deny_paths, draft.secret_protection.deny_paths),
-    pathChanges("Secret pattern exemptions", saved.secret_protection.allow_paths, draft.secret_protection.allow_paths)
-  ].filter((change) => change !== null);
-};
-
 // src/gui/frontend/shortcuts.ts
 var textEntryTags = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 var isSearchShortcut = (event, target) => event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !textEntryTags.has(target.tagName) && !target.isContentEditable;
 
 // src/gui/frontend/views/policy.ts
 var secretCategoryNames = {
-  Basename: "Sensitive file names",
-  Pattern: "Sensitive file name patterns",
-  "Home path": "Sensitive home folders",
-  Variant: "Key file name variants",
-  Extension: "Sensitive file extensions",
-  "Extension pattern": "Sensitive extension patterns",
-  "Coding CLI credential": "Coding agent credentials",
-  "Coding CLI config": "Coding agent settings"
+  Basename: t.secretCategoryBasename,
+  Pattern: t.secretCategoryPattern,
+  "Home path": t.secretCategoryHomePath,
+  Variant: t.secretCategoryVariant,
+  Extension: t.secretCategoryExtension,
+  "Extension pattern": t.secretCategoryExtensionPattern,
+  "Coding CLI credential": t.secretCategoryCredential,
+  "Coding CLI config": t.secretCategoryConfig
 };
+var presets = safetyLevels(t);
+var capabilities = capabilityNames(t);
 var state;
 var draftPolicy;
 var preview = null;
@@ -4280,8 +5587,8 @@ var projectFieldChip = (field) => {
   if (!projectDraft)
     return "";
   if (!markedFields.has(field))
-    return '<span class="project-chip inherited">Inherited</span>';
-  return \`<button type="button" class="project-chip" data-unmark-field="\${escapeHtml(field)}" title="Set by this project. Click to stop setting it." aria-label="Set by project: \${escapeHtml(field)}. Activate to inherit again.">Project</button>\`;
+    return \`<span class="project-chip inherited">\${escapeHtml(t.inheritedChip)}</span>\`;
+  return \`<button type="button" class="project-chip" data-unmark-field="\${escapeHtml(field)}" title="\${escapeHtml(t.projectChipTitle)}" aria-label="\${escapeHtml(t.projectChipLabel(field))}">\${escapeHtml(t.projectChip)}</button>\`;
 };
 var projectChipSlots = [
   ["destructive-enabled-chip", "destructive_command_protection.enabled"],
@@ -4321,29 +5628,29 @@ var ruleLabels = () => Object.fromEntries([...state?.destructiveCommandRules ?? 
 var setBanner = () => {
   const saved = state;
   const notices = [
-    saved && !saved.policy.destructive_command_protection.enabled ? "Command protection is off: built-in destructive command rules are not enforced. Catastrophic and custom rules still apply." : null,
-    saved && !saved.policy.secret_protection.enabled ? "Secret protection is off: sensitive files and deny paths are not blocked." : null,
-    saved?.configState && saved.configState.state !== "ready" ? \`A fallback configuration is being enforced: \${saved.configState.reason}\` : null
+    saved && !saved.policy.destructive_command_protection.enabled ? t.commandProtectionOffBanner : null,
+    saved && !saved.policy.secret_protection.enabled ? t.secretProtectionOffBanner : null,
+    saved?.configState && saved.configState.state !== "ready" ? t.fallbackConfigBanner(saved.configState.reason) : null
   ].filter((notice) => notice !== null);
-  qs("protection-banner").innerHTML = notices.map((notice) => \`<p>\${escapeHtml(notice)}</p>\`).concat(notices.length > 0 && !location.hash.startsWith("#policy") ? ['<a href="#policy">Open Protections</a>'] : []).join("");
+  qs("protection-banner").innerHTML = notices.map((notice) => \`<p>\${escapeHtml(notice)}</p>\`).concat(notices.length > 0 && !location.hash.startsWith("#policy") ? [\`<a href="#policy">\${escapeHtml(t.openProtections)}</a>\`] : []).join("");
   qs("protection-banner").hidden = notices.length === 0;
 };
 var savedComparisonPolicy = () => projectDraft ? overlayProjectProposal(projectDraft.baseline, JSON.parse(projectDraft.snapshot)) : state?.policy;
 var renderSavebar = () => {
   qs("policy-savebar").hidden = !shared.dirty;
-  qs("save").textContent = projectDraft ? "Review and apply" : "Save";
+  qs("save").textContent = projectDraft ? t.reviewAndApply : t.save;
   if (!shared.dirty || !state)
     return;
-  const changes = policyChanges(savedComparisonPolicy(), draftPolicy, ruleLabels());
-  qs("savebar-title").textContent = changes.length === 0 ? "Unsaved changes" : plural(changes.length, "unsaved change");
-  qs("savebar-summary").textContent = changes.slice(0, 3).join("; ") + (changes.length > 3 ? \`; and \${changes.length - 3} more\` : "");
+  const changes = policyChanges(savedComparisonPolicy(), draftPolicy, ruleLabels(), t);
+  qs("savebar-title").textContent = changes.length === 0 ? t.unsavedChanges : t.unsavedChangeCount(changes.length);
+  qs("savebar-summary").textContent = changes.slice(0, 3).join(t.changeSeparator) + (changes.length > 3 ? t.moreChanges(changes.length - 3) : "");
 };
 var syncRawFromForm = () => {
   if (state?.errors.length)
     return;
   qs("raw").value = \`\${JSON.stringify(projectDraft ? collectProjectProposal(markedFields, draftPolicy) : collectFormPolicy(), null, 2)}
 \`;
-  qs("raw-source").textContent = projectDraft ? \`Only the fields set by this project. Written to \${projectDraft.path}.\` : "Read-only. Mirrors the settings above.";
+  qs("raw-source").textContent = projectDraft ? t.rawProjectFields(projectDraft.path) : t.rawReadOnly;
 };
 var updateDirtyStatus = () => {
   if (!state || state.errors.length)
@@ -4420,7 +5727,7 @@ var ruleRowHtml = (row) => \`<li class="rule-row\${row.disabled ? " row-disabled
     </div>
     \${row.info}
   </li>\`;
-var offCount = (off) => off > 0 ? \` · <span class="off-count">\${off} off</span>\` : "";
+var offCount = (off) => off > 0 ? \` · <span class="off-count">\${escapeHtml(t.offCount(off))}</span>\` : "";
 var renderDestructiveCommands = () => {
   if (!state || !preview)
     return;
@@ -4428,16 +5735,16 @@ var renderDestructiveCommands = () => {
   const query = searchQuery();
   const disabled = !draftPolicy.destructive_command_protection.enabled;
   const catastrophicCount = state.destructiveCommandRules.filter((rule) => rule.catastrophic).length;
-  qs("destructive-command-summary").textContent = disabled ? "Off. Built-in rules are not enforced; catastrophic and custom rules still apply. Your rule settings are kept." : \`\${preview.counts.enabled} on · \${preview.counts.disabled} off · \${catastrophicCount} always on\`;
+  qs("destructive-command-summary").textContent = disabled ? t.commandProtectionOffSummary : t.commandRuleSummary(preview.counts.enabled, preview.counts.disabled, catastrophicCount);
   qs("destructive-panel").classList.toggle("is-off", disabled);
   const visible = state.destructiveCommandRules.filter((rule) => matches(query, [rule.category, rule.label, rule.id, rule.description]) && (!showChangedOnly || destructiveChanged(rule)));
   const rowHtml = (rule) => {
-    const info = \`<button type="button" class="info-button" data-rule-example="\${escapeHtml(rule.id)}" aria-label="\${escapeHtml(\`About \${rule.label}\`)}" aria-haspopup="dialog" aria-controls="rule-example-popover">\${icons.info}</button>\`;
-    const heading = \`<span class="rule-name">\${escapeHtml(rule.label)}</span><code class="rule-id">\${escapeHtml(rule.id)}</code>\${tierForRule(rule) === "normal" ? "" : \`<span class="tier-badge \${tierForRule(rule)}">\${tierForRule(rule) === "strict" ? "Strict" : "Paranoid"}</span>\`}\`;
+    const info = \`<button type="button" class="info-button" data-rule-example="\${escapeHtml(rule.id)}" aria-label="\${escapeHtml(t.aboutRule(rule.label))}" aria-haspopup="dialog" aria-controls="rule-example-popover">\${icons.info}</button>\`;
+    const heading = \`<span class="rule-name">\${escapeHtml(rule.label)}</span><code class="rule-id">\${escapeHtml(rule.id)}</code>\${tierForRule(rule) === "normal" ? "" : \`<span class="tier-badge \${tierForRule(rule)}">\${escapeHtml(tierForRule(rule) === "strict" ? t.presetStrict : t.presetParanoid)}</span>\`}\`;
     if (rule.catastrophic)
       return ruleRowHtml({
         id: rule.id,
-        control: \`<span class="lock" title="Always on">\${icons.lock}</span>\`,
+        control: \`<span class="lock" title="\${escapeHtml(t.alwaysOn)}">\${icons.lock}</span>\`,
         heading,
         note: null,
         noteTone: "",
@@ -4454,21 +5761,21 @@ var renderDestructiveCommands = () => {
       id: rule.id,
       control: \`<input type="checkbox" class="switch" data-destructive-command-active="\${escapeHtml(rule.id)}" \${effective.enabled ? "checked" : ""} \${disabled ? "disabled" : ""} aria-label="\${escapeHtml(rule.label)}">\`,
       heading,
-      note: ruleNote(rule, effective, effectiveState.capabilities),
+      note: ruleNote(rule, effective, effectiveState.capabilities, t),
       noteTone: effective.source === "rule_override" ? "changed" : effective.source === "capability_override" || effective.source === "environment" ? "" : tierForRule(rule),
-      actions: \`\${override ? \`<button type="button" class="quiet small" data-use-inherited="\${escapeHtml(rule.id)}">Reset</button>\` : ""}\${projectFieldChip(\`destructive_command_protection.overrides.\${rule.id}\`)}\`,
+      actions: \`\${override ? \`<button type="button" class="quiet small" data-use-inherited="\${escapeHtml(rule.id)}">\${escapeHtml(t.reset)}</button>\` : ""}\${projectFieldChip(\`destructive_command_protection.overrides.\${rule.id}\`)}\`,
       description: rule.description,
       info,
       disabled
     });
   };
-  qs("destructive-command-rules").innerHTML = visible.length === 0 ? '<p class="empty">No command protections match.</p>' : commandRuleGroups(visible).map((group) => {
-    const all = commandRuleGroups(state?.destructiveCommandRules ?? []).find((entry) => entry.key === group.key)?.rules ?? [];
+  qs("destructive-command-rules").innerHTML = visible.length === 0 ? \`<p class="empty">\${escapeHtml(t.noCommandProtectionMatch)}</p>\` : commandRuleGroups(visible, t).map((group) => {
+    const all = commandRuleGroups(state?.destructiveCommandRules ?? [], t).find((entry) => entry.key === group.key)?.rules ?? [];
     const off = all.filter((rule) => effectiveState.rules[rule.id]?.enabled === false).length;
     return categoryHtml({
       key: \`destructive:\${group.key}\`,
       title: group.title,
-      counts: group.key === "always-on" ? \`\${plural(all.length, "rule")} · can't be turned off\` : \`\${plural(all.length, "rule")}\${offCount(off)}\`,
+      counts: group.key === "always-on" ? escapeHtml(\`\${t.ruleCount(all.length)} · \${t.cannotTurnOff}\`) : \`\${escapeHtml(t.ruleCount(all.length))}\${offCount(off)}\`,
       bulkSwitch: "",
       rowsHtml: group.rules.map(rowHtml).join("")
     });
@@ -4482,7 +5789,7 @@ var renderSecretPatterns = () => {
   const overrides = draftPolicy.secret_protection.overrides;
   const disabled = !draftPolicy.secret_protection.enabled;
   const offTotal = loaded.secretPatterns.filter((rule) => !secretRuleIsActive(rule, overrides)).length;
-  qs("secret-summary").textContent = disabled ? "Off. Sensitive files and deny paths are not blocked. Your rule settings and paths are kept." : \`\${loaded.secretPatterns.length - offTotal} on · \${offTotal} off\`;
+  qs("secret-summary").textContent = disabled ? t.secretProtectionOffSummary : t.secretRuleSummary(loaded.secretPatterns.length - offTotal, offTotal);
   qs("secret-panel").classList.toggle("is-off", disabled);
   const visible = loaded.secretPatterns.filter((rule) => matches(query, [
     rule.category,
@@ -4499,23 +5806,23 @@ var renderSecretPatterns = () => {
       id: rule.id,
       control: \`<input type="checkbox" class="switch" data-secret-active="\${escapeHtml(rule.id)}" \${active ? "checked" : ""} \${disabled ? "disabled" : ""} aria-label="\${escapeHtml(rule.label)}">\`,
       heading: \`<span class="rule-name">\${escapeHtml(rule.label)}</span>\`,
-      note: override ? "Changed by you" : rule.defaultOff ? "Off by default" : null,
+      note: override ? t.changedByYou : rule.defaultOff ? t.offByDefault : null,
       noteTone: override ? "changed" : "",
-      actions: \`\${override ? \`<button type="button" class="quiet small" data-secret-reset="\${escapeHtml(rule.id)}">Reset</button>\` : ""}\${projectFieldChip(\`secret_protection.overrides.\${rule.id}\`)}\`,
-      description: rule.description ?? (rule.paths ? plural(rule.paths.length, "path") : ""),
-      info: rule.paths ? \`<button type="button" class="info-button" data-secret-paths="\${escapeHtml(rule.id)}" aria-label="\${escapeHtml(\`Protected paths for \${rule.label}\`)}" aria-haspopup="dialog" aria-controls="rule-example-popover">\${icons.info}</button>\` : '<span class="info-spacer"></span>',
+      actions: \`\${override ? \`<button type="button" class="quiet small" data-secret-reset="\${escapeHtml(rule.id)}">\${escapeHtml(t.reset)}</button>\` : ""}\${projectFieldChip(\`secret_protection.overrides.\${rule.id}\`)}\`,
+      description: rule.description ?? (rule.paths ? t.pathCount(rule.paths.length) : ""),
+      info: rule.paths ? \`<button type="button" class="info-button" data-secret-paths="\${escapeHtml(rule.id)}" aria-label="\${escapeHtml(t.protectedPathsFor(rule.label))}" aria-haspopup="dialog" aria-controls="rule-example-popover">\${icons.info}</button>\` : '<span class="info-spacer"></span>',
       disabled
     });
   };
-  qs("secret-patterns").innerHTML = visible.length === 0 ? '<p class="empty">No secret protections match.</p>' : groupRules(visible).map((group) => {
+  qs("secret-patterns").innerHTML = visible.length === 0 ? \`<p class="empty">\${escapeHtml(t.noSecretProtectionMatch)}</p>\` : groupRules(visible).map((group) => {
     const all = loaded.secretPatterns.filter((rule) => rule.category === group.category);
     const on = all.filter((rule) => secretRuleIsActive(rule, overrides)).length;
     const title = secretCategoryNames[group.category] ?? group.category;
     return categoryHtml({
       key: \`secret:\${group.category}\`,
       title,
-      counts: \`\${plural(all.length, "rule")}\${offCount(on === 0 ? 0 : all.length - on)}\`,
-      bulkSwitch: \`<input type="checkbox" class="switch" data-secret-group-active="\${escapeHtml(group.category)}" \${on > 0 ? "checked" : ""} \${disabled ? "disabled" : ""} aria-label="\${escapeHtml(\`Turn all \${title} on or off\`)}" title="Turn all on or off">\`,
+      counts: \`\${escapeHtml(t.ruleCount(all.length))}\${offCount(on === 0 ? 0 : all.length - on)}\`,
+      bulkSwitch: \`<input type="checkbox" class="switch" data-secret-group-active="\${escapeHtml(group.category)}" \${on > 0 ? "checked" : ""} \${disabled ? "disabled" : ""} aria-label="\${escapeHtml(t.toggleGroup(title))}" title="\${escapeHtml(t.toggleAll)}">\`,
       rowsHtml: group.rules.map(rowHtml).join("")
     });
   }).join("");
@@ -4536,20 +5843,20 @@ var renderSafety = () => {
     ...new Set(Object.values(preview.capabilities).filter((capability) => capability.source === "environment").flatMap((capability) => capability.sources.filter((source) => source.startsWith("env "))))
   ] : [];
   qs("environment-overrides").hidden = environmentSources.length === 0;
-  qs("environment-overrides").textContent = environmentSources.length ? \`An environment variable raises protection beyond these settings: \${environmentSources.map((source) => source.slice(4)).join(", ")}\` : "";
-  qs("safety-level").innerHTML = Object.entries(safetyLevels).map(([level, meta]) => \`<label class="preset-card preset-\${level}"><input type="radio" name="safety-level" value="\${level}" \${draftPolicy.safety.level === level ? "checked" : ""}><span class="preset-name">\${meta[0]}</span><span class="preset-description">\${meta[1]}</span></label>\`).join("");
+  qs("environment-overrides").textContent = environmentSources.length ? t.environmentRaises(environmentSources.map((source) => source.slice(4)).join(", ")) : "";
+  qs("safety-level").innerHTML = Object.entries(presets).map(([level, meta]) => \`<label class="preset-card preset-\${level}"><input type="radio" name="safety-level" value="\${level}" \${draftPolicy.safety.level === level ? "checked" : ""}><span class="preset-name">\${escapeHtml(meta[0])}</span><span class="preset-description">\${escapeHtml(meta[1])}</span></label>\`).join("");
   const inherited = SAFETY_LEVEL_CAPABILITIES[draftPolicy.safety.level];
-  qs("safety-overrides").innerHTML = Object.entries(capabilityNames).map(([key, meta]) => {
+  qs("safety-overrides").innerHTML = Object.entries(capabilities).map(([key, meta]) => {
     const value = draftPolicy.safety.overrides[key];
-    return \`<div class="setting-row"><label class="setting-text" for="override-\${key}"><strong>\${meta[0]}</strong><small>\${meta[1]}</small></label>\${projectFieldChip(\`safety.overrides.\${key}\`)}<select id="override-\${key}" data-safety-override="\${key}">
-      <option value="inherit" \${value === undefined ? "selected" : ""}>From preset (\${inherited[key] ? "on" : "off"})</option>
-      <option value="true" \${value === true ? "selected" : ""}>Always on</option>
-      <option value="false" \${value === false ? "selected" : ""}>Always off</option>
+    return \`<div class="setting-row"><label class="setting-text" for="override-\${key}"><strong>\${escapeHtml(meta[0])}</strong><small>\${escapeHtml(meta[1])}</small></label>\${projectFieldChip(\`safety.overrides.\${key}\`)}<select id="override-\${key}" data-safety-override="\${key}">
+      <option value="inherit" \${value === undefined ? "selected" : ""}>\${escapeHtml(t.fromPresetOption(inherited[key]))}</option>
+      <option value="true" \${value === true ? "selected" : ""}>\${escapeHtml(t.alwaysOn)}</option>
+      <option value="false" \${value === false ? "selected" : ""}>\${escapeHtml(t.alwaysOff)}</option>
     </select></div>\`;
   }).join("");
-  qs("workflow").innerHTML = \`<div class="setting-row"><label class="setting-text" for="workflow-worktree"><strong>Allow discarding local changes in linked git worktrees</strong><small>Only relaxes the discard checks inside linked worktrees.</small></label>\${projectFieldChip("workflow.worktree_mode")}<input type="checkbox" class="switch" id="workflow-worktree" data-workflow-worktree \${draftPolicy.workflow.worktree_mode ? "checked" : ""}></div>\`;
+  qs("workflow").innerHTML = \`<div class="setting-row"><label class="setting-text" for="workflow-worktree"><strong>\${escapeHtml(t.worktreeDiscard)}</strong><small>\${escapeHtml(t.worktreeDiscardHelp)}</small></label>\${projectFieldChip("workflow.worktree_mode")}<input type="checkbox" class="switch" id="workflow-worktree" data-workflow-worktree \${draftPolicy.workflow.worktree_mode ? "checked" : ""}></div>\`;
   const customized = (preview?.counts.effectiveCustomizations ?? 0) > 0 || Object.entries(draftPolicy.safety.overrides).some(([key, value]) => value !== SAFETY_LEVEL_CAPABILITIES[draftPolicy.safety.level][key]);
-  qs("safety-preset-status").textContent = customized ? \`\${levelName(draftPolicy.safety.level)}, customized\` : "";
+  qs("safety-preset-status").textContent = customized ? t.presetCustomized(levelName(draftPolicy.safety.level, t)) : "";
 };
 var showRulePopover = (button, options) => {
   const popover = qs("rule-example-popover");
@@ -4585,7 +5892,7 @@ var createPathList = (prefix, config) => {
     qs(\`\${prefix}-add-button\`).disabled = disabled;
     qs(\`\${prefix}-list\`).innerHTML = paths.map((path, index) => \`<li class="path-item\${disabled ? " row-disabled" : ""}">
           <code>\${escapeHtml(path)}</code>
-          <button type="button" class="quiet icon-only" data-path-list="\${prefix}" data-path-remove="\${index}" \${disabled ? "disabled" : ""} aria-label="Remove \${escapeHtml(path)}">\${icons.remove}</button>
+          <button type="button" class="quiet icon-only" data-path-list="\${prefix}" data-path-remove="\${index}" \${disabled ? "disabled" : ""} aria-label="\${escapeHtml(t.removePath(path))}">\${icons.remove}</button>
         </li>\`).join("");
   };
   const claimForProject = () => {
@@ -4619,7 +5926,7 @@ var createPathList = (prefix, config) => {
       if (projectDraft !== scope)
         return;
       if (error) {
-        setHint(\`Not added: \${additions.join(", ")}. \${error}\`);
+        setHint(t.notAdded(additions.join(", "), error));
         if (claimed) {
           markedFields.delete(config.field);
           config.setPaths(previousPaths);
@@ -4633,7 +5940,7 @@ var createPathList = (prefix, config) => {
     config.setPaths([...current, ...additions.filter((entry) => !current.includes(entry))]);
     if (qs(\`\${prefix}-input\`).value === submitted)
       qs(\`\${prefix}-input\`).value = "";
-    setHint(duplicates.length ? \`Already listed: \${duplicates.join(", ")}\` : "");
+    setHint(duplicates.length ? t.alreadyListed(duplicates.join(", ")) : "");
     render();
     afterEdit(false);
     qs(\`\${prefix}-input\`).focus();
@@ -4710,7 +6017,7 @@ var refreshPolicyPreview = async () => {
   if (requestId !== previewRequestId)
     return;
   if (!result.ok || !result.data?.preview) {
-    notify("Preview failed", "error", errorText(result));
+    notify(t.previewFailed, "error", errorText(result));
     return;
   }
   preview = result.data.preview;
@@ -4735,18 +6042,18 @@ var runCommandTest = async () => {
   el.hidden = false;
   if (!result.ok) {
     el.className = "notice error";
-    el.textContent = \`Could not test this command: \${errorText(result)}\`;
+    el.textContent = t.couldNotTest(errorText(result));
     return;
   }
   if (result.data.result === "allowed") {
     el.className = "notice ok";
-    el.innerHTML = \`<strong>Allowed.</strong> No rule blocks this command. <a href="#rules?compose=\${encodeURIComponent(command)}">Create a rule to block it</a>\`;
+    el.innerHTML = \`\${t.testerAllowed} <a href="#rules?compose=\${encodeURIComponent(command)}">\${escapeHtml(t.createRuleToBlock)}</a>\`;
     return;
   }
   const ruleId = result.data.customRule?.id ?? result.data.ruleId;
-  const ruleHtml = !ruleId ? "" : result.data.customRule ? \` by <a class="rule-id" href="#rules?focus=\${encodeURIComponent(ruleId)}">\${escapeHtml(ruleId)}</a>\` : \` by <a class="rule-id" href="#policy?q=\${encodeURIComponent(ruleId)}">\${escapeHtml(ruleId)}</a>\`;
+  const ruleHtml = !ruleId ? "" : result.data.customRule ? \`<a class="rule-id" href="#rules?focus=\${encodeURIComponent(ruleId)}">\${escapeHtml(ruleId)}</a>\` : \`<a class="rule-id" href="#policy?q=\${encodeURIComponent(ruleId)}">\${escapeHtml(ruleId)}</a>\`;
   el.className = "notice error";
-  el.innerHTML = \`<strong>Blocked</strong>\${ruleHtml}. \${escapeHtml(result.data.reason || "")}\${result.data.segment && result.data.segment !== command ? \`<div class="tester-segment">Blocked part: <code>\${escapeHtml(result.data.segment)}</code></div>\` : ""}\`;
+  el.innerHTML = \`\${t.testerBlocked(ruleHtml)} \${escapeHtml(result.data.reason || "")}\${result.data.segment && result.data.segment !== command ? \`<div class="tester-segment">\${escapeHtml(t.blockedPart)} <code>\${escapeHtml(result.data.segment)}</code></div>\` : ""}\`;
 };
 var render2 = () => {
   if (!state)
@@ -4756,12 +6063,12 @@ var render2 = () => {
   preview = loaded.preview;
   shared.dirty = false;
   qs("policy-savebar").hidden = true;
-  showPath("policy-path", loaded.path, loaded.exists ? "" : " (not created yet)");
+  showPath("policy-path", loaded.path, loaded.exists ? "" : t.notCreatedYet);
   const projectPolicy = loaded.projectPolicy;
   qs("project-policy-row").hidden = !projectPolicy;
   showPath("project-policy-path", projectPolicy?.path ?? "");
   qs("project-policy-notice").hidden = !projectPolicy || projectPolicy.weakenings.length === 0;
-  qs("project-policy-notice").textContent = projectPolicy ? ["The project policy changes these settings:", ...projectPolicy.weakenings].join(\`
+  qs("project-policy-notice").textContent = projectPolicy ? [t.projectPolicyChanges, ...projectPolicy.weakenings].join(\`
 \`) : "";
   qs("app-version").textContent = loaded.version;
   qs("raw").value = loaded.errors.length ? loaded.raw : \`\${JSON.stringify(draftPolicy, null, 2)}
@@ -4776,7 +6083,7 @@ var render2 = () => {
   syncProjectChips();
   syncRawFromForm();
   if (loaded.errors.length)
-    qs("raw-source").textContent = "The file as it is on disk.";
+    qs("raw-source").textContent = t.rawOnDisk;
   updateActions();
   setBanner();
   emit("dirty");
@@ -4799,7 +6106,7 @@ var restoreDraft = () => {
   })();
   const isRecordField = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
   const isOptionalPathList = (value) => value === undefined || Array.isArray(value) && value.every((item) => typeof item === "string");
-  const isPolicyShape = isRecordField(parsed) && isRecordField(parsed.safety) && typeof parsed.safety.level === "string" && Object.hasOwn(safetyLevels, parsed.safety.level) && isRecordField(parsed.safety.overrides) && isRecordField(parsed.workflow) && isRecordField(parsed.destructive_command_protection) && isRecordField(parsed.destructive_command_protection.overrides) && isOptionalPathList(parsed.destructive_command_protection.allow_paths) && isRecordField(parsed.secret_protection) && isRecordField(parsed.secret_protection.overrides) && isOptionalPathList(parsed.secret_protection.deny_paths) && isOptionalPathList(parsed.secret_protection.allow_paths) && isRecordField(parsed.audit);
+  const isPolicyShape = isRecordField(parsed) && isRecordField(parsed.safety) && typeof parsed.safety.level === "string" && Object.hasOwn(presets, parsed.safety.level) && isRecordField(parsed.safety.overrides) && isRecordField(parsed.workflow) && isRecordField(parsed.destructive_command_protection) && isRecordField(parsed.destructive_command_protection.overrides) && isOptionalPathList(parsed.destructive_command_protection.allow_paths) && isRecordField(parsed.secret_protection) && isRecordField(parsed.secret_protection.overrides) && isOptionalPathList(parsed.secret_protection.deny_paths) && isOptionalPathList(parsed.secret_protection.allow_paths) && isRecordField(parsed.audit);
   if (!isPolicyShape || stored === JSON.stringify(state.policy)) {
     sessionStorage.removeItem("cc-safety-net-draft");
     return;
@@ -4811,12 +6118,12 @@ var restoreDraft = () => {
   draftPolicy = draft;
   renderPolicySections();
   refreshPolicyPreview();
-  notify("Restored your unsaved changes", "ok");
+  notify(t.restoredDraft, "ok");
 };
 var loadPolicy = async () => {
   const result = await requestJson("/api/policy");
   if (!result.ok || !result.data) {
-    notify("Could not load your policy", "error", errorText(result));
+    notify(t.couldNotLoadPolicy, "error", errorText(result));
     return false;
   }
   state = result.data;
@@ -4824,7 +6131,7 @@ var loadPolicy = async () => {
   render2();
   restoreDraft();
   if (state.errors.length)
-    notify("Your policy file needs repair", "error");
+    notify(t.statusRepair, "error");
   return true;
 };
 var writePolicy = async (path, body, failureTitle) => {
@@ -4843,7 +6150,7 @@ var renderProjectDraftBar = () => {
   qs("scope-user").setAttribute("aria-pressed", String(projectDraft === null));
   qs("project-draft-enter").setAttribute("aria-pressed", String(projectDraft !== null));
   qs("project-draft-bar").hidden = projectDraft === null;
-  qs("save").textContent = projectDraft ? "Review and apply" : "Save";
+  qs("save").textContent = projectDraft ? t.reviewAndApply : t.save;
   if (!projectDraft)
     return;
   qs("project-draft-path").textContent = projectDraft.path;
@@ -4866,15 +6173,15 @@ var exitProjectDraft = () => {
 var ingestProjectState = async (okStatus) => {
   const result = await requestJson("/api/policy/project");
   if (!result.ok || !result.data) {
-    notify("Project policy unavailable", "error", errorText(result));
+    notify(t.projectPolicyUnavailable, "error", errorText(result));
     return false;
   }
   const seeded = seedProjectDraft(result.data);
   if (!seeded) {
     exitProjectDraft();
     await loadPolicy();
-    notify("Repair your policy first", "error", [
-      "Your own policy file must be repaired before you can edit a project policy.",
+    notify(t.repairFirst, "error", [
+      t.repairBeforeProject,
       ...Array.isArray(result.data.userPolicyDiagnostics) ? result.data.userPolicyDiagnostics : []
     ].join(\`
 \`));
@@ -4900,18 +6207,18 @@ var enterProjectDraft = async () => {
   if (projectDraft)
     return;
   if (!state) {
-    notify("Your policy has not loaded yet", "error", "Reload the page.");
+    notify(t.policyNotLoaded, "error", t.reloadPage);
     return;
   }
   if (state.errors.length) {
-    notify("Repair your policy first", "error");
+    notify(t.repairFirst, "error");
     return;
   }
   if (shared.dirty) {
     if (!await confirmDialog({
-      title: "Discard unsaved changes?",
-      body: "A project policy starts from your saved policy. Save your changes first, or discard them here.",
-      confirmLabel: "Discard changes",
+      title: t.discardUnsavedTitle,
+      body: t.discardBeforeProject,
+      confirmLabel: t.discardChanges,
       confirmClass: ""
     }))
       return;
@@ -4919,20 +6226,20 @@ var enterProjectDraft = async () => {
     if (!await loadPolicy())
       return;
   }
-  await ingestProjectState("Editing the project policy");
+  await ingestProjectState(t.editingProjectPolicy);
 };
 var confirmDiscardProjectDraft = async (body) => !shared.dirty || await confirmDialog({
-  title: "Discard this project draft?",
+  title: t.discardDraftTitle,
   body,
-  confirmLabel: "Discard draft",
+  confirmLabel: t.discardDraft,
   confirmClass: ""
 });
 var changeProjectDirectory = async () => {
-  if (!await confirmDiscardProjectDraft("Switching folders discards this draft."))
+  if (!await confirmDiscardProjectDraft(t.switchFolderDiscards))
     return;
   const result = await requestJson("/api/policy/project/choose-directory", { method: "POST" });
   if (!result.ok) {
-    notify("Could not open the folder picker", "error", errorText(result));
+    notify(t.folderPickerFailed, "error", errorText(result));
     return;
   }
   if (result.data.error) {
@@ -4941,22 +6248,22 @@ var changeProjectDirectory = async () => {
   }
   if (result.data.cancelled)
     return;
-  await ingestProjectState("Editing the project policy");
+  await ingestProjectState(t.editingProjectPolicy);
 };
 var leaveProjectDraft = async () => {
   if (!projectDraft)
     return;
-  if (!await confirmDiscardProjectDraft("Your project changes have not been written anywhere yet."))
+  if (!await confirmDiscardProjectDraft(t.projectChangesUnwritten))
     return;
   exitProjectDraft();
   if (await loadPolicy())
-    notify("Back to your own policy", "ok");
+    notify(t.backToOwnPolicy, "ok");
 };
 var discardProjectDraft = async (draft) => {
   if (!await confirmDialog({
-    title: "Discard changes to this draft?",
-    body: "The draft goes back to the settings this project already has.",
-    confirmLabel: "Discard changes",
+    title: t.discardDraftChangesTitle,
+    body: t.discardDraftChangesBody,
+    confirmLabel: t.discardChanges,
     confirmClass: ""
   }))
     return;
@@ -4965,20 +6272,20 @@ var discardProjectDraft = async (draft) => {
   draftPolicy = overlayProjectProposal(draft.baseline, snapshot);
   renderPolicySections();
   refreshPolicyPreview();
-  notify("Changes discarded", "ok");
+  notify(t.changesDiscarded, "ok");
 };
 var handleStaleProjectDraft = async () => {
-  if (!await ingestProjectState("Project draft reloaded"))
+  if (!await ingestProjectState(t.projectDraftReloaded))
     return;
-  notify("The project folder changed", "error", "The draft was reloaded for the new folder. Review it again before applying.");
+  notify(t.projectFolderChanged, "error", t.projectFolderChangedBody);
 };
 var projectDiffHtml = (data) => {
   const rows = Array.isArray(data.rows) ? data.rows : [];
   const warnings = [
-    ...data.existingFileDiagnostics?.length ? ["The existing project policy file is invalid and will be replaced."] : [],
+    ...data.existingFileDiagnostics?.length ? [t.invalidProjectFile] : [],
     ...data.weakenings ?? []
   ];
-  return (rows.length === 0 ? '<p class="empty">No change to the effective policy.</p>' : \`<table class="diff-table"><thead><tr><th>Setting</th><th>Now</th><th>After</th></tr></thead><tbody>\${rows.map((row) => \`<tr><td><code>\${escapeHtml(row.field)}</code></td><td class="diff-before">\${escapeHtml(row.before ?? "(unset)")}</td><td class="diff-after">\${escapeHtml(row.after ?? "(unset)")}</td></tr>\`).join("")}</tbody></table>\`) + warnings.map((text) => \`<p class="notice warn">\${escapeHtml(text)}</p>\`).join("");
+  return (rows.length === 0 ? \`<p class="empty">\${escapeHtml(t.noEffectiveChange)}</p>\` : \`<table class="diff-table"><thead><tr><th>\${escapeHtml(t.diffSetting)}</th><th>\${escapeHtml(t.diffNow)}</th><th>\${escapeHtml(t.diffAfter)}</th></tr></thead><tbody>\${rows.map((row) => \`<tr><td><code>\${escapeHtml(row.field)}</code></td><td class="diff-before">\${escapeHtml(row.before ?? t.unset)}</td><td class="diff-after">\${escapeHtml(row.after ?? t.unset)}</td></tr>\`).join("")}</tbody></table>\`) + warnings.map((text) => \`<p class="notice warn">\${escapeHtml(text)}</p>\`).join("");
 };
 var reviewProjectDraft = async (draft) => {
   const proposal = collectProjectProposal(markedFields, draftPolicy);
@@ -4992,44 +6299,44 @@ var reviewProjectDraft = async (draft) => {
     return;
   }
   if (!diff.ok) {
-    notify("Review failed", "error", errorText(diff));
+    notify(t.reviewFailed, "error", errorText(diff));
     return;
   }
   if (JSON.stringify(collectProjectProposal(markedFields, draftPolicy)) !== serialized) {
-    notify("Review again", "error", "The draft changed while the review was loading.");
+    notify(t.reviewAgain, "error", t.draftChangedDuringReview);
     return;
   }
   if (!await confirmDialog({
-    title: "Apply this project policy?",
-    body: "Everyone who works in this project gets these settings on top of their own policy.",
+    title: t.applyProjectTitle,
+    body: t.applyProjectBody,
     detail: draft.path,
     rowsHtml: projectDiffHtml(diff.data),
-    confirmLabel: "Apply project policy",
+    confirmLabel: t.applyProject,
     confirmClass: "primary"
   }))
     return;
-  await runExclusive("Applying…", async () => {
+  await runExclusive(t.applyingStatus, async () => {
     const applied = await requestJson("/api/policy/project/apply", { method: "POST", body });
     if (applied.status === 409) {
       await handleStaleProjectDraft();
       return;
     }
     if (!isWriteSuccess(applied)) {
-      notify("Apply failed", "error", errorText(applied));
+      notify(t.applyFailed, "error", errorText(applied));
       return;
     }
     exitProjectDraft();
     if (await loadPolicy())
-      notify("Project policy applied", "ok", applied.data.path);
+      notify(t.projectApplied, "ok", applied.data.path);
   });
 };
 var save = () => {
   if (!state) {
-    notify("Your policy has not loaded yet", "error", "Reload the page.");
+    notify(t.policyNotLoaded, "error", t.reloadPage);
     return;
   }
   if (state.errors.length) {
-    notify("Repair your policy before saving", "error");
+    notify(t.repairBeforeSaving, "error");
     return;
   }
   if (projectDraft) {
@@ -5039,10 +6346,10 @@ var save = () => {
   if (!shared.dirty)
     return;
   const policy = collectFormPolicy();
-  runExclusive("Saving…", async () => {
-    const result = await writePolicy("/api/policy", JSON.stringify(policy), "Save failed");
+  runExclusive(t.savingStatus, async () => {
+    const result = await writePolicy("/api/policy", JSON.stringify(policy), t.saveFailed);
     if (result && await reloadAfterWrite())
-      notify("Policy saved", "ok", result.data.path);
+      notify(t.policySaved, "ok", result.data.path);
   });
 };
 var discard = async () => {
@@ -5051,44 +6358,44 @@ var discard = async () => {
     return;
   }
   if (!await confirmDialog({
-    title: "Discard unsaved changes?",
-    body: "Every change since your last save will be undone.",
-    confirmLabel: "Discard changes",
+    title: t.discardUnsavedTitle,
+    body: t.discardUnsavedBody,
+    confirmLabel: t.discardChanges,
     confirmClass: ""
   }))
     return;
-  await runExclusive("Discarding…", async () => {
+  await runExclusive(t.discardingStatus, async () => {
     sessionStorage.removeItem("cc-safety-net-draft");
     if (await loadPolicy())
-      notify("Changes discarded", "ok");
+      notify(t.changesDiscarded, "ok");
   });
 };
 var repair = async () => {
   if (!state?.errors.length)
     return;
   if (!await confirmDialog({
-    title: "Repair your policy file?",
-    body: "Valid settings are kept and invalid ones are dropped. If the JSON cannot be read at all, defaults are restored.",
+    title: t.repairTitle,
+    body: t.repairBody,
     detail: state.path,
-    confirmLabel: "Repair",
+    confirmLabel: t.repair,
     confirmClass: "primary"
   }))
     return;
-  await runExclusive("Repairing…", async () => {
-    const result = await writePolicy("/api/repair", "{}", "Repair failed");
+  await runExclusive(t.repairingStatus, async () => {
+    const result = await writePolicy("/api/repair", "{}", t.repairFailed);
     if (result && await reloadAfterWrite())
-      notify("Policy repaired", "ok", result.data.path);
+      notify(t.policyRepaired, "ok", result.data.path);
   });
 };
 var resetOverrides = async (section) => {
   if (Object.keys(draftPolicy[section].overrides).length === 0) {
-    notify("Nothing to reset: every rule already uses its default", "ok");
+    notify(t.nothingToReset, "ok");
     return;
   }
   if (!await confirmDialog({
-    title: "Reset every rule to its default?",
-    body: \`All \${section === "secret_protection" ? "secret" : "command"} rules go back to the setting their preset gives them. You can still discard before saving.\`,
-    confirmLabel: "Reset rules"
+    title: t.resetRulesTitle,
+    body: t.resetRulesBody(section === "secret_protection"),
+    confirmLabel: t.resetRules
   }))
     return;
   markedFields = new Set([...markedFields].filter((field) => !field.startsWith(\`\${section}.overrides.\`)));
@@ -5121,10 +6428,10 @@ var setSecretOverride = (rule, active) => {
 var toggleProtection = async (input) => {
   const secret = input.id === "secret-enabled";
   if (!input.checked && !await confirmDialog({
-    title: secret ? "Turn off secret protection?" : "Turn off command protection?",
-    body: secret ? "Sensitive files, coding agent credentials, and deny paths stop being blocked until you turn this back on." : "Built-in destructive git, filesystem, and execution rules stop blocking commands until you turn this back on.",
-    detail: secret ? undefined : "Catastrophic and custom rules still apply.",
-    confirmLabel: "Turn off"
+    title: secret ? t.turnOffSecretTitle : t.turnOffCommandTitle,
+    body: secret ? t.turnOffSecretBody : t.turnOffCommandBody,
+    detail: secret ? undefined : t.catastrophicStillApply,
+    confirmLabel: t.turnOff
   })) {
     input.checked = true;
     return;
@@ -5216,7 +6523,7 @@ var handleClick = (target) => {
   const example = state?.destructiveCommandRules.find((rule) => rule.id === target.closest("[data-rule-example]")?.dataset.ruleExample);
   if (example) {
     showRulePopover(target.closest("[data-rule-example]"), {
-      label: example.catastrophic ? "Always on" : example.category,
+      label: example.catastrophic ? t.alwaysOn : example.category,
       title: example.label,
       description: example.description,
       body: example.example
@@ -5226,7 +6533,7 @@ var handleClick = (target) => {
   const secretPaths = state?.secretPatterns.find((rule) => rule.id === target.closest("[data-secret-paths]")?.dataset.secretPaths);
   if (secretPaths?.paths) {
     showRulePopover(target.closest("[data-secret-paths]"), {
-      label: "Protected paths",
+      label: t.protectedPaths,
       title: secretPaths.label,
       description: "",
       body: secretPaths.paths.join(\`
@@ -5279,7 +6586,7 @@ var showPolicy = (params) => {
   document.querySelector(\`[data-rule-row="\${CSS.escape(next.query)}"]\`)?.scrollIntoView({ block: "center" });
 };
 var setRawCopyLabel = () => {
-  qs("raw-copy").innerHTML = \`\${icons.copy}<span>Copy</span>\`;
+  qs("raw-copy").innerHTML = \`\${icons.copy}<span>\${escapeHtml(t.copy)}</span>\`;
 };
 var initPolicy = () => {
   setRawCopyLabel();
@@ -5399,6 +6706,11 @@ var requested = false;
 var scope = "project";
 var pendingFocus = null;
 var directoryPickerFailed = false;
+var exampleRequests = {
+  suggest: t.exampleSuggestRequest,
+  block: t.exampleBlockRequest,
+  verify: t.exampleVerifyRequest
+};
 var showPathEnd = () => {
   const input = qs("rules-project-path");
   input.title = input.value;
@@ -5416,18 +6728,18 @@ var render3 = () => {
   pathInput.readOnly = canPick;
   qs("rules-choose-directory").hidden = !canPick;
   showPathEnd();
-  qs("rules-list").innerHTML = loaded.rulebooks.length === 0 ? loaded.errors.length > 0 ? '<p class="empty">Every rulebook was skipped because of errors, so no custom rule is enforced. See Problems above.</p>' : '<p class="empty">No custom rules yet. Use <strong>Create a rule</strong> below, or run <code>npx -y cc-safety-net rule init</code>.</p>' : loaded.rulebooks.map((rulebook) => \`<section class="rulebook">
+  qs("rules-list").innerHTML = loaded.rulebooks.length === 0 ? loaded.errors.length > 0 ? \`<p class="empty">\${escapeHtml(t.allRulebooksSkipped)}</p>\` : \`<p class="empty">\${t.noCustomRules}</p>\` : loaded.rulebooks.map((rulebook) => \`<section class="rulebook">
     <div class="rulebook-head">
       <strong>\${escapeHtml(rulebook.name)}</strong>
       <span class="count">v\${escapeHtml(rulebook.version)}</span>
-      <span>\${rulebook.source === "user" ? "All projects" : "This project"}</span>
-      <span>\${plural(rulebook.rules.length, "rule")}</span>
+      <span>\${rulebook.source === "user" ? t.allProjects : t.thisProject}</span>
+      <span>\${t.ruleCount(rulebook.rules.length)}</span>
       \${rulebook.spec === rulebook.name ? "" : \`<code>\${escapeHtml(rulebook.spec)}</code>\`}
     </div>
     <ul class="card rows">\${rulebook.rules.map((rule) => \`<li class="setting-row rulebook-rule\${pendingFocus === rule.name ? " focused" : ""}">
       <div class="rulebook-rule-head"><code class="command">\${escapeHtml([rule.command, rule.subcommand].filter(Boolean).join(" "))}</code><code class="rule-id">custom.\${escapeHtml(rule.name)}</code></div>
       <p>\${escapeHtml(rule.reason)}</p>
-      <p class="muted">Blocks when any of these arguments is present: \${rule.block_args.map((arg) => \`<code>\${escapeHtml(arg)}</code>\`).join(" ")}</p>
+      <p class="muted">\${t.blocksWhenArgument} \${rule.block_args.map((arg) => \`<code>\${escapeHtml(arg)}</code>\`).join(" ")}</p>
     </li>\`).join("")}</ul>
   </section>\`).join("");
   const diagnostics = [
@@ -5442,14 +6754,14 @@ var render3 = () => {
   if (focused)
     focused.scrollIntoView({ block: "center" });
   if (!focused)
-    notify(\`custom.\${pendingFocus} is not in any rulebook\`, "error");
+    notify(t.customRuleMissing(\`custom.\${pendingFocus}\`), "error");
   pendingFocus = null;
 };
 var loadRules = async () => {
   requested = true;
   const result = await requestJson("/api/rules");
   if (!result.ok || !Array.isArray(result.data?.rulebooks)) {
-    qs("rules-list").innerHTML = \`<p class="empty">Could not load rules: \${escapeHtml(errorText(result))}</p>\`;
+    qs("rules-list").innerHTML = \`<p class="empty">\${escapeHtml(t.couldNotLoadRules(errorText(result)))}</p>\`;
     rulesData = null;
     requested = false;
     qs("rules-diagnostics-panel").hidden = true;
@@ -5500,32 +6812,32 @@ var chooseProjectDirectory = async (button) => {
   directoryPickerFailed = true;
   qs("rules-project-path").readOnly = false;
   button.hidden = true;
-  notify("The folder picker is not available", "error", \`\${result.ok ? result.data.error : errorText(result)}. Type the project folder instead.\`);
+  notify(t.folderPickerUnavailable, "error", t.typeFolderInstead(result.ok ? result.data.error : errorText(result)));
 };
 var copyRulePrompt = async (button) => {
   const request = qs("rules-composer-input").value;
   const projectPath = qs("rules-project-path").value;
   if (!rulesData) {
-    notify("Rules have not loaded yet", "error", "Click Refresh and try again.");
+    notify(t.rulesNotLoaded, "error", t.refreshAndRetry);
     return;
   }
   if (!request.trim()) {
-    notify("Describe what should be blocked first", "error");
+    notify(t.describeRuleFirst, "error");
     return;
   }
   if (scope === "project" && !projectPath.trim()) {
-    notify("Enter the project folder the rule belongs to", "error");
+    notify(t.enterProjectFolder, "error");
     return;
   }
   button.disabled = true;
   const copied = await navigator.clipboard.writeText(rulePromptText({ rulesData, rulesScope: scope, projectPath, request })).then(() => true, () => false);
   button.disabled = false;
   if (!copied) {
-    notify("Copy failed", "error");
+    notify(t.copyFailed, "error");
     return;
   }
   qs("rules-composer-input").value = "";
-  notify("Prompt copied", "ok", "Paste it into your coding agent.");
+  notify(t.promptCopied, "ok", t.pasteIntoAgent);
 };
 var initRules = () => {
   qs("rules-refresh").addEventListener("click", (event) => {
@@ -5547,7 +6859,7 @@ var initRules = () => {
     }
     const example = target.closest("[data-rules-example]");
     if (example)
-      qs("rules-composer-input").value = example.dataset.rulesExample ?? "";
+      qs("rules-composer-input").value = exampleRequests[example.dataset.rulesExample ?? ""] ?? "";
   });
 };
 
@@ -5559,37 +6871,46 @@ var applyTheme = (theme) => {
     button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
   });
 };
+var savedTheme = guiData.preferences.theme ?? "auto";
+var chooseTheme = async (theme) => {
+  applyTheme(theme);
+  if (await savePreference({ theme })) {
+    savedTheme = theme;
+    return;
+  }
+  applyTheme(savedTheme);
+};
 var renderRetention = () => {
   const days = shared.policy?.policy.audit.retention_days;
   if (days === undefined)
     return;
   qs("retention-days").value = String(days);
-  qs("retention-unit").textContent = days === 1 ? "day" : "days";
+  qs("retention-unit").textContent = t.dayUnit(days);
 };
-var blockedBy = () => (shared.policy?.errors.length ?? 0) > 0 ? "Repair your policy file in Protections first." : shared.drafting ? "Apply or leave your project policy draft first." : shared.dirty ? "Save or discard your unsaved Protections changes first." : null;
+var blockedBy = () => (shared.policy?.errors.length ?? 0) > 0 ? t.repairInProtectionsFirst : shared.drafting ? t.leaveProjectDraftFirst : shared.dirty ? t.saveProtectionsFirst : null;
 var saveRetentionDays = async (days) => {
   const saved = shared.policy;
   if (!saved)
     return;
   const current = saved.policy.audit.retention_days;
-  const problem = !Number.isInteger(days) || days < MIN_AUDIT_RETENTION_DAYS || days > MAX_AUDIT_RETENTION_DAYS ? \`Enter a whole number of days from \${MIN_AUDIT_RETENTION_DAYS} to \${MAX_AUDIT_RETENTION_DAYS}.\` : blockedBy();
+  const problem = !Number.isInteger(days) || days < MIN_AUDIT_RETENTION_DAYS || days > MAX_AUDIT_RETENTION_DAYS ? t.retentionRange(MIN_AUDIT_RETENTION_DAYS, MAX_AUDIT_RETENTION_DAYS) : blockedBy();
   if (problem) {
     renderRetention();
-    notify("Retention unchanged", "error", problem);
+    notify(t.retentionUnchanged, "error", problem);
     return;
   }
   if (days === current)
     return;
   if (days < current && !await confirmDialog({
-    title: \`Keep logs for only \${dayCount(days)}?\`,
-    body: \`Log entries older than \${dayCount(days)} are deleted on the next cleanup and cannot be recovered.\`,
+    title: t.shortenRetentionTitle(days),
+    body: t.shortenRetentionBody(days),
     detail: qs("logs-path").textContent ?? "",
-    confirmLabel: "Shorten retention"
+    confirmLabel: t.shortenRetention
   })) {
     renderRetention();
     return;
   }
-  await runExclusive("Saving…", async () => {
+  await runExclusive(t.savingStatus, async () => {
     const policy = clonePolicy(saved.policy);
     policy.audit.retention_days = days;
     const result = await requestJson("/api/policy", {
@@ -5598,14 +6919,14 @@ var saveRetentionDays = async (days) => {
     });
     if (!isWriteSuccess(result)) {
       renderRetention();
-      notify("Save failed", "error", errorText(result));
+      notify(t.saveFailed, "error", errorText(result));
       return;
     }
     if (!await loadPolicy())
       return;
     limitActivityDays(days);
     await Promise.all([loadOverview(), loadActivity()]);
-    notify(\`Logs are now kept for \${dayCount(days)}\`, "ok");
+    notify(t.retentionSaved(days), "ok");
   });
 };
 var resetPolicy = async () => {
@@ -5613,45 +6934,39 @@ var resetPolicy = async () => {
   if (!saved)
     return;
   if (shared.drafting) {
-    notify("Reset unavailable", "error", "Apply or leave your project policy draft first.");
+    notify(t.resetUnavailable, "error", t.leaveProjectDraftFirst);
     return;
   }
   if (!await confirmDialog({
-    title: "Reset your policy?",
-    body: "Your policy file is replaced with the defaults. Every customization is lost.",
+    title: t.resetPolicyTitle,
+    body: t.resetPolicyBody,
     detail: saved.path,
-    confirmLabel: "Reset policy"
+    confirmLabel: t.resetPolicy
   }))
     return;
-  await runExclusive("Resetting…", async () => {
+  await runExclusive(t.resettingStatus, async () => {
     const result = await requestJson("/api/reset", { method: "POST", body: "{}" });
     if (!isWriteSuccess(result)) {
-      notify("Reset failed", "error", errorText(result));
+      notify(t.resetFailed, "error", errorText(result));
       return;
     }
     sessionStorage.removeItem("cc-safety-net-draft");
     if (await loadPolicy())
-      notify("Policy reset to the defaults", "ok", result.data.path);
+      notify(t.policyReset, "ok", result.data.path);
   });
 };
 var initSettings = () => {
   document.querySelectorAll("[data-copy-path]").forEach((button) => {
-    button.innerHTML = \`\${icons.copy}<span>Copy</span>\`;
+    button.innerHTML = \`\${icons.copy}<span>\${escapeHtml(t.copy)}</span>\`;
     button.addEventListener("click", () => {
       copyText(button, qs(button.dataset.copyPath ?? "").dataset.path ?? "");
     });
   });
-  const stored = localStorage.getItem("cc-safety-net-theme");
-  applyTheme(themes.includes(stored) ? stored : "auto");
+  applyTheme(savedTheme);
   qs("settings-theme").addEventListener("click", (event) => {
     const theme = event.target.closest("[data-theme-choice]")?.dataset.themeChoice;
-    if (!theme)
-      return;
-    if (theme === "auto")
-      localStorage.removeItem("cc-safety-net-theme");
-    if (theme !== "auto")
-      localStorage.setItem("cc-safety-net-theme", theme);
-    applyTheme(theme);
+    if (themes.includes(theme))
+      chooseTheme(theme);
   });
   qs("retention-days").addEventListener("change", (event) => {
     saveRetentionDays(Number(event.target.value));
@@ -5663,17 +6978,31 @@ var initSettings = () => {
 };
 
 // src/gui/frontend/main.ts
+var translatedAttributes = ["title", "aria-label", "placeholder"];
+var translatePage = () => {
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t[element.dataset.i18n];
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((element) => {
+    element.innerHTML = t[element.dataset.i18nHtml];
+  });
+  translatedAttributes.forEach((attribute) => {
+    document.querySelectorAll(\`[data-i18n-\${attribute}]\`).forEach((element) => {
+      element.setAttribute(attribute, t[element.getAttribute(\`data-i18n-\${attribute}\`)]);
+    });
+  });
+};
 var views = {
-  overview: ["Overview", () => {
+  overview: [t.navOverview, () => {
     return;
   }],
-  activity: ["Activity", showActivity],
-  policy: ["Protections", showPolicy],
-  rules: ["Custom rules", showRules],
-  integrations: ["Agents", () => {
+  activity: [t.navActivity, showActivity],
+  policy: [t.navProtections, showPolicy],
+  rules: [t.navCustomRules, showRules],
+  integrations: [t.navAgents, () => {
     return;
   }],
-  settings: ["Settings", () => {
+  settings: [t.navSettings, () => {
     return;
   }]
 };
@@ -5693,6 +7022,7 @@ var applyView = () => {
   window.scrollTo({ top: 0 });
   views[view][1](new URLSearchParams(query));
 };
+translatePage();
 initConfirmDialog();
 initOverview();
 initActivity();
@@ -5701,6 +7031,19 @@ initRules();
 initIntegrations();
 initSettings();
 qs("toast-close").addEventListener("click", () => notify(""));
+document.querySelectorAll("[data-language-select]").forEach((select) => {
+  select.value = locale;
+  select.addEventListener("change", () => {
+    const language = select.value;
+    if (!locales.includes(language) || language === locale)
+      return;
+    savePreference({ language }).then((saved) => {
+      if (saved)
+        location.reload();
+      select.value = locale;
+    });
+  });
+});
 on("dirty", () => {
   qs("nav-dirty").hidden = !shared.dirty;
 });
@@ -5720,6 +7063,7 @@ loadPolicy().then((loaded) => {
   </script>
 </body>
 </html>
-`;var Wp='<script id="ccsn-data" type="application/json">';function zp(_,L=Jp){return L.replace(Wp,()=>Wp+JSON.stringify({token:_}).replaceAll("<","\\u003c"))}var Gs="kenryu42/cc-safety-net",dk=`https://github.com/${Gs}`,ef=1e4,uk=7,pk="The project draft directory changed; reload the draft before applying.",fk="audit settings are user scope only; remove the audit section from a project proposal";async function nf(_,L={}){let j=mn({label:"gui",booleans:{noOpen:["--no-open"]}},_),Y=L.log??console.log,Z=L.error??console.error;if(j.errors.length>0){for(let se of j.errors)Z(se);return Z("Usage: cc-safety-net gui [--no-open]"),1}let oe=await mk(c,L);if(Y(`CC Safety Net policy GUI: ${oe.url}`),!j.flags.noOpen)try{await(L.openBrowser??Pk)(oe.url)}catch(se){Z(`Failed to open browser: ${se instanceof Error?se.message:String(se)}`),Z(`Open this URL manually: ${oe.url}`)}if(L.keepAlive===!1)return await oe.close(),0;return await Sk(oe),0}async function mk(_,L={}){let j=sk(24).toString("base64url"),Y={dir:null,revision:0},Z=lk((fe,ge)=>{gk(_,fe,ge,j,L,Y)});await new Promise((fe,ge)=>{Z.once("error",ge),Z.listen(0,"127.0.0.1",()=>{Z.off("error",ge),fe()})});let se=`http://127.0.0.1:${Z.address().port}`;return{origin:se,token:j,url:`${se}/?token=${encodeURIComponent(j)}`,close:()=>xk(Z)}}async function gk(_,L,j,Y,Z,oe){let se=_(),fe=new URL(L.url??"/","http://127.0.0.1");if(L.method==="GET"&&fe.pathname==="/favicon.ico"){j.writeHead(204,{"cache-control":"no-store"}),j.end();return}if(!wk(L,fe,Y)){rn(j,403,{error:"Forbidden"});return}if(L.method==="GET"&&fe.pathname==="/"){await Promise.resolve(Z.buildDocument?.()).then((ge)=>Ck(j,zp(Y,ge)),(ge)=>rn(j,500,{error:ge instanceof Error?ge.message:String(ge)}));return}if(L.method==="GET"&&fe.pathname==="/api/policy"){let ge=Ou(se,Z),Pe=R(se,Us(Z));rn(j,200,{...ge,configState:Ve(Pe),...Pe.policyScopes?{projectPolicy:{path:h(Z.cwd??process.cwd()),weakenings:Pe.policyScopes.weakeningsIgnored?[]:Pe.policyScopes.weakenings}}:{},destructiveCommandRules:V,secretPatterns:dt,version:pn(),preview:ge.errors.length>0?null:We(ge.policy,se.env)});return}if(L.method==="POST"&&fe.pathname==="/api/policy/preview"){let ge=await Er(L);if(!ge.ok){rn(j,ge.status,{errors:[ge.error]});return}let Pe=$u(se,ge.value);rn(j,Pe.errors.length>0?400:200,Pe);return}if(L.method==="POST"&&fe.pathname==="/api/policy/explain"){let ge=await Er(L);if(!ge.ok){rn(j,ge.status,{errors:[ge.error]});return}let Pe=ge.value;if(Pe===null||typeof Pe.command!=="string"){rn(j,400,{errors:["command must be a string"]});return}let Ee=kr(Pe.policy,se.home);if(Ee.length>0){rn(j,400,{errors:Ee});return}rn(j,200,vk(se,Pe.command,Pe.policy,Z));return}if(L.method==="POST"&&fe.pathname==="/api/policy"){let ge=await Er(L);if(!ge.ok){rn(j,ge.status,{errors:[ge.error]});return}let Pe=Fn(se,ge.value,Z);rn(j,Pe.errors.length>0?400:200,Pe);return}if(L.method==="POST"&&fe.pathname==="/api/reset"){rn(j,200,Fn(se,ne,Z));return}if(L.method==="POST"&&fe.pathname==="/api/repair"){rn(j,200,Du(se,Z));return}if(L.method==="POST"&&fe.pathname==="/api/policy/project/choose-directory"){let ge=await(Z.chooseDirectory??Ms)();if("path"in ge)oe.dir=ge.path,oe.revision+=1;rn(j,200,{cancelled:"cancelled"in ge,..."error"in ge?{error:ge.error}:{}});return}if(L.method==="GET"&&fe.pathname==="/api/policy/project"){let ge=tf(oe,Z),Pe=rf(se,ge,Z),Ee=Pe?{projection:{},diagnostics:[Pe]}:Yp(ge,se.home),Re=Cr(se,Z);rn(j,200,{path:h(ge),revision:oe.revision,baseline:Re.baseline,userPolicyDiagnostics:Re.diagnostics,projection:Ee.projection,projectionDiagnostics:Ee.diagnostics,canPickDirectory:Fs(process.platform,process.env)});return}if(L.method==="POST"&&fe.pathname==="/api/policy/project/diff"){let ge=await Zp(se,L,j,oe,Z);if(!ge)return;let Pe=Yp(ge.dir,se.home),Ee=Cr(se,Z).baseline,Re=te(Ee,pe(ge.proposal,se.home).policy);rn(j,200,{rows:Eo(te(Ee,Pe.projection).policy,Re.policy,!1),weakenings:Re.weakenings,existingFileDiagnostics:Pe.diagnostics});return}if(L.method==="POST"&&fe.pathname==="/api/policy/project/apply"){let ge=await Zp(se,L,j,oe,Z);if(!ge)return;let Pe=hk(ge.dir,ge.proposal,se.home);rn(j,Pe.errors.length>0?500:200,Pe);return}if(L.method==="GET"&&fe.pathname==="/api/activity"){let ge=ie(se,Z),Pe=bk(fe.searchParams.get("days"),ge);if(Pe===null){rn(j,400,{error:`days must be an integer between 1 and ${ge}`});return}rn(j,200,Bp(se,Pe,Z.activityLogsDir));return}if(L.method==="POST"&&fe.pathname==="/api/rules/choose-directory"){rn(j,200,await Ms());return}if(L.method==="GET"&&fe.pathname==="/api/rules"){let ge=ee(se,Us(Z)),Pe=new Map(ge.rules.map((Ee)=>[Ee.name,Ee]));rn(j,200,{projectPath:Z.cwd??process.cwd(),canPickDirectory:Fs(process.platform,process.env),rulebooks:ge.rulebooks.map((Ee)=>({source:Ee.source,spec:Ee.spec,name:Ee.name,version:Ee.version,rules:Ee.rules.flatMap((Re)=>{let Le=Pe.get(Re);if(!Le)return[];return[{name:Le.name,command:Le.command,subcommand:Le.subcommand,block_args:Le.block_args,reason:Le.reason}]})})),errors:ge.errors,warnings:ge.warnings});return}if(L.method==="GET"&&fe.pathname==="/api/star/context"){rn(j,200,await(Z.fetchStarContext??(()=>Ak(se,{logsDir:Z.activityLogsDir})))());return}if(L.method==="POST"&&fe.pathname==="/api/star"){let ge=await(Z.starRepo??Ek)();rn(j,200,ge.ok?{ok:!0}:{ok:!1,fallbackUrl:dk});return}if(L.method==="GET"&&fe.pathname==="/api/integrations"){rn(j,200,await(Z.fetchIntegrations??(()=>Rk(se)))());return}if(L.method==="GET"&&fe.pathname==="/api/health"){rn(j,200,await(Z.fetchHealth??Tk)());return}if(L.method==="POST"&&(fe.pathname==="/api/install"||fe.pathname==="/api/uninstall")){let ge=await Er(L);if(!ge.ok){rn(j,ge.status,{errors:[ge.error]});return}let Pe=ge.value?.target;if(typeof Pe!=="string"||!On.some((Re)=>Re.target===Pe)){rn(j,400,{error:"unknown target"});return}let Ee=fe.pathname==="/api/install"?"install":"uninstall";rn(j,200,await(Z.runIntegration??Ik)(Ee,Pe));return}rn(j,404,{error:"Not found"})}function Us(_){return{..._,cwd:_.cwd??process.cwd()}}function tf(_,L){return _.dir??L.cwd??process.cwd()}function rf(_,L,j){if(!O(_,{...j,cwd:L}))return null;return`${h(L)} is the user policy, not a project policy; choose a project directory, or run the GUI from one`}function Yp(_,L){let j=h(_),Y=ak(j)?$t(j):{value:void 0,errors:[]},Z=pe(Y.value,L);return{projection:Z.policy,diagnostics:[...Y.errors,...Z.diagnostics]}}async function Zp(_,L,j,Y,Z){let oe=tf(Y,Z),se=Y.revision,fe=await Er(L);if(!fe.ok)return rn(j,fe.status,{errors:[fe.error]}),null;let ge=fe.value;if(typeof ge?.revision!=="number")return rn(j,400,{errors:["revision must be a number"]}),null;if(ge.revision!==se)return rn(j,409,{errors:[pk]}),null;let Pe=rf(_,oe,Z);if(Pe)return rn(j,400,{errors:[Pe]}),null;let Ee=yk(ge.proposal,_.home);if(Ee.length>0)return rn(j,400,{errors:Ee}),null;return{dir:oe,proposal:ge.proposal}}function yk(_,L){let j=kr(_,L);if(j.length>0)return j;return _?.audit===void 0?[]:[fk]}function hk(_,L,j){let Y=h(_),Z=Ro(L,k(L,j));try{return g(i(w(_,"project policy"),Y),`${JSON.stringify(Z,null,2)}
-`),{path:Y,errors:[]}}catch(oe){return{path:Y,errors:[oe instanceof Error?oe.message:String(oe)]}}}function vk(_,L,j,Y){let Z=k(j,_.home),oe=R(_,Us(Y)),se=Ne({rules:oe.policy.rules,transparentWrappers:oe.policy.transparentWrappers,commandTools:oe.policy.commandTools,safety:ze(Z.safety),worktreeMode:Z.workflow.worktree_mode,destructiveCommandProtectionEnabled:Z.destructive_command_protection.enabled,destructiveCommandRuleOverrides:Z.destructive_command_protection.overrides,destructiveCommandAllowPaths:Z.destructive_command_protection.allow_paths,secretProtection:{enabled:Z.secret_protection.enabled,disabledRules:mt(Z.secret_protection.overrides),denyPaths:Z.secret_protection.deny_paths,allowPaths:Z.secret_protection.allow_paths}});return mr(L,{policySnapshot:se,cwd:Y.cwd,userConfigDir:Y.userConfigDir},_)}function bk(_,L){if(_===null)return Math.min(uk,L);let j=Number(_);if(!Number.isInteger(j)||j<1||j>L)return null;return j}function wk(_,L,j){if(L.searchParams.get("token")!==j)return!1;if(_.method!=="POST")return!0;return _.headers["x-cc-safety-net-token"]===j}var kk=1048576;async function Er(_){let L=[],j=0;for await(let Y of _){let Z=Y;if(j+=Z.byteLength,j>kk)return{ok:!1,status:413,error:"Request body is too large"};L.push(Z)}try{return{ok:!0,value:JSON.parse(Buffer.concat(L).toString("utf-8")||"{}")}}catch(Y){return{ok:!1,status:400,error:`Invalid JSON: ${Y instanceof Error?Y.message:String(Y)}`}}}function Ck(_,L){_.writeHead(200,{"content-type":"text/html; charset=utf-8","cache-control":"no-store"}),_.end(L)}function rn(_,L,j){_.writeHead(L,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}),_.end(JSON.stringify(j))}function xk(_){return new Promise((L,j)=>{_.close((Y)=>Y?j(Y):L())})}function Sk(_){return new Promise((L)=>{let j=()=>{process.off("SIGINT",Y),process.off("SIGTERM",Y)},Y=()=>{j(),_.close().then(L)};process.once("SIGINT",Y),process.once("SIGTERM",Y)})}function Pk(_){let L=process.platform==="darwin"?"open":process.platform==="win32"?"cmd":"xdg-open",j=process.platform==="win32"?["/c","start","",_]:[_];return new Promise((Y,Z)=>{let oe=Qp(L,j,{detached:!0,stdio:"ignore"}),se=(ge)=>{oe.off("spawn",fe),Z(ge)},fe=()=>{oe.off("error",se),oe.unref(),Y()};oe.once("error",se),oe.once("spawn",fe)})}async function Ek(_="gh",L=ef){return{ok:await Ok(_,["api","-X","PUT",`/user/starred/${Gs}`],L)===0}}async function Rk(_,L={}){let j=await Nr((Z)=>Jt({environment:_,cwd:process.cwd(),openCodeVersion:Z}).status!=="n/a",L.fetcher),Y=_k(_,j);return{targets:En.map((Z)=>{let oe=Y.find((se)=>se.platform===Z.id);return{target:Z.id,label:cn(Z.id),version:j.versions[Z.id]??null,status:oe?.configured?"active":oe?.detected?"disabled":oe?.inspectionStatus==="not-inspected"?"not-inspected":"not-installed"}}),system:{version:j.version,nodeVersion:j.nodeVersion,platform:j.platform}}}function _k(_,L){return Wt(_,process.cwd(),{ampPluginListOutput:L.ampPluginListOutput,codexPluginListOutput:L.codexPluginListOutput,copilotCliVersion:L.versions["copilot-cli"],openCodeVersion:L.versions.opencode,openCodePluginListOutput:L.openCodePluginListOutput})}async function Tk(_={}){let L=await(_.checkUpdates??Gn)();return{update:{latestVersion:L.latestVersion??null,updateAvailable:L.updateAvailable}}}var Xp=Promise.resolve();function Ik(_,L,j={}){let Y=async()=>{let oe=[],{log:se,error:fe}=console;console.log=(...ge)=>oe.push(ge.map(String).join(" ")),console.error=console.log;try{return{ok:await wr(_,[],{selectTargets:async()=>[L],output:new ck({write(Pe,Ee,Re){oe.push(String(Pe).replace(/\n$/,"")),Re()}}),...j})===0,output:oe.join(`
-`)}}finally{console.log=se,console.error=fe}},Z=Xp.then(Y);return Xp=Z.then(()=>{return},()=>{return}),Z}async function Ak(_,L={}){let[j,Y]=await Promise.all([$k(L.fetchRepo),Promise.resolve(Ar(_,ie(_),L.logsDir).totalBlocked)]);return{starCount:j,blockedTotal:Y}}function Ok(_,L,j){return new Promise((Y)=>{let Z=Qp(_,L,{stdio:"ignore",windowsHide:!0}),oe=!1,se=setTimeout(()=>{Z.kill(),fe(null)},j),fe=(ge)=>{if(oe)return;oe=!0,clearTimeout(se),Y(ge)};Z.once("error",()=>fe(null)),Z.once("close",fe)})}async function $k(_=fetch){try{let L=await _(`https://api.github.com/repos/${Gs}`,{headers:{accept:"application/vnd.github+json"},signal:AbortSignal.timeout(ef)});if(!L.ok)return null;let j=await L.json();return typeof j.stargazers_count==="number"?j.stargazers_count:null}catch{return null}}function Dk(_){if(_[0]!=="help")return!1;let L=_[1];if(!L)ps(),process.exit(0);if(gr(L))process.exit(0);console.error(`Unknown command: ${L}`),console.error("Run 'cc-safety-net --help' for available commands."),process.exit(1)}var Nk={hook:async()=>{console.error("hook requires exactly one integration flag. Try: cc-safety-net hook --kimi-code"),gr("hook",console.error),process.exit(1)},install:async(_)=>{process.exit(await wr("install",_))},update:async(_)=>{process.exit(await Rs(_))},uninstall:async(_)=>{process.exit(await wr("uninstall",_))},rule:async(_)=>{process.exit(await Mp(c(),_))},policy:async(_)=>{process.exit(await Hu(c(),_))},status:async(_)=>{if($n(mn({label:"status"},_).errors))process.exit(1);Gp(c())},statusline:async(_)=>{let L=mn({label:"statusline",booleans:{claudeCode:["-cc","--claude-code"]}},_);if(L.errors.length===0&&L.flags.claudeCode){await Hs(c());return}if($n(L.errors),!L.flags.claudeCode)console.error("statusline requires --claude-code (-cc)");gr("statusline",console.error),process.exit(1)},doctor:async(_)=>{let L=is(_);if(!L)process.exit(1);let j=await Zc(c(),{json:L.json,skipUpdateCheck:L.skipUpdateCheck});process.exit(j)},logs:async(_)=>{process.exit(await Ys(c(),_))},gui:async(_)=>{process.exit(await nf(_))},explain:async(_)=>{process.exit(await cd(c(),_))}};async function Lk(_){let L=mn({label:"cc-safety-net",booleans:{version:["-V","--version"]},positionals:"list"},_);if(Dk(_))return;let j=_[0],Y=j?Ir(j):void 0;if(L.help&&Y&&Y.name!=="rule")gr(Y.name),process.exit(0);if(!j||L.help&&!Y)ps(),process.exit(0);if(L.flags.version)pd(),process.exit(0);if(Y){await Nk[Y.name](_.slice(1));return}if(j==="--statusline"){await Hs(c());return}console.error(j.startsWith("-")?`Unknown option: ${j}`:`Unknown command: ${j}`),console.error("Run 'cc-safety-net --help' for usage."),process.exit(1)}export{Lk as runCli};
+`;var tf='<script id="ccsn-data" type="application/json">';function rf(P,L=nf){return L.replace(tf,()=>tf+JSON.stringify(P).replaceAll("<","\\u003c"))}var Vs="kenryu42/cc-safety-net",xk=`https://github.com/${Vs}`,ff=1e4,Pk=7,Sk="The project draft directory changed; reload the draft before applying.",Rk="audit settings are user scope only; remove the audit section from a project proposal";async function mf(P,L={}){let H=mn({label:"gui",booleans:{noOpen:["--no-open"]}},P),Y=L.log??console.log,Z=L.error??console.error;if(H.errors.length>0){for(let se of H.errors)Z(se);return Z("Usage: cc-safety-net gui [--no-open]"),1}let oe=await Ek(c,L);if(Y(`CC Safety Net policy GUI: ${oe.url}`),!H.flags.noOpen)try{await(L.openBrowser??Hk)(oe.url)}catch(se){Z(`Failed to open browser: ${se instanceof Error?se.message:String(se)}`),Z(`Open this URL manually: ${oe.url}`)}if(L.keepAlive===!1)return await oe.close(),0;return await Fk(oe),0}async function Ek(P,L={}){let H=hk(24).toString("base64url"),Y={dir:null,revision:0},Z=wk((me,he)=>{Tk(P,me,he,H,L,Y)});await new Promise((me,he)=>{Z.once("error",he),Z.listen(0,"127.0.0.1",()=>{Z.off("error",he),me()})});let se=`http://127.0.0.1:${Z.address().port}`;return{origin:se,token:H,url:`${se}/?token=${encodeURIComponent(H)}`,close:()=>jk(Z)}}async function Tk(P,L,H,Y,Z,oe){let se=P(),me=new URL(L.url??"/","http://127.0.0.1");if(L.method==="GET"&&me.pathname==="/favicon.ico"){H.writeHead(204,{"cache-control":"no-store"}),H.end();return}if(!Dk(L,me,Y)){rn(H,403,{error:"Forbidden"});return}if(L.method==="GET"&&me.pathname==="/"){let he=sf(of(se,Z));await Promise.resolve(Z.buildDocument?.()).then((ke)=>Lk(H,rf({token:Y,preferences:he},ke)),(ke)=>rn(H,500,{error:ke instanceof Error?ke.message:String(ke)}));return}if(L.method==="POST"&&me.pathname==="/api/preferences"){let he=await Qt(L);if(!he.ok){rn(H,he.status,{errors:[he.error]});return}let ke=Qp(he.value);if(!ke){rn(H,400,{errors:["preferences accept only language (en, ja, zh-CN) and theme (auto, light, dark)"]});return}let Pe=of(se,Z),Te=ef(sf(Pe),ke),_e=Ak(Pe,Te);rn(H,_e?500:200,_e?{errors:[_e]}:{preferences:Te});return}if(L.method==="GET"&&me.pathname==="/api/policy"){let he=Du(se,Z),ke=R(se,qs(Z));rn(H,200,{...he,configState:Ve(ke),...ke.policyScopes?{projectPolicy:{path:y(Z.cwd??process.cwd()),weakenings:ke.policyScopes.weakeningsIgnored?[]:ke.policyScopes.weakenings}}:{},destructiveCommandRules:q,secretPatterns:dt,version:pn(),preview:he.errors.length>0?null:Be(he.policy,se.env)});return}if(L.method==="POST"&&me.pathname==="/api/policy/preview"){let he=await Qt(L);if(!he.ok){rn(H,he.status,{errors:[he.error]});return}let ke=Nu(se,he.value);rn(H,ke.errors.length>0?400:200,ke);return}if(L.method==="POST"&&me.pathname==="/api/policy/explain"){let he=await Qt(L);if(!he.ok){rn(H,he.status,{errors:[he.error]});return}let ke=he.value;if(ke===null||typeof ke.command!=="string"){rn(H,400,{errors:["command must be a string"]});return}let Pe=Cr(ke.policy,se.home);if(Pe.length>0){rn(H,400,{errors:Pe});return}rn(H,200,Ok(se,ke.command,ke.policy,Z));return}if(L.method==="POST"&&me.pathname==="/api/policy"){let he=await Qt(L);if(!he.ok){rn(H,he.status,{errors:[he.error]});return}let ke=Hn(se,he.value,Z);rn(H,ke.errors.length>0?400:200,ke);return}if(L.method==="POST"&&me.pathname==="/api/reset"){rn(H,200,Hn(se,ne,Z));return}if(L.method==="POST"&&me.pathname==="/api/repair"){rn(H,200,Lu(se,Z));return}if(L.method==="POST"&&me.pathname==="/api/policy/project/choose-directory"){let he=await(Z.chooseDirectory??Gs)();if("path"in he)oe.dir=he.path,oe.revision+=1;rn(H,200,{cancelled:"cancelled"in he,..."error"in he?{error:he.error}:{}});return}if(L.method==="GET"&&me.pathname==="/api/policy/project"){let he=gf(oe,Z),ke=yf(se,he,Z),Pe=ke?{projection:{},diagnostics:[ke]}:af(he,se.home),Te=xr(se,Z);rn(H,200,{path:y(he),revision:oe.revision,baseline:Te.baseline,userPolicyDiagnostics:Te.diagnostics,projection:Pe.projection,projectionDiagnostics:Pe.diagnostics,canPickDirectory:Bs(process.platform,process.env)});return}if(L.method==="POST"&&me.pathname==="/api/policy/project/diff"){let he=await lf(se,L,H,oe,Z);if(!he)return;let ke=af(he.dir,se.home),Pe=xr(se,Z).baseline,Te=te(Pe,fe(he.proposal,se.home).policy);rn(H,200,{rows:Ro(te(Pe,ke.projection).policy,Te.policy,!1),weakenings:Te.weakenings,existingFileDiagnostics:ke.diagnostics});return}if(L.method==="POST"&&me.pathname==="/api/policy/project/apply"){let he=await lf(se,L,H,oe,Z);if(!he)return;let ke=Ik(he.dir,he.proposal,se.home);rn(H,ke.errors.length>0?500:200,ke);return}if(L.method==="GET"&&me.pathname==="/api/activity"){let he=ie(se,Z),ke=$k(me.searchParams.get("days"),he);if(ke===null){rn(H,400,{error:`days must be an integer between 1 and ${he}`});return}rn(H,200,Vp(se,ke,Z.activityLogsDir));return}if(L.method==="POST"&&me.pathname==="/api/rules/choose-directory"){rn(H,200,await Gs());return}if(L.method==="GET"&&me.pathname==="/api/rules"){let he=ee(se,qs(Z)),ke=new Map(he.rules.map((Pe)=>[Pe.name,Pe]));rn(H,200,{projectPath:Z.cwd??process.cwd(),canPickDirectory:Bs(process.platform,process.env),rulebooks:he.rulebooks.map((Pe)=>({source:Pe.source,spec:Pe.spec,name:Pe.name,version:Pe.version,rules:Pe.rules.flatMap((Te)=>{let _e=ke.get(Te);if(!_e)return[];return[{name:_e.name,command:_e.command,subcommand:_e.subcommand,block_args:_e.block_args,reason:_e.reason}]})})),errors:he.errors,warnings:he.warnings});return}if(L.method==="GET"&&me.pathname==="/api/star/context"){rn(H,200,await(Z.fetchStarContext??(()=>Vk(se,{logsDir:Z.activityLogsDir})))());return}if(L.method==="POST"&&me.pathname==="/api/star"){let he=await(Z.starRepo??Mk)();rn(H,200,he.ok?{ok:!0}:{ok:!1,fallbackUrl:xk});return}if(L.method==="GET"&&me.pathname==="/api/integrations"){rn(H,200,await(Z.fetchIntegrations??(()=>Uk(se)))());return}if(L.method==="GET"&&me.pathname==="/api/health"){rn(H,200,await(Z.fetchHealth??Gk)());return}if(L.method==="POST"&&(me.pathname==="/api/install"||me.pathname==="/api/uninstall")){let he=await Qt(L);if(!he.ok){rn(H,he.status,{errors:[he.error]});return}let ke=he.value?.target;if(typeof ke!=="string"||!On.some((Te)=>Te.target===ke)){rn(H,400,{error:"unknown target"});return}let Pe=me.pathname==="/api/install"?"install":"uninstall";rn(H,200,await(Z.runIntegration??qk)(Pe,ke));return}rn(H,404,{error:"Not found"})}function of(P,L){return kk(pf(le(P,L)),"gui.json")}function sf(P){if(!uf(P))return{};try{return Xp(JSON.parse(bk(P,"utf-8")))}catch{return{}}}function Ak(P,L){try{return vk(pf(P),{recursive:!0}),an(P,`${JSON.stringify(L,null,2)}
+`),null}catch(H){return H instanceof Error?H.message:String(H)}}function qs(P){return{...P,cwd:P.cwd??process.cwd()}}function gf(P,L){return P.dir??L.cwd??process.cwd()}function yf(P,L,H){if(!O(P,{...H,cwd:L}))return null;return`${y(L)} is the user policy, not a project policy; choose a project directory, or run the GUI from one`}function af(P,L){let H=y(P),Y=uf(H)?$t(H):{value:void 0,errors:[]},Z=fe(Y.value,L);return{projection:Z.policy,diagnostics:[...Y.errors,...Z.diagnostics]}}async function lf(P,L,H,Y,Z){let oe=gf(Y,Z),se=Y.revision,me=await Qt(L);if(!me.ok)return rn(H,me.status,{errors:[me.error]}),null;let he=me.value;if(typeof he?.revision!=="number")return rn(H,400,{errors:["revision must be a number"]}),null;if(he.revision!==se)return rn(H,409,{errors:[Sk]}),null;let ke=yf(P,oe,Z);if(ke)return rn(H,400,{errors:[ke]}),null;let Pe=_k(he.proposal,P.home);if(Pe.length>0)return rn(H,400,{errors:Pe}),null;return{dir:oe,proposal:he.proposal}}function _k(P,L){let H=Cr(P,L);if(H.length>0)return H;return P?.audit===void 0?[]:[Rk]}function Ik(P,L,H){let Y=y(P),Z=Eo(L,k(L,H));try{return h(i(w(P,"project policy"),Y),`${JSON.stringify(Z,null,2)}
+`),{path:Y,errors:[]}}catch(oe){return{path:Y,errors:[oe instanceof Error?oe.message:String(oe)]}}}function Ok(P,L,H,Y){let Z=k(H,P.home),oe=R(P,qs(Y)),se=Ne({rules:oe.policy.rules,transparentWrappers:oe.policy.transparentWrappers,commandTools:oe.policy.commandTools,safety:ze(Z.safety),worktreeMode:Z.workflow.worktree_mode,destructiveCommandProtectionEnabled:Z.destructive_command_protection.enabled,destructiveCommandRuleOverrides:Z.destructive_command_protection.overrides,destructiveCommandAllowPaths:Z.destructive_command_protection.allow_paths,secretProtection:{enabled:Z.secret_protection.enabled,disabledRules:mt(Z.secret_protection.overrides),denyPaths:Z.secret_protection.deny_paths,allowPaths:Z.secret_protection.allow_paths}});return gr(L,{policySnapshot:se,cwd:Y.cwd,userConfigDir:Y.userConfigDir},P)}function $k(P,L){if(P===null)return Math.min(Pk,L);let H=Number(P);if(!Number.isInteger(H)||H<1||H>L)return null;return H}function Dk(P,L,H){if(L.searchParams.get("token")!==H)return!1;if(P.method!=="POST")return!0;return P.headers["x-cc-safety-net-token"]===H}var Nk=1048576;async function Qt(P){let L=[],H=0;for await(let Y of P){let Z=Y;if(H+=Z.byteLength,H>Nk)return{ok:!1,status:413,error:"Request body is too large"};L.push(Z)}try{return{ok:!0,value:JSON.parse(Buffer.concat(L).toString("utf-8")||"{}")}}catch(Y){return{ok:!1,status:400,error:`Invalid JSON: ${Y instanceof Error?Y.message:String(Y)}`}}}function Lk(P,L){P.writeHead(200,{"content-type":"text/html; charset=utf-8","cache-control":"no-store"}),P.end(L)}function rn(P,L,H){P.writeHead(L,{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}),P.end(JSON.stringify(H))}function jk(P){return new Promise((L,H)=>{P.close((Y)=>Y?H(Y):L())})}function Fk(P){return new Promise((L)=>{let H=()=>{process.off("SIGINT",Y),process.off("SIGTERM",Y)},Y=()=>{H(),P.close().then(L)};process.once("SIGINT",Y),process.once("SIGTERM",Y)})}function Hk(P){let L=process.platform==="darwin"?"open":process.platform==="win32"?"cmd":"xdg-open",H=process.platform==="win32"?["/c","start","",P]:[P];return new Promise((Y,Z)=>{let oe=df(L,H,{detached:!0,stdio:"ignore"}),se=(he)=>{oe.off("spawn",me),Z(he)},me=()=>{oe.off("error",se),oe.unref(),Y()};oe.once("error",se),oe.once("spawn",me)})}async function Mk(P="gh",L=ff){return{ok:await Kk(P,["api","-X","PUT",`/user/starred/${Vs}`],L)===0}}async function Uk(P,L={}){let H=await Nr((Z)=>Jt({environment:P,cwd:process.cwd(),openCodeVersion:Z}).status!=="n/a",L.fetcher),Y=Bk(P,H);return{targets:Rn.map((Z)=>{let oe=Y.find((se)=>se.platform===Z.id);return{target:Z.id,label:cn(Z.id),version:H.versions[Z.id]??null,status:oe?.configured?"active":oe?.detected?"disabled":oe?.inspectionStatus==="not-inspected"?"not-inspected":"not-installed"}}),system:{version:H.version,nodeVersion:H.nodeVersion,platform:H.platform}}}function Bk(P,L){return zt(P,process.cwd(),{ampPluginListOutput:L.ampPluginListOutput,codexPluginListOutput:L.codexPluginListOutput,copilotCliVersion:L.versions["copilot-cli"],openCodeVersion:L.versions.opencode,openCodePluginListOutput:L.openCodePluginListOutput})}async function Gk(P={}){let L=await(P.checkUpdates??Bn)();return{update:{latestVersion:L.latestVersion??null,updateAvailable:L.updateAvailable}}}var cf=Promise.resolve();function qk(P,L,H={}){let Y=async()=>{let oe=[],{log:se,error:me}=console;console.log=(...he)=>oe.push(he.map(String).join(" ")),console.error=console.log;try{return{ok:await kr(P,[],{selectTargets:async()=>[L],output:new Ck({write(ke,Pe,Te){oe.push(String(ke).replace(/\n$/,"")),Te()}}),...H})===0,output:oe.join(`
+`)}}finally{console.log=se,console.error=me}},Z=cf.then(Y);return cf=Z.then(()=>{return},()=>{return}),Z}async function Vk(P,L={}){let[H,Y]=await Promise.all([Jk(L.fetchRepo),Promise.resolve(Ir(P,ie(P),L.logsDir).totalBlocked)]);return{starCount:H,blockedTotal:Y}}function Kk(P,L,H){return new Promise((Y)=>{let Z=df(P,L,{stdio:"ignore",windowsHide:!0}),oe=!1,se=setTimeout(()=>{Z.kill(),me(null)},H),me=(he)=>{if(oe)return;oe=!0,clearTimeout(se),Y(he)};Z.once("error",()=>me(null)),Z.once("close",me)})}async function Jk(P=fetch){try{let L=await P(`https://api.github.com/repos/${Vs}`,{headers:{accept:"application/vnd.github+json"},signal:AbortSignal.timeout(ff)});if(!L.ok)return null;let H=await L.json();return typeof H.stargazers_count==="number"?H.stargazers_count:null}catch{return null}}function zk(P){if(P[0]!=="help")return!1;let L=P[1];if(!L)gs(),process.exit(0);if(yr(L))process.exit(0);console.error(`Unknown command: ${L}`),console.error("Run 'cc-safety-net --help' for available commands."),process.exit(1)}var Wk={hook:async()=>{console.error("hook requires exactly one integration flag. Try: cc-safety-net hook --kimi-code"),yr("hook",console.error),process.exit(1)},install:async(P)=>{process.exit(await kr("install",P))},update:async(P)=>{process.exit(await _s(P))},uninstall:async(P)=>{process.exit(await kr("uninstall",P))},rule:async(P)=>{process.exit(await Bp(c(),P))},policy:async(P)=>{process.exit(await Mu(c(),P))},status:async(P)=>{if($n(mn({label:"status"},P).errors))process.exit(1);qp(c())},statusline:async(P)=>{let L=mn({label:"statusline",booleans:{claudeCode:["-cc","--claude-code"]}},P);if(L.errors.length===0&&L.flags.claudeCode){await Us(c());return}if($n(L.errors),!L.flags.claudeCode)console.error("statusline requires --claude-code (-cc)");yr("statusline",console.error),process.exit(1)},doctor:async(P)=>{let L=ss(P);if(!L)process.exit(1);let H=await ed(c(),{json:L.json,skipUpdateCheck:L.skipUpdateCheck});process.exit(H)},logs:async(P)=>{process.exit(await Qs(c(),P))},gui:async(P)=>{process.exit(await mf(P))},explain:async(P)=>{process.exit(await ud(c(),P))}};async function Yk(P){let L=mn({label:"cc-safety-net",booleans:{version:["-V","--version"]},positionals:"list"},P);if(zk(P))return;let H=P[0],Y=H?_r(H):void 0;if(L.help&&Y&&Y.name!=="rule")yr(Y.name),process.exit(0);if(!H||L.help&&!Y)gs(),process.exit(0);if(L.flags.version)md(),process.exit(0);if(Y){await Wk[Y.name](P.slice(1));return}if(H==="--statusline"){await Us(c());return}console.error(H.startsWith("-")?`Unknown option: ${H}`:`Unknown command: ${H}`),console.error("Run 'cc-safety-net --help' for usage."),process.exit(1)}export{Yk as runCli};

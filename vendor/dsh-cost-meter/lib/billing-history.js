@@ -3,9 +3,11 @@ import { multiplierPath } from './price-multiplier.js'
 import { createHash, randomUUID } from 'node:crypto'
 import { fxRatesOf } from './exchange-rates.js'
 import { priceAt } from './pricing.js'
+import { rememberPriceVersion, copyPriceVersions, mergePriceVersions, encodePriceVersions, decodePriceVersions } from './pricing-history-codec.js'
 
 const bindings = new WeakMap()
 const indexes = new WeakMap()
+const normalized = new WeakSet()
 const fields = ['prices', 'priceMatch', 'priceOverrides', 'exchangeRate', 'peakEnabled', 'peakEffectiveAt', 'peakWindows', 'peakHolidays']
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const safe = key => !['__proto__', 'constructor', 'prototype'].includes(key)
@@ -29,11 +31,16 @@ function indexOf(history) {
   return index
 }
 
-export function pricingSnapshot(config) {
+/**
+ * @param stored - Normalizing a saved version: keep its Ollama Cloud calendar policy. Versions
+ *   saved before v1.9.13 have none and keep DeepSeek's windows; live settings use Ollama's.
+ */
+export function pricingSnapshot(config, stored = false) {
   // Credentials, prompts and other settings never enter a price version.
   const snapshot = structuredClone(Object.fromEntries(fields.filter(key => key !== 'prices' && config?.[key] !== undefined).map(key => [key, config[key]])))
   const prices = config?.prices ?? {}
-  snapshot.prices = { ...(prices.currency ? { currency: prices.currency } : {}), default: ratesOnly(prices.default), models: modelsOnly(prices.models),
+  snapshot.prices = { ...(prices.currency ? { currency: prices.currency } : {}), ollamaPeak: !stored || prices.ollamaPeak === true,
+    default: ratesOnly(prices.default), models: modelsOnly(prices.models),
     ...(prices.custom ? { custom: modelsOnly(prices.custom) } : {}),
     providers: Object.fromEntries(Object.entries(prices.providers ?? {}).filter(([key]) => safe(key)).map(([key, table]) => [key, {
       ...(table.currency ? { currency: table.currency } : {}), ...(table.default ? { default: ratesOnly(table.default) } : {}), models: modelsOnly(table.models),
@@ -41,17 +48,26 @@ export function pricingSnapshot(config) {
   return snapshot
 }
 
-export function createPricingHistory(config) {
-  const pricing = pricingSnapshot(config), id = hash(pricing)
-  return { versions: { [id]: pricing }, changes: { initial: { at: 0, version: id } }, revisions: {}, runs: {}, fxChanges: { initial: { at: 0, rates: fxRatesOf(config) } } }
+/** @param stored - Seeding from a saved ledger's table: keep that table's calendar policy. */
+export function createPricingHistory(config, stored = false) {
+  const pricing = pricingSnapshot(config, stored), id = hash(pricing)
+  const versions = {}; rememberPriceVersion(versions, id, pricing)
+  const history = { versions, changes: { initial: { at: 0, version: id } }, revisions: {}, runs: {}, fxChanges: { initial: { at: 0, rates: fxRatesOf(config) } } }
+  normalized.add(history)
+  return history
 }
 
-export function normalizePricingHistory(raw, config) {
-  if (!object(raw?.versions) || !object(raw?.changes)) return createPricingHistory(config)
-  const versions = Object.fromEntries(Object.entries(raw.versions).filter(([id, value]) => /^[a-f\d]{64}$/.test(id) && object(value?.prices))
-    .map(([id, value]) => [id, pricingSnapshot(value)]))
+/**
+ * @param stored - raw/config were read from a saved ledger. Without a usable timeline its calls
+ *   were recorded under the saved table's policy (pre-v1.9.13 unless a saved version says
+ *   otherwise), so the seeded version keeps it; a new ledger starts on the current calendar.
+ */
+export function normalizePricingHistory(raw, config, previous, stored = false) {
+  if (normalized.has(raw)) return raw
+  if (!object(raw?.versions) || !object(raw?.changes)) return createPricingHistory(config, stored)
+  const versions = decodePriceVersions(raw.versions, value => pricingSnapshot(value, true), previous?.versions)
   const changes = Object.fromEntries(Object.entries(raw.changes).filter(([id, row]) => safe(id) && Number.isFinite(row?.at) && row.at >= 0 && versions[row.version]))
-  if (!Object.values(changes).some(row => row.at === 0)) return createPricingHistory(config)
+  if (!Object.values(changes).some(row => row.at === 0)) return createPricingHistory(config, stored && !Object.values(versions).some(version => version.prices?.ollamaPeak))
   const revisions = Object.fromEntries(Object.entries(raw.revisions ?? {}).filter(([id, row]) => safe(id) && typeof row?.sessionId === 'string'
     && (row.model === undefined || (typeof row.model === 'string' && row.model.includes(':') && row.model.length <= 2048))
     && /^\d{4}-\d{2}-\d{2}$/.test(row.date) && Number.isFinite(row.at) && versions[row.version]))
@@ -59,7 +75,9 @@ export function normalizePricingHistory(raw, config) {
     .map(([id, row]) => [id, { ...Object.fromEntries([...runFields, ...['beforeCny', 'afterCny', 'beforeEur', 'afterEur'].filter(key => Number.isFinite(row[key]) && row[key] >= 0)].map(key => [key, row[key]])), ...(typeof row.model === 'string' ? { model: row.model } : {}) }]))
   const fxChanges = Object.fromEntries(Object.entries(raw.fxChanges ?? {}).filter(([id, row]) => safe(id) && Number.isFinite(row?.at) && row.at >= 0 && ['CNY', 'EUR'].every(key => Number.isFinite(row.rates?.[key]) && row.rates[key] > 0)))
   if (!Object.keys(fxChanges).length) for (const [id, row] of Object.entries(changes)) fxChanges[id] = { at: row.at, sequence: row.sequence ?? 0, rates: fxRatesOf({ ...versions[row.version], currency: config.currency }) }
-  return { versions, changes, revisions, runs, fxChanges }
+  const history = { versions, changes, revisions, runs, fxChanges }
+  normalized.add(history)
+  return history
 }
 
 export function advancePricingHistory(history, config, at = Date.now()) {
@@ -74,7 +92,7 @@ export function advancePricingHistory(history, config, at = Date.now()) {
   }
   const withoutFx = value => { const { exchangeRate, ...rest } = value ?? {}; return rest }
   if (latest?.version === version || JSON.stringify(withoutFx(history.versions[latest?.version])) === JSON.stringify(withoutFx(pricing))) return fxChanged
-  history.versions[version] = pricing
+  rememberPriceVersion(history.versions, version, pricing, latest?.version)
   history.changes[randomUUID()] = { at: Math.max(at, latest?.at ?? 0), sequence: (latest?.sequence ?? 0) + 1, version }
   indexes.delete(history)
   return true
@@ -122,7 +140,7 @@ export function pricingConfigAt(config, at, sessionId = '', model = '') {
 /** Repricing affects only fully replayable session/day records explicitly accepted by the user. */
 export function recordPricingRevision(history, config, sessionId, date, at, before, after, model = '') {
   const pricing = pricingSnapshot(config), version = hash(pricing)
-  history.versions[version] = pricing
+  rememberPriceVersion(history.versions, version, pricing, indexOf(history).changes.at(-1)?.version)
   history.revisions[randomUUID()] = { sessionId, date, at, ...(model ? { model, preserveFx: true } : { fxRates: fxRatesOf(config) }), sequence: Object.keys(history.revisions).length + 1, version, before, after }
   indexes.delete(history)
 }
@@ -132,7 +150,22 @@ export function mergePricingHistory(local, disk) {
   if (!disk) return local
   const revisions = { ...disk.revisions }
   for (const [key, row] of Object.entries(local.revisions ?? {})) if (!revisions[key] || row.at >= revisions[key].at) revisions[key] = row
-  return { versions: { ...disk.versions, ...local.versions }, changes: { ...local.changes, ...disk.changes }, revisions, runs: { ...disk.runs, ...local.runs }, fxChanges: { ...disk.fxChanges, ...local.fxChanges } }
+  const history = { versions: mergePriceVersions(local.versions, disk.versions), changes: { ...local.changes, ...disk.changes }, revisions, runs: { ...disk.runs, ...local.runs }, fxChanges: { ...disk.fxChanges, ...local.fxChanges } }
+  normalized.add(history)
+  return history
+}
+
+/** Price versions are immutable; detach mutable timeline/amount records only. */
+export function copyPricingHistory(history) {
+  if (!history) return history
+  const { versions, ...rest } = history
+  const result = { ...structuredClone(rest), versions: copyPriceVersions(versions) }
+  normalized.add(result)
+  return result
+}
+
+export function encodePricingHistory(history) {
+  return history ? { ...history, format: 2, versions: encodePriceVersions(history.versions) } : history
 }
 
 export function pricingHistoryFingerprint(config) {

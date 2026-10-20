@@ -6,10 +6,12 @@
  */
 
 import { FX_FIELDS, frozenAmounts, frozenFields, addFrozen, freezeLegacyAmounts, fxRatesOf } from './exchange-rates.js'
+import { normalizeModelStatistics, validModelStatistics } from './model-statistics.js'
 import { readFileSync, renameSync, statSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import { validRequestFee } from './web-request-pricing.js'
 import { repairDailySessionTotals } from './ledger-totals.js'
-import { withLedgerLock, readLedger, writeLedger, applyAccount, mergeLedger, mergeRuntimeConfig, cleanUsageCursors } from './ledger-persistence.js'
+import { withLedgerLock, readLedger, writeLedger, applyAccount, mergeLedger, mergeRuntimeConfig, cleanUsageCursors, cloneLedgerSnapshot } from './ledger-persistence.js'
 import { normalizePricingHistory, advancePricingHistory, bindPricingHistory, pricingConfigAt } from './billing-history.js'
 import { join } from 'node:path'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
@@ -40,6 +42,10 @@ import { DEFAULT_PLAN_PROVIDER_CLASS, PLAN_PROVIDER_IDS, billingClassOf, enabled
 
 const LEDGER_VERSION = 1
 const DEFAULT_HISTORY_DAYS = 180
+function diskRevisionOf(path) {
+  try { const info = statSync(path, { bigint: true }); return `${info.ino}:${info.mtimeNs}:${info.size}` }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error }
+}
 const GATEWAY_PROVIDER_IDS = ['antigravity', 'claude', 'codex', 'kimi', 'xai', 'workbuddy']
 const GATEWAY_DISPLAY_VALUES = ['sidebar', 'settings', 'both', 'off']
 const GATEWAY_SOURCE_ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/
@@ -150,13 +156,17 @@ export function defaultConfig() {
     peakAlertPosition: 'corner', // 弹窗位置:corner(右下角) | center(屏幕中心)
     peakAlertWebNotify: false, // 弹窗时额外发浏览器(系统)通知,需用户在地址栏授权
     showSessionId: false, // 会话列表中附显会话 ID(默认只显示标题,需要时开启)
+    sessionListCosts: false,
+    sessionListCostPeriod: 'total',
     hideOfficialBalance: false, // 隐藏官方账户余额(issue #45):开启后侧边栏/会话页/设置页的官方余额 UI 整体不渲染
     hideBudget: false, // Hide the sidebar budget card without disabling budget tracking.
     hideTodayCost: false, // 隐藏今日消耗金额(issue #46):开启后侧栏今日费用行/预算明细今日行/概览今日卡片不渲染
+    modelStatistics: {}, // Per channel/model: today, monthly/all-time summaries and budgets.
     hideSessionCostHeader: false,
     hideSessionCostDock: false,
     hideTurnCost: false,
     sessionCostCompact: false, // 输入区下方会话费用行只显示金额(悬停 title 与费用明细弹窗保留完整分项)
+    followSkinTransparency: false, // 跟随皮肤透明度；默认保留不透明遮挡面。
     contextCostsEnabled: false,
     contextCostsPromptSeen: false,
     statisticsBasis: 'auto', // 未选择时沿用全局 API / 含 Plan 口径。
@@ -165,12 +175,19 @@ export function defaultConfig() {
     includeSubagentCost: false, // 本会话展示可合并连续子代理后代;不重复写入每日账本。
     codexQuotaEnabled: false, // Codex 额度按需开启,避免未使用 Codex 时显示卡片或查询。
     codexQuotaSidebar: true, // 独立控制侧栏卡片，保留会话额度条。
+    codexQuotaStrip: true, // 独立控制输入区额度条，旧配置保留原显示。
+    codexQuotaSource: 'auto', // Codex 额度数据源:auto | connect | subscription | chatgpt。
+    // dsh-codex-subscription 兼容:一次性历史归类提示是否已永久关闭 / 历史归类完成时刻 ms(0 = 未应用)。
+    codexCompatPromptDismissed: false,
+    codexCompatHistoryAppliedAt: 0,
     sidebarSimple: false,
     sidebarSimplePromptSeen: false,
     sidebarModels: { enabled: false, period: 'today', topN: 5, summary: 'total', position: 'last', defaultOpen: false, remember: true, tokens: false, shares: true, refreshSeconds: 60, dock: false },
     sidebarStyle: 'standard', // 侧边栏进度条样式:standard(标准,纵向单列) | compact(紧凑,额度卡两列网格)
     legacyAutoImportedAt: 0, // 安装前历史自动导入标记(issue #27):完成时刻 ms;0 = 尚未跑过
-    peakStyle: 'compact', // 峰谷时段条样式:compact(简洁单行/竖向同构) | classic(经典分段/胶囊芯片)
+    peakStyle: 'compact', // compact / classic 保留原样；progress 按侧栏布局显示时间进度。
+    peakTimeDisplay: 'both', // both / countdown / switch
+    peakProgressPromptSeen: false,
     priceMatch: 'auto', // 未知模型名自动匹配价格表:auto(归一化/安全后缀) | exact(仅精确)
     priceMatchDismissed: [], // 从匹配设置中移除的 provider:model 行；不删除用量或改变计价规则。
     priceOverrides: {}, // 手动匹配覆盖:{ 'provider:modelId': 'provider:模型 | deepseek:__default__' };裸模型名 = 同渠道换名(旧版遗留,跨渠道裸 DeepSeek 名由查价兜底自愈,issue #56)
@@ -207,6 +224,7 @@ export function defaultConfig() {
       openrouter: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '' },
       siliconflow: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '' },
       commandcode: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '' },
+      clinepass: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '' },
       // SCNet Token Plan 无 API 额度端点:按官方 Credits 抵扣表本地估算(issue #26)。
       // planCredits=月度 Credits 额度;planStart=订阅起始日(空 = 自然月)。
       scnet: { enabled: false, display: 'settings', refreshMinutes: 15, apiKey: '', planCredits: 240000, planStart: '' },
@@ -780,10 +798,14 @@ const VALIDATION_MESSAGES = {
     includeSubagentCost: 'includeSubagentCost 必须是布尔值',
     codexQuotaEnabled: 'codexQuotaEnabled 必须是布尔值',
     codexQuotaSidebar: 'codexQuotaSidebar 必须是布尔值',
+    codexQuotaStrip: 'codexQuotaStrip 必须是布尔值',
+    codexQuotaSource: 'codexQuotaSource 必须是 auto / connect / subscription / chatgpt',
+    codexCompatPromptDismissed: 'codexCompatPromptDismissed 必须是布尔值',
+    codexCompatHistoryAppliedAt: 'codexCompatHistoryAppliedAt 必须是非负数',
     sidebarSimple: '简化显示设置必须是布尔值',
     sidebarModels: '模型花费卡片设置无效：Top-N 为 1–10，刷新间隔为 10–60 秒',
     sidebarStyle: 'sidebarStyle 必须是 standard / compact',
-    peakStyle: 'peakStyle 必须是 compact / classic',
+    peakStyle: 'peakStyle 必须是 compact / classic / progress',
     priceMatch: 'priceMatch 必须是 auto / exact',
     priceOverrides: 'priceOverrides 必须是字符串→字符串映射',
     priceMatchDismissed: 'priceMatchDismissed 必须是模型键字符串数组（最多 1000 项，每项 1–512 字符）',
@@ -814,6 +836,7 @@ const VALIDATION_MESSAGES = {
     customBalanceLabelEn: 'customBalance.labelEn 必须是字符串',
     customBalanceUnit: 'customBalance.unit 必须是 USD / CNY / EUR / CREDITS',
     customBalanceConvert: 'customBalance.convertToDisplayCurrency 必须是布尔值',
+    customBalanceHttp: 'customBalance.allowInsecureHttp 必须是布尔值',
     customBalanceRequest: 'customBalance.request.url 必须是非空字符串',
     customBalanceHeaders: 'customBalance.request.headers 必须是字符串→字符串映射',
     customBalanceExtract: 'customBalance.extract 必须是对象',
@@ -886,10 +909,14 @@ const VALIDATION_MESSAGES = {
     includeSubagentCost: 'includeSubagentCost must be a boolean',
     codexQuotaEnabled: 'codexQuotaEnabled must be a boolean',
     codexQuotaSidebar: 'codexQuotaSidebar must be a boolean',
+    codexQuotaStrip: 'codexQuotaStrip must be a boolean',
+    codexQuotaSource: 'codexQuotaSource must be auto / connect / subscription / chatgpt',
+    codexCompatPromptDismissed: 'codexCompatPromptDismissed must be a boolean',
+    codexCompatHistoryAppliedAt: 'codexCompatHistoryAppliedAt must be a non-negative number',
     sidebarSimple: 'Simple display settings must be boolean',
     sidebarModels: 'Invalid model cost card settings: Top-N must be 1–10 and refresh interval 10–60 seconds',
     sidebarStyle: 'sidebarStyle must be standard / compact',
-    peakStyle: 'peakStyle must be compact / classic',
+    peakStyle: 'peakStyle must be compact / classic / progress',
     priceMatch: 'priceMatch must be auto / exact',
     priceOverrides: 'priceOverrides must be a string→string map',
     priceMatchDismissed: 'priceMatchDismissed must contain at most 1000 model keys of 1–512 characters',
@@ -920,6 +947,7 @@ const VALIDATION_MESSAGES = {
     customBalanceLabelEn: 'customBalance.labelEn must be a string',
     customBalanceUnit: 'customBalance.unit must be USD / CNY / EUR / CREDITS',
     customBalanceConvert: 'customBalance.convertToDisplayCurrency must be a boolean',
+    customBalanceHttp: 'customBalance.allowInsecureHttp must be a boolean',
     customBalanceRequest: 'customBalance.request.url must be a non-empty string',
     customBalanceHeaders: 'customBalance.request.headers must be a string→string map',
     customBalanceExtract: 'customBalance.extract must be an object',
@@ -1065,6 +1093,7 @@ export function applyConfigPatch(current, rawPatch) {
   const candidate = mergeDeep(structuredClone(current), patch)
   // 这两张编辑表随对应设置整表提交；逐键深合并会把用户移除的键补回来。
   if (Object.hasOwn(patch, 'priceOverrides')) candidate.priceOverrides = structuredClone(patch.priceOverrides)
+  if (Object.hasOwn(patch, 'modelStatistics')) candidate.modelStatistics = structuredClone(patch.modelStatistics)
   const qwenPatch = patch.codingPlans?.qwen
   if (qwenPatch !== null && typeof qwenPatch === 'object' && !Array.isArray(qwenPatch) && Object.hasOwn(qwenPatch, 'rates')) {
     candidate.codingPlans.qwen.rates = structuredClone(qwenPatch.rates)
@@ -1191,11 +1220,14 @@ export function applyConfigPatch(current, rawPatch) {
   if (!['corner', 'center'].includes(candidate.peakAlertPosition)) errors.push(vmsg(locale, 'peakAlertPosition'))
   if (typeof candidate.peakAlertWebNotify !== 'boolean') errors.push(vmsg(locale, 'peakAlertWebNotify'))
   if (candidate.showSessionId !== undefined && typeof candidate.showSessionId !== 'boolean') errors.push(vmsg(locale, 'showSessionId'))
+  if (typeof candidate.sessionListCosts !== 'boolean') errors.push('sessionListCosts must be a boolean')
+  if (!['total', 'today'].includes(candidate.sessionListCostPeriod)) errors.push('sessionListCostPeriod must be total or today')
   // UI 隐藏开关(issues #45/#46):布尔,可缺省(默认关);开启后对应区块整体不渲染。
   if (candidate.hideOfficialBalance !== undefined && typeof candidate.hideOfficialBalance !== 'boolean') errors.push(vmsg(locale, 'hideOfficialBalance'))
   if (candidate.hideBudget !== undefined && typeof candidate.hideBudget !== 'boolean') errors.push(vmsg(locale, 'hideBudget'))
   if (candidate.hideTodayCost !== undefined && typeof candidate.hideTodayCost !== 'boolean') errors.push(vmsg(locale, 'hideTodayCost'))
-  for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost']) {
+  if (!validModelStatistics(candidate.modelStatistics)) errors.push(locale === 'en' ? 'Invalid per-model statistics switches' : '模型统计开关无效')
+  for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost', 'followSkinTransparency']) {
     if (candidate[key] !== undefined && typeof candidate[key] !== 'boolean') errors.push(locale === 'en' ? `${key} must be a boolean` : `${key} 必须是布尔值`)
   }
   // 会话费用行紧凑模式:布尔,可缺省(默认关)。
@@ -1205,9 +1237,14 @@ export function applyConfigPatch(current, rawPatch) {
   // 「含 Plan 总额」全局开关(v1.6.0):布尔,可缺省(默认关)。
   if (candidate.statisticsBasis !== undefined && !['auto', 'api', 'plan', 'total'].includes(candidate.statisticsBasis)) errors.push('statisticsBasis must be auto, api, plan or total')
   if (candidate.showTotalWithPlan !== undefined && typeof candidate.showTotalWithPlan !== 'boolean') errors.push(vmsg(locale, 'showTotalWithPlan'))
-  for (const field of ['includeSubagentCost', 'codexQuotaEnabled', 'codexQuotaSidebar']) {
+  for (const field of ['includeSubagentCost', 'codexQuotaEnabled', 'codexQuotaSidebar', 'codexQuotaStrip', 'codexCompatPromptDismissed']) {
     if (candidate[field] !== undefined && typeof candidate[field] !== 'boolean') errors.push(vmsg(locale, field))
   }
+  // Codex 额度数据源:auto 依次探测 subscription、chatgpt、connect,或固定一种来源。
+  if (candidate.codexQuotaSource !== undefined && !['auto', 'connect', 'subscription', 'chatgpt'].includes(candidate.codexQuotaSource)) errors.push(vmsg(locale, 'codexQuotaSource'))
+  // dsh-codex-subscription 兼容:历史归类应用时刻为非负有限数(0 = 尚未应用)。
+  if (candidate.codexCompatHistoryAppliedAt !== undefined
+    && (typeof candidate.codexCompatHistoryAppliedAt !== 'number' || !Number.isFinite(candidate.codexCompatHistoryAppliedAt) || candidate.codexCompatHistoryAppliedAt < 0)) errors.push(vmsg(locale, 'codexCompatHistoryAppliedAt'))
   // 侧边栏进度条样式:standard(默认,纵向单列) | compact(额度卡两列网格)。
   for (const field of ['sidebarSimple', 'sidebarSimplePromptSeen']) {
     if (candidate[field] !== undefined && typeof candidate[field] !== 'boolean') errors.push(vmsg(locale, 'sidebarSimple'))
@@ -1218,7 +1255,9 @@ export function applyConfigPatch(current, rawPatch) {
     || ['enabled', 'defaultOpen', 'remember', 'tokens', 'shares', 'dock'].some(k => typeof sm[k] !== 'boolean')
     || !['today', 'history'].includes(sm.period) || !['total', 'top'].includes(sm.summary) || !['first', 'afterBalance', 'last'].includes(sm.position)
     || !Number.isInteger(sm.topN) || sm.topN < 1 || sm.topN > 10 || !Number.isInteger(sm.refreshSeconds) || sm.refreshSeconds < 10 || sm.refreshSeconds > 60) errors.push(vmsg(locale, 'sidebarModels'))
-  if (candidate.peakStyle !== 'compact' && candidate.peakStyle !== 'classic') errors.push(vmsg(locale, 'peakStyle'))
+  if (!['compact', 'classic', 'progress'].includes(candidate.peakStyle)) errors.push(vmsg(locale, 'peakStyle'))
+  if (!['both', 'countdown', 'switch'].includes(candidate.peakTimeDisplay)) errors.push('peakTimeDisplay must be both / countdown / switch')
+  if (typeof candidate.peakProgressPromptSeen !== 'boolean') errors.push('peakProgressPromptSeen must be boolean')
   if (candidate.priceMatch !== 'auto' && candidate.priceMatch !== 'exact') errors.push(vmsg(locale, 'priceMatch'))
   const overrides = candidate.priceOverrides
   if (candidate.priceMatchDismissed !== undefined && (!Array.isArray(candidate.priceMatchDismissed)
@@ -1300,6 +1339,7 @@ export function applyConfigPatch(current, rawPatch) {
     if (entry.labelEn !== undefined && typeof entry.labelEn !== 'string') errors.push(vmsg(locale, fieldPrefix + 'LabelEn'))
     if (entry.unit !== undefined && !['USD', 'CNY', 'EUR', 'CREDITS'].includes(entry.unit)) errors.push(vmsg(locale, fieldPrefix + 'Unit'))
     if (entry.convertToDisplayCurrency !== undefined && typeof entry.convertToDisplayCurrency !== 'boolean') errors.push(vmsg(locale, fieldPrefix + 'Convert'))
+    if (entry.allowInsecureHttp !== undefined && typeof entry.allowInsecureHttp !== 'boolean') errors.push(vmsg(locale, fieldPrefix + 'Http'))
     const request = entry.request
     // url 仅在启用时必填:默认禁用状态下不能阻断其它配置项的保存。
     if (request === null || typeof request !== 'object' || Array.isArray(request) || typeof request.url !== 'string' || (entry.enabled === true && request.url.length === 0)) {
@@ -1548,10 +1588,13 @@ export function sanitizeConfig(raw) {
   // 枚举收敛。
   out.locale = oneOf(out.locale, ['auto', 'zh', 'en'], 'auto')
   out.position = oneOf(out.position, ['dock', 'header', 'off'], 'dock')
-  out.peakStyle = oneOf(out.peakStyle, ['compact', 'classic'], 'compact')
+  out.peakStyle = oneOf(out.peakStyle, ['compact', 'classic', 'progress'], 'compact')
+  out.peakTimeDisplay = oneOf(out.peakTimeDisplay, ['both', 'countdown', 'switch'], 'both')
   out.priceMatch = oneOf(out.priceMatch, ['auto', 'exact'], 'auto')
   // 官方价格币种与价表币种标记(issue #47):非法值回落 USD(价表缺省即 USD)。
   out.pricingCurrency = oneOf(out.pricingCurrency, ['USD', 'CNY'], 'USD')
+  // 日历策略只属于冻结的历史价格版本(billing-history pricingSnapshot);当前配置一律按新日历。
+  if (out.prices !== null && typeof out.prices === 'object') delete out.prices.ollamaPeak
   if (out.prices !== null && typeof out.prices === 'object' && !Array.isArray(out.prices)
     && out.prices.currency !== undefined) {
     out.prices.currency = oneOf(out.prices.currency, ['USD', 'CNY'], 'USD')
@@ -1559,10 +1602,13 @@ export function sanitizeConfig(raw) {
   out.decimals = Math.max(0, Math.min(10, Math.floor(Number(out.decimals) || 0)))
   out.historyDays = Math.max(7, Math.min(3650, Math.floor(Number(out.historyDays) || 180)))
   out.showSessionId = out.showSessionId === true
+  out.sessionListCosts = out.sessionListCosts === true
+  out.sessionListCostPeriod = oneOf(out.sessionListCostPeriod, ['total', 'today'], 'total')
   out.hideOfficialBalance = out.hideOfficialBalance === true
   out.hideBudget = out.hideBudget === true
   out.hideTodayCost = out.hideTodayCost === true
-  for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost']) out[key] = out[key] === true
+  out.modelStatistics = normalizeModelStatistics(out.modelStatistics)
+  for (const key of ['hideSessionCostHeader', 'hideSessionCostDock', 'hideTurnCost', 'followSkinTransparency']) out[key] = out[key] === true
   out.sessionCostCompact = out.sessionCostCompact === true
   out.contextCostsEnabled = out.contextCostsEnabled === true
   out.contextCostsPromptSeen = out.contextCostsPromptSeen === true
@@ -1572,6 +1618,11 @@ export function sanitizeConfig(raw) {
   out.includeSubagentCost = out.includeSubagentCost === true
   out.codexQuotaEnabled = out.codexQuotaEnabled === true
   out.codexQuotaSidebar = out.codexQuotaSidebar !== false
+  out.codexQuotaStrip = out.codexQuotaStrip !== false
+  out.codexQuotaSource = oneOf(out.codexQuotaSource, ['auto', 'connect', 'subscription', 'chatgpt'], 'auto')
+  // dsh-codex-subscription 兼容:提示关闭标记收敛为布尔;历史归类完成时刻非法/非正一律归 0。
+  out.codexCompatPromptDismissed = out.codexCompatPromptDismissed === true
+  out.codexCompatHistoryAppliedAt = Number.isFinite(out.codexCompatHistoryAppliedAt) && out.codexCompatHistoryAppliedAt > 0 ? out.codexCompatHistoryAppliedAt : 0
   out.sidebarSimple = out.sidebarSimple === true
   out.sidebarSimplePromptSeen = out.sidebarSimplePromptSeen === true
   out.sidebarModels = Object.fromEntries(Object.entries(base.sidebarModels).map(([k, fallback]) => {
@@ -1661,6 +1712,7 @@ export function sanitizeConfig(raw) {
       labelEn: typeof entry.labelEn === 'string' ? entry.labelEn : baseEntry.labelEn,
       unit: entry.adapter === 'tokenrhythm' ? 'CNY' : oneOf(entry.unit, ['USD', 'CNY', 'EUR', 'CREDITS'], baseEntry.unit),
       convertToDisplayCurrency: entry.convertToDisplayCurrency === true,
+      allowInsecureHttp: entry.allowInsecureHttp === true,
     }
     if (entry.request === null || typeof entry.request !== 'object' || Array.isArray(entry.request)) {
       clean.request = { ...baseEntry.request }
@@ -1840,6 +1892,7 @@ export function sanitizeConfig(raw) {
 const SECRET_REF_MAP = {
   balance: 'DEEPSEEK_BALANCE_API_KEY',
   goQuota: 'OPENCODE_GO_API_KEY',
+  'codingPlans.opendesign': 'OPENDESIGN_CONTROL_KEY',
   'codingPlans.anthropic': 'ANTHROPIC_OAUTH_TOKEN',
   'codingPlans.zai': 'ZAI_API_KEY',
   'codingPlans.minimax': 'MINIMAX_API_KEY',
@@ -1847,6 +1900,7 @@ const SECRET_REF_MAP = {
   'codingPlans.openrouter': 'OPENROUTER_API_KEY',
   'codingPlans.siliconflow': 'SILICONFLOW_API_KEY',
   'codingPlans.commandcode': 'COMMANDCODE_API_KEY',
+  'codingPlans.clinepass': 'CLINE_PASS_API_KEY',
   'codingPlans.volcengine.ak': 'VOLC_ACCESSKEY',
   'codingPlans.volcengine.sk': 'VOLC_SECRETKEY',
   'codingPlans.mimo': 'MIMO_COOKIE',
@@ -2096,6 +2150,7 @@ export class Ledger {
     let historyReset = null
     let usageCursors = {}
     let pricingHistory
+    let legacyPricingHistory = false
     try {
       const parsed = JSON.parse(readFileSync(path, 'utf8'))
       if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -2110,8 +2165,9 @@ export class Ledger {
           historyReset = parsed.historyReset ?? null
           usageCursors = cleanUsageCursors(parsed.usageCursors)
           const cfg = typeof parsed.config === 'object' && parsed.config !== null ? parsed.config : {}
-          // Freeze the installed table before a catalog migration changes it.
-          pricingHistory = normalizePricingHistory(parsed.pricingHistory, sanitizeConfig(cfg))
+          // Freeze the installed table, and its calendar policy, before a catalog migration changes it.
+          pricingHistory = normalizePricingHistory(parsed.pricingHistory, sanitizeConfig(cfg), undefined, true)
+          legacyPricingHistory = !!parsed.pricingHistory && parsed.pricingHistory.format !== 2
           // 一次性迁移:先于清洗对原始配置执行,已应用过的(账本 migrations 标记)跳过。
           migrations = Array.isArray(parsed.migrations) ? parsed.migrations.filter(m => typeof m === 'string') : []
           const applied = new Set(migrations)
@@ -2157,6 +2213,8 @@ export class Ledger {
       }
     }
     const ledger = new Ledger(config, days, path, migrations, { planSamples, planHourBuckets, openrouterPriceHashes, providerPriceHashes, balanceRef, historyReset, usageCursors, pricingHistory })
+    ledger.legacyPricingHistory = legacyPricingHistory
+    if (legacyPricingHistory) ledger.scheduleWrite()
     const repaired = repairDailySessionTotals(ledger.days)
     if (repaired.length) {
       if (repaired.includes(ledger.balanceRef?.date)) ledger.balanceRef = null
@@ -2172,8 +2230,9 @@ export class Ledger {
    * @param sessionId - 会话 id(可能缺失,例如无会话的辅助调用)。
    * @param atMs - 计费时刻(epoch ms)。
    */
-  account(tokens, modelId, sessionId, atMs, provider, meter) {
+  account(tokens, modelId, sessionId, atMs, provider, meter, requestFee) {
     if (this.closed) return
+    if (requestFee !== undefined && (!validRequestFee(requestFee) || provider !== 'deepseek-official' || modelId !== `deepseek-web-${requestFee.kind}`)) throw new Error('Invalid official web request fee')
     const pricing = pricingConfigAt(this.config, atMs, sessionId, `${provider || 'deepseek'}:${modelId}`)
     const resolved = providerPriceEntryFor(provider, modelId, pricing.prices, {
       mode: pricing.priceMatch === 'exact' ? 'exact' : 'auto',
@@ -2189,13 +2248,13 @@ export class Ledger {
     // 官方价格币种为人民币(issue #47)时,DeepSeek 主表(峰谷计费,含 default
     // 兜底与跨厂商兑底命中)计出的成本为人民币,按展示汇率折算为美元入账;
     // 第三方 flat 恒为美元价,直接入账。
-    const priced = resolved.priced ? costOf(tokens, entry, atMs, peak) : 0
-    const cost = usdFromCost(priced, resolved.currency, fxRatesOf(pricing).CNY)
+    const priced = requestFee ? requestFee.requests * requestFee.rateCny : resolved.priced ? costOf(tokens, entry, atMs, peak) : 0
+    const cost = usdFromCost(priced, requestFee ? 'CNY' : resolved.currency, fxRatesOf(pricing).CNY)
     // Plan/API 双轨分类(issue #64):plan 类调用金额只记等值(cost),apiCost 记真金白银部分;
     // Plan 类调用同时进入 provider×小时聚合桶(供 5 小时滚动窗本地量聚合)。
     const planBilling = this.config.planBilling
     const enabledPlans = enabledPlanSetOf(this.config)
-    const cls = billingClassOf(provider, modelId, planBilling, enabledPlans, this.config.prices)
+    const cls = requestFee ? 'api' : billingClassOf(provider, modelId, planBilling, enabledPlans, this.config.prices)
     const apiCost = cls === 'api' ? cost : 0
     // 归一化各桶 token 数:非有限/负数一律按 0 处理,防止污染账本聚合。
     const num = value => {
@@ -2240,7 +2299,6 @@ export class Ledger {
   }
 
   scheduleWrite() {
-    advancePricingHistory(this.pricingHistory, this.config)
     this.pendingWrite = true
     if (this.writeTimer !== null) return
     this.writeTimer = setTimeout(() => {
@@ -2251,7 +2309,7 @@ export class Ledger {
 
   /** A detached, secret-free baseline for merging changes from other processes. */
   snapshot() {
-    return structuredClone({
+    return cloneLedgerSnapshot({
       version: LEDGER_VERSION, config: stripSecrets(this.config), days: this.days,
       balanceRef: this.balanceRef ?? null, migrations: this.migrations,
       planSamples: this.planSamples ?? {}, planHourBuckets: this.planHourBuckets ?? {},
@@ -2274,9 +2332,12 @@ export class Ledger {
   }
 
   readDiskSnapshot() {
+    const revision = diskRevisionOf(this.path)
+    if (revision && revision === this.diskRevision) return this.writeBase
     const raw = readLedger(this.path)
     if (raw === null) return null
-    const pricingHistory = normalizePricingHistory(raw.pricingHistory, sanitizeConfig(raw.config))
+    this.legacyPricingHistory = !!raw.pricingHistory && raw.pricingHistory.format !== 2
+    const pricingHistory = normalizePricingHistory(raw.pricingHistory, sanitizeConfig(raw.config), this.pricingHistory, true)
     for (const migration of CONFIG_MIGRATIONS) {
       if (!(raw.migrations ?? []).includes(migration.id)) migration.apply(raw.config ?? {})
     }
@@ -2305,13 +2366,16 @@ export class Ledger {
     if (this.closed) return
     if (this.pendingWrite) { this.flush(); return }
     try {
-      const info = statSync(this.path, { bigint: true })
-      const revision = `${info.ino}:${info.mtimeNs}:${info.size}`
+      const revision = diskRevisionOf(this.path)
       if (revision === this.diskRevision) return
       const disk = this.readDiskSnapshot()
       if (disk === null) return
-      this.adoptSnapshot(mergeLedger(this.writeBase, this.snapshot(), disk, []))
-      this.writeBase = structuredClone(disk)
+      this.adoptSnapshot(mergeLedger(this.writeBase, this.snapshot(), disk, [], Date.now(), [], { ownLocal: true }))
+      // Keep the new baseline equal to the state we now hold: a freshly loaded legacy
+      // ledger has frozen FX amounts backfilled in memory that the file does not carry
+      // yet, and a baseline copied from that file would treat them as a local change
+      // later (double-counting when a sibling process persists the same backfill).
+      this.writeBase = this.snapshot()
       this.diskRevision = revision
     } catch (error) {
       if (error?.code !== 'ENOENT') console.warn(`[dsh-cost-meter] 账本刷新失败,保留当前记录: ${String(error?.message ?? error)}`)
@@ -2326,30 +2390,32 @@ export class Ledger {
     this.flush()
   }
 
-  flush() {
+  flush(waitMs = 0) {
     if (!this.pendingWrite || this.closed) return
     try {
       withLedgerLock(this.path, () => {
+        advancePricingHistory(this.pricingHistory, this.config)
         const disk = this.readDiskSnapshot()
-        const merged = mergeLedger(this.writeBase, this.snapshot(), disk, this.pendingAccounts, Date.now(), this.pendingPlanHourRepairs)
+        const merged = mergeLedger(this.writeBase, this.snapshot(), disk, this.pendingAccounts, Date.now(), this.pendingPlanHourRepairs, { ownLocal: true })
         // Keep runtime-only secret fallbacks in memory, never in the file or baseline.
-        writeLedger(this.path, merged)
+        writeLedger(this.path, merged, this.legacyPricingHistory)
+        this.legacyPricingHistory = false
         this.adoptSnapshot(merged)
         this.writeBase = this.snapshot()
         this.pendingAccounts = []
         this.pendingPlanHourRepairs = []
         this.pendingWrite = false
-        this.diskRevision = null
-      })
+        this.diskRevision = diskRevisionOf(this.path)
+      }, waitMs)
     } catch (error) {
-      console.warn(`[dsh-cost-meter] 账本写入失败,稍后重试: ${String(error?.message ?? error)}`)
+      if (error?.code !== 'EBUSY' || waitMs > 0) console.warn(`[dsh-cost-meter] 账本写入失败,稍后重试: ${String(error?.message ?? error)}`)
       if (!this.closed) this.scheduleWrite()
     }
   }
 
   /** 停止后续写入并最终落盘(插件卸载/进程退出)。 */
   close() {
-    this.flush()                  // 趁仍处打开状态强制落盘(close 前的最后一次入账不丢)
+    this.flush(5000)              // 退出时保留同步最终提交；日常写入遇锁立即让出并重试。
     this.closed = true
     if (this.writeTimer !== null) { clearTimeout(this.writeTimer); this.writeTimer = null }
   }
@@ -2465,6 +2531,12 @@ export class Ledger {
   }
 }
 
+// 赠送余额部分减少(issue #302)的保守阈值:同期本地官方渠道费用最多只能解释减量的
+// 1/4,其余至少 3/4 无法由消费解释时,才降级为「赠送余额到期/回收」提示;超过 1/4
+// 仍按既有 drift 处理,避免把真实漏记的消费一并吞掉。与既有漂移阈值
+// (max($0.3, 15%))一样属于内部判定常数;用户侧仍可用 balance.reconcile 关闭整套对账。
+const GRANTED_RELEASE_MAX_LOCAL_RATIO = 0.25
+
 /**
  * 余额差交叉校验(issue #18 讨论):用官方余额当日变动反推消费,与本地账本今日合计比对。
  * 仅当余额确实减少时才对账——订阅/Coding Plan 消费不动官方余额,若强行用余额差
@@ -2479,7 +2551,9 @@ export class Ledger {
  * @param dayKey - 本地日期键(YYYY-MM-DD)。
  * @param nowMs - 当前时刻。
  * @param [options] - { exchangeRate }:CNY→USD 折算率(1 USD 兑 X CNY)。
- * @returns {{ ref, event }} event.kind ∈ baseline | structure-reset | flat | ok | drift; event.todayCost 是自基准以来的费用增量。
+ * @returns {{ ref, event }} event.kind ∈ baseline | structure-reset | flat | ok | drift | granted-release;
+ *   event.todayCost 是自基准以来的费用增量。granted-release 表示减量可归因于赠送余额
+ *   到期/回收(issue #302),ref 已重置为当前快照,调用方按「非消费提示」展示。
  */
 export function reconcileBalanceDelta(prevRef, balance, todayCost, dayKey, nowMs, options) {
   if (balance === null || typeof balance !== 'object' || !Number.isFinite(balance.totalBalance)) {
@@ -2530,7 +2604,24 @@ export function reconcileBalanceDelta(prevRef, balance, todayCost, dayKey, nowMs
   todayCost -= prevRef.ledgerCost
   const dev = Math.abs(spentUsd - todayCost)
   const threshold = Math.max(0.3, 0.15 * Math.max(spentUsd, todayCost))
-  if (dev > threshold) return { ref: prevRef, event: { kind: 'drift', spent, spentCurrency: snap.currency, spentUsd, todayCost } }
+  if (dev > threshold) {
+    // 赠送余额部分减少(issue #302):#89 只覆盖「归零」;赠送桶部分到期/回收时,总额减量
+    // 全部落在赠送桶、充值桶不变,本地消费却远低于该减量——整块差额不是消费,报 drift 会
+    // 把到期金额当成「变动虚高」。仅当下面三个条件同时成立才降级(重置基准 + 一次性说明):
+    //   ① 减量可完全由赠送桶下降解释(充值桶没有实质减少,总额减量不超过赠送减量);
+    //   ② 同期本地官方渠道费用(含外部来源)最多只能解释减量的 1/4;
+    //   ③ 原本会触发 drift(dev 超既有阈值)——不改变阈值内已有的 ok/flat 判定。
+    // 本地费用能解释相当比例(>1/4)时仍按真实 drift 上报,避免吞掉漏记消费。
+    const grantedDrop = prevRef.granted - snap.granted
+    const toppedDrop = prevRef.topped - snap.topped
+    const grantedOnlyDecrease = Number.isFinite(prevRef.granted) && Number.isFinite(prevRef.topped)
+      && grantedDrop > 0.009
+      && toppedDrop <= 0.009
+      && spent <= grantedDrop + 0.009
+      && todayCost <= spentUsd * GRANTED_RELEASE_MAX_LOCAL_RATIO
+    if (grantedOnlyDecrease) return { ref: snap, event: { kind: 'granted-release', spent, spentCurrency: snap.currency, spentUsd, todayCost } }
+    return { ref: prevRef, event: { kind: 'drift', spent, spentCurrency: snap.currency, spentUsd, todayCost } }
+  }
   // ok/drift 都保留当日首次基准,后续拉取继续与早间基线比对。
   return { ref: prevRef, event: { kind: 'ok', spent, spentCurrency: snap.currency, spentUsd, todayCost } }
 }

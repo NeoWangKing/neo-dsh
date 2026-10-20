@@ -4,9 +4,11 @@
  */
 
 import { FX_FIELDS } from './exchange-rates.js'
-const FIELDS = ['input', 'output', 'cacheRead', 'cacheWrite', 'reasoning', 'calls', 'cost', 'apiCost', ...FX_FIELDS]
+const FIELDS = ['input', 'output', 'cacheRead', 'cacheWrite', 'reasoning', 'calls', 'cost', 'apiCost']
 const amount = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0
 const validId = value => typeof value === 'string' && value.length > 0 && value.length <= 512
+// Frozen FX amounts stay absent until a contributing row recorded them: defaulting
+// them to 0 would make the client trust a finite「¥0」for a real USD cost (issue #300).
 const emptyBuckets = () => Object.fromEntries(FIELDS.map(key => [key, 0]))
 const headerReads = new WeakMap()
 
@@ -16,6 +18,16 @@ function empty(id) {
 
 function add(target, source) {
   for (const key of FIELDS) target[key] += amount(key === 'apiCost' ? (source.apiCost ?? source.cost) : source[key])
+  for (const key of FX_FIELDS) if (Number.isFinite(source?.[key])) target[key] = (target[key] ?? 0) + source[key]
+}
+
+/** Frozen amounts are additive only across rows that all recorded them. */
+const frozenComplete = row => FX_FIELDS.every(key => Number.isFinite(row?.[key]))
+function dropIncompleteFrozen(target, rows) {
+  if (rows.every(frozenComplete)) return target
+  for (const key of FX_FIELDS) delete target[key]
+  for (const bucket of Object.values(target.byProviderModel)) for (const key of FX_FIELDS) delete bucket[key]
+  return target
 }
 
 function addSession(target, source) {
@@ -112,16 +124,19 @@ export function aggregateSessionCost(days, sessionId, headers = [], includeSubag
   if (!validId(sessionId)) throw new Error('invalid session id')
   const descendants = includeSubagents ? subagentIds(sessionId, headers) : new Set()
   const own = empty(sessionId), subagents = empty(sessionId)
+  const ownRows = [], subagentRows = []
   let found = false
   const counted = new Set()
   for (const day of Object.values(days ?? {})) {
     if (!Array.isArray(day?.sessions)) continue
     for (const row of day.sessions) {
       if (row === null || typeof row !== 'object') continue
-      if (row.id === sessionId) { addSession(own, row); found = true }
-      else if (descendants.has(row.id)) { addSession(subagents, row); counted.add(row.id) }
+      if (row.id === sessionId) { ownRows.push(row); addSession(own, row); found = true }
+      else if (descendants.has(row.id)) { subagentRows.push(row); addSession(subagents, row); counted.add(row.id) }
     }
   }
+  dropIncompleteFrozen(own, ownRows)
+  dropIncompleteFrozen(subagents, subagentRows)
   return { own, subagents, subagentCount: counted.size, found }
 }
 
@@ -131,6 +146,30 @@ export async function getSessionCost(ledger, ctx, sessionId) {
   const include = ledger.config?.includeSubagentCost === true
   const headers = include ? await readSessionHeaders(ctx) : []
   return aggregateSessionCost(ledger.days, sessionId, headers, include)
+}
+
+/** Aggregate a visible page in one pass over the ledger; never read conversation bodies. */
+export async function getSessionListCosts(ledger, ctx, query) {
+  if (!Array.isArray(query?.sessionIds) || query.sessionIds.length > 100 || !query.sessionIds.every(validId)
+    || !['today', 'total'].includes(query.period)) throw Error('invalid session list query')
+  const ids = [...new Set(query.sessionIds)], headers = ledger.config?.includeSubagentCost ? await readSessionHeaders(ctx) : []
+  const targets = new Map(), rows = new Map(ids.map(id => [id, empty(id)])), contributors = new Map(ids.map(id => [id, []]))
+  for (const id of ids) for (const source of [id, ...(ledger.config?.includeSubagentCost ? subagentIds(id, headers) : [])]) {
+    if (!targets.has(source)) targets.set(source, [])
+    targets.get(source).push(id)
+  }
+  const now = new Date(), dayKey = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
+  for (const [date, day] of Object.entries(ledger.days ?? {})) {
+    if (query.period === 'today' && date !== dayKey) continue
+    for (const source of day.sessions ?? []) for (const id of targets.get(source.id) ?? []) {
+      addSession(rows.get(id), source); contributors.get(id).push(source)
+    }
+  }
+  return ids.map(id => {
+    const sources = contributors.get(id), row = dropIncompleteFrozen(rows.get(id), sources)
+    const { byProviderModel, ...summary } = row
+    return { ...summary, found: sources.length > 0 }
+  })
 }
 
 /** One scope shared by the badge, selected-conversation statistics and log details. */
@@ -165,17 +204,22 @@ export function conversationRows(days, headers = [], include = false) {
     (day.sessions ?? []).filter(row => validId(row?.id)).map(row => ({ ...row, date })))
   const owners = include ? conversationOwners(headers, source.map(row => row.id)) : new Map()
   const rows = new Map()
+  const contributors = new Map()
   let recent = 0
   for (const raw of source) {
     const id = owners.get(raw.id) ?? raw.id
     let row = rows.get(id)
     if (!row) { row = { ...empty(id), date: raw.date }; rows.set(id, row) }
     addSession(row, raw)
+    const seen = contributors.get(id)
+    if (seen) seen.push(raw)
+    else contributors.set(id, [raw])
     if (raw.id === id) {
       if (raw.title) row.title = raw.title
       if (amount(raw.at)) row.at = row.at ? Math.min(row.at, raw.at) : raw.at
     }
     row.recent = recent++
   }
+  for (const row of rows.values()) dropIncompleteFrozen(row, contributors.get(row.id) ?? [])
   return [...rows.values()]
 }

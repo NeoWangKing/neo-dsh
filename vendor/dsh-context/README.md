@@ -2,6 +2,8 @@
 
 # dsh-context
 
+[中文](README_zh.md)
+
 [![npm version](https://img.shields.io/npm/v/dsh-context)](https://www.npmjs.com/package/dsh-context)
 [![GitHub stars](https://img.shields.io/github/stars/bowenliang123/dsh-context?style=social)](https://github.com/bowenliang123/dsh-context)
 [![dshfind](https://dshfind.com/api/badge/bowenliang123/dsh-context)](https://dshfind.com/en/plugins/bowenliang123/dsh-context?ref=badge)
@@ -88,7 +90,7 @@ Open any session and click the **Context / 上下文** tab:
 
 The headline occupancy and composition read the **same official token-meter projections as the chat composer's context ring** (`contextPressure` / `contextBreakdown`), so the figures always match what the ring tells you — the card's percentage is that same occupancy, printed with one decimal.
 
-The **Context Stats** card's Agent Network cell (the billed tokens and estimated cost of the whole family) jumps to the **Fleet** tab.
+The **Context Stats** card's Agent Network cell (the billed tokens and estimated cost of the whole family) jumps to the **Fleet** tab. Its Input / Output pills are jump links too: **Human Inputs** opens the **Context Browser** on your messages, and **Read / Written / Searched / Images** land on the **File Activity** card with that kind picked.
 
 ### Context Stats
 
@@ -142,6 +144,8 @@ Pick **Live (next request)** or any retained step, and browse what that request 
 ![Image attachment cards with their dimensions, stored size, and token estimate](https://raw.githubusercontent.com/bowenliang123/dsh-context/main/docs/context-browser-images.png)
 
 - **Diff against the previous turn** — signed delta badges per category (`+N` items, `±Nk` tokens) tell you what a turn added or reclaimed at one glance. Steps older than a compaction are reconstructed from the removed-message archive — and the card says so when a step's makeup is only approximate.
+
+- **DNA mode lays the whole context out flat** — the bar draws one band per item in the model's reading order, and below it the same items become one flat list with the newest message on top (the model reads oldest-first, so the list runs that order bottom-up): every row carries its prompt position (`#12`), category, introducing step, and token price, and expands into the same full content; the tool schemas and the system prompt close the list as two group rows. The card ends flush with the composition + trend cards beside it — a fully flattened session scrolls inside instead of flooding the page.
 
 ### ⚡ Context Events — when and why the window changed
 

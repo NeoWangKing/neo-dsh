@@ -219,7 +219,7 @@ type DefaultGranularity = 'step' | 'turn';
 type DefaultTrendMode = 'total' | 'delta';
 /** The browser delta baseline: against the immediately preceding record, or the previous turn's last step. */
 type DefaultDeltaBase = 'step' | 'turn';
-type DefaultFileSort = 'count' | 'latest' | 'path';
+type DefaultFileSort = 'count' | 'latest' | 'path' | 'name';
 type DefaultToolSort = 'size' | 'count' | 'name';
 type DefaultPlacement = 'all' | 'tab' | 'sidebar';
 type InsightsEntry = 'show' | 'hide';
@@ -569,7 +569,7 @@ export declare const Config: z$1<Schemastery.ObjectS<NoInfer<{
   defaultTrendMode: z$1<"delta" | "total", "delta" | "total", "defined">;
   defaultDeltaBase: z$1<"step" | "turn", "step" | "turn", "defined">;
   defaultToolSort: z$1<"count" | "name" | "size", "count" | "name" | "size", "defined">;
-  defaultFileSort: z$1<"count" | "latest" | "path", "count" | "latest" | "path", "defined">;
+  defaultFileSort: z$1<"count" | "latest" | "name" | "path", "count" | "latest" | "name" | "path", "defined">;
   insightsEntry: z$1<"hide" | "show", "hide" | "show", "defined">;
   defaultDurationCurve: z$1<"hide" | "show", "hide" | "show", "defined">;
   fleetTab: z$1<"hide" | "show", "hide" | "show", "defined">;
@@ -587,7 +587,7 @@ export declare const Config: z$1<Schemastery.ObjectS<NoInfer<{
   defaultTrendMode: z$1<"delta" | "total", "delta" | "total", "defined">;
   defaultDeltaBase: z$1<"step" | "turn", "step" | "turn", "defined">;
   defaultToolSort: z$1<"count" | "name" | "size", "count" | "name" | "size", "defined">;
-  defaultFileSort: z$1<"count" | "latest" | "path", "count" | "latest" | "path", "defined">;
+  defaultFileSort: z$1<"count" | "latest" | "name" | "path", "count" | "latest" | "name" | "path", "defined">;
   insightsEntry: z$1<"hide" | "show", "hide" | "show", "defined">;
   defaultDurationCurve: z$1<"hide" | "show", "hide" | "show", "defined">;
   fleetTab: z$1<"hide" | "show", "hide" | "show", "defined">;

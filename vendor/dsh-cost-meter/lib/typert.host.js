@@ -63,7 +63,7 @@ export const sessionCostSchema = z.object({
   subagentCount: num,
   found: z.boolean(),
 })
-const turnCostRowSchema = z.object({ provider: z.string(), model: z.string(), bucket: z.string(), tokens: num, rate: num, cost: num, priced: z.boolean(), plan: z.boolean() })
+const turnCostRowSchema = z.object({ provider: z.string(), model: z.string(), bucket: z.string(), tokens: num, requests: num.optional(), rate: num, cost: num, priced: z.boolean(), plan: z.boolean() })
 const meteringSchema = z.object({ source: z.literal('billion-context'), requestId: z.string(), attempt: num, complete: z.boolean(), status: z.string(), upstream: z.string() }).optional()
 export const turnCostSchema = z.object({
   found: z.boolean(), cost: num, apiCost: num, ...frozenMoney,
@@ -232,14 +232,18 @@ const configSchema = z.object({
   peakAlertPosition: z.enum(['corner', 'center']).optional(),
   peakAlertWebNotify: z.boolean().optional(),
   showSessionId: z.boolean().optional(),
+  sessionListCosts: z.boolean().optional(),
+  sessionListCostPeriod: z.enum(['total', 'today']).optional(),
   // UI 隐藏开关(issues #45/#46):开启后官方余额/今日消耗金额的对应 UI 区块整体不渲染。
   hideOfficialBalance: z.boolean().optional(),
   hideBudget: z.boolean().optional(),
   hideTodayCost: z.boolean().optional(),
+  modelStatistics: z.record(z.string(), z.object({ today: z.boolean().optional(), summary: z.boolean().optional(), budget: z.boolean().optional() }).strict()).optional(),
   hideSessionCostHeader: z.boolean().optional(),
   hideSessionCostDock: z.boolean().optional(),
   hideTurnCost: z.boolean().optional(),
   sessionCostCompact: z.boolean().optional(),
+  followSkinTransparency: z.boolean().optional(),
   contextCostsEnabled: z.boolean().optional(),
   contextCostsPromptSeen: z.boolean().optional(),
   sidebarTodayMetric: z.enum(['cost', 'tokens']).optional(),
@@ -249,6 +253,11 @@ const configSchema = z.object({
   includeSubagentCost: z.boolean().optional(),
   codexQuotaEnabled: z.boolean().optional(),
   codexQuotaSidebar: z.boolean().optional(),
+  codexQuotaStrip: z.boolean().optional(),
+  codexQuotaSource: z.enum(['auto', 'connect', 'subscription', 'chatgpt']).optional(),
+  // dsh-codex-subscription 兼容:一次性历史归类提示是否永久关闭 / 历史归类完成时刻 ms(0 = 未应用)。
+  codexCompatPromptDismissed: z.boolean().optional(),
+  codexCompatHistoryAppliedAt: num.optional(),
   sidebarSimple: z.boolean().optional(),
   sidebarSimplePromptSeen: z.boolean().optional(),
   sidebarModels: z.object({ enabled: z.boolean(), period: z.enum(['today', 'history']), topN: z.number().int().min(1).max(10), summary: z.enum(['total', 'top']), position: z.enum(['first', 'afterBalance', 'last']), defaultOpen: z.boolean(), remember: z.boolean(), tokens: z.boolean(), shares: z.boolean(), refreshSeconds: z.number().int().min(10).max(60), dock: z.boolean() }).strict().optional(),
@@ -256,7 +265,9 @@ const configSchema = z.object({
   priceMatchDismissed: z.array(z.string()).optional(),
   // 安装前历史自动导入完成时刻(issue #27,内部标记;0/缺席 = 尚未跑过)。
   legacyAutoImportedAt: num.optional(),
-  peakStyle: z.enum(['compact', 'classic']).optional(),
+  peakStyle: z.enum(['compact', 'classic', 'progress']).optional(),
+  peakTimeDisplay: z.enum(['both', 'countdown', 'switch']).optional(),
+  peakProgressPromptSeen: z.boolean().optional(),
   priceMatch: z.enum(['auto', 'exact']).optional(),
   priceOverrides: z.record(z.string(), z.string()).optional(),
   priceTableDisplay: z.record(z.string(), z.boolean()).optional(),
@@ -335,6 +346,7 @@ const configSchema = z.object({
     display: z.enum(['sidebar', 'settings', 'both', 'off']),
     unit: z.enum(['USD', 'CNY', 'EUR', 'CREDITS']).optional(),
     convertToDisplayCurrency: z.boolean().optional(),
+    allowInsecureHttp: z.boolean().optional(),
     refreshMinutes: num,
     request: z.object({
       url: z.string(),
@@ -355,6 +367,7 @@ const configSchema = z.object({
     display: z.enum(['sidebar', 'settings', 'both', 'off']),
     unit: z.enum(['USD', 'CNY', 'EUR', 'CREDITS']).optional(),
     convertToDisplayCurrency: z.boolean().optional(),
+    allowInsecureHttp: z.boolean().optional(),
     refreshMinutes: num,
     request: z.object({
       url: z.string(),
@@ -411,7 +424,7 @@ const configSchema = z.object({
   planBilling: z.object({
     providers: z.record(z.string(), z.enum(['auto', 'plan', 'api'])),
     models: z.record(z.string(), z.enum(['plan', 'api'])),
-    modelPlans: z.record(z.string(), z.enum(['opendesign', 'anthropic', 'zai', 'minimax', 'kimi', 'openrouter', 'siliconflow', 'commandcode', 'scnet', 'volcengine', 'qwen', 'mimo', 'factory', 'go', 'codex', 'volcengine-agent', 'tencent-coding', 'tencent-token', 'baidu-coding'])).optional(),
+    modelPlans: z.record(z.string(), z.enum(['opendesign', 'anthropic', 'zai', 'minimax', 'kimi', 'openrouter', 'siliconflow', 'commandcode', 'clinepass', 'scnet', 'volcengine', 'qwen', 'mimo', 'factory', 'workbuddy', 'go', 'codex', 'volcengine-agent', 'tencent-coding', 'tencent-token', 'baidu-coding'])).optional(),
   }).optional(),
   historyDays: num,
   fetchedAt: z.union([z.string(), z.null()]),
@@ -560,6 +573,7 @@ const planStatsSchema = z.object({
 })
 
 export const stateSchema = z.object({
+  modelLabels: z.record(z.string(), z.string()).optional(),
   today: daySchema,
   month: daySchema,
   total: daySchema,
@@ -587,6 +601,19 @@ export const stateSchema = z.object({
   externalUsage: externalUsageSchema.optional(),
   billionContext: z.object({ protocol: num, connected: z.boolean(), failed: z.boolean(), requests: num, unreported: num, partial: num, uncovered: num,
     detected: z.boolean().optional(), version: z.string().optional(), compatibility: z.enum(['unknown', 'ready', 'needs_update', 'changed', 'bridge_missing']).optional(), noticeId: z.string().optional() }).optional(),
+  // dsh-codex-subscription 兼容(契约 C):仅在该插件安装时下发;键缺席 = 旧宿主 / 未安装,
+  // strict codec 会丢弃未声明字段,故必须显式声明整棵状态树。
+  codexCompat: z.object({
+    installed: z.boolean(),
+    enabled: z.boolean().optional(),
+    version: z.string(),
+    detection: z.enum(['package', 'profile', 'none']),
+    planClass: z.enum(['auto', 'plan', 'api']),
+    usage: z.object({ calls: num, cost: num, tokens: num, days: num, providers: z.array(z.string()) }),
+    historyAppliedAt: num,
+    promptDismissed: z.boolean(),
+    promptDue: z.boolean(),
+  }).optional(),
   config: configSchema,
   // 价格表版本号(宿主进程内唯一前缀 + 递增计数):客户端回传该值,一致时宿主
   // 省略 config.prices(占轮询载荷 56%)。缺席 = 旧宿主,客户端照常收全量。
@@ -684,6 +711,27 @@ export const TYPERT = {
       parameters: [
         { name: 'patch', wire: 'patch', source: 'json', codec: _patch$codec },
       ],
+      result: _state$codec,
+    },
+    {
+      // dsh-codex-subscription 兼容(契约 D):把历史 codex 类计费统一归类为 Plan,
+      // 影响 Plan 配额基线,返回完整 state。
+      id: 'dsh-cost-meter#costMeter/applyCodexCompatHistory',
+      service: 'costMeter',
+      namespace: 'costMeter',
+      method: 'applyCodexCompatHistory',
+      invocation: { kind: 'direct' },
+      parameters: [],
+      result: _state$codec,
+    },
+    {
+      // 永久关闭一次性兼容提示(×/保持现状/ESC),返回完整 state。
+      id: 'dsh-cost-meter#costMeter/dismissCodexCompat',
+      service: 'costMeter',
+      namespace: 'costMeter',
+      method: 'dismissCodexCompat',
+      invocation: { kind: 'direct' },
+      parameters: [],
       result: _state$codec,
     },
     {
@@ -838,6 +886,9 @@ export const TYPERT = {
       parameters: [{ name: 'sessionId', wire: 'sessionId', source: 'json', codec: _sessionId$codec }, { name: 'startSeq', wire: 'startSeq', source: 'json', codec: _turnSeq$codec }, { name: 'endSeq', wire: 'endSeq', source: 'json', codec: _turnSeq$codec }, { name: 'displayCurrency', wire: 'displayCurrency', source: 'json', acceptsUndefined: true, codec: strictCodec('DisplayCurrency', z.enum(['USD', 'CNY', 'EUR']).optional()) }],
       result: _turnCost$codec,
     },
+    { id: 'dsh-cost-meter#costMeter/getSessionListCosts', service: 'costMeter', namespace: 'costMeter', method: 'getSessionListCosts', invocation: { kind: 'direct' },
+      parameters: [{ name: 'query', wire: 'query', source: 'json', codec: strictCodec('SessionListQuery', z.object({ sessionIds: z.array(z.string().min(1).max(512)).max(100), period: z.enum(['total', 'today']) })) }],
+      result: strictCodec('SessionListCosts', z.array(sessionSchema.extend({ found: z.boolean() }))) },
     ...[['getBillingStatistics', 'BillingStatistics', billingStatisticsSchema], ['getSessionBilling', 'SessionBilling', sessionBillingSchema]].map(([method, name, schema]) => ({
       id: 'dsh-cost-meter#costMeter/' + method, service: 'costMeter', namespace: 'costMeter', method, invocation: { kind: 'direct' },
       parameters: [{ name: 'query', wire: 'query', source: 'json', codec: strictCodec('StatisticsQuery', statisticsQuerySchema) }],
@@ -983,8 +1034,14 @@ export const TYPERT = {
           },
           {
             kind: 'method',
+            name: 'getSessionListCosts',
+            signature: 'getSessionListCosts(query: { sessionIds: string[]; period: "total" | "today" }): unknown',
+            summary: '批量读取可见会话的账本金额与 Token 汇总。Read recorded amounts for visible sessions in one batch.',
+          },
+          {
+            kind: 'method',
             name: 'getTurnCost',
-            signature: 'getTurnCost(sessionId: string, startSeq: number, endSeq: number): TurnCost',
+            signature: 'getTurnCost(sessionId: string, startSeq: number, endSeq: number, displayCurrency?: DisplayCurrency): TurnCost',
             summary: '读取已完成轮次的分项用量与估算费用。Read recorded usage and estimated costs for a completed turn.',
           },
           {

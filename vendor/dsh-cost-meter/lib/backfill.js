@@ -258,13 +258,31 @@ export function listSessionLogs(root, onlySessionIds = null) {
   return listSessionLogFiles(root, onlySessionIds)
 }
 
-/** Merge the plugin journal before replay, so UUID dedup also covers repaired v1.7.21 logs. */
-async function* sessionBillingRecords(ledger, sessionsRoot, onlySessionIds = null) {
+/**
+ * Merge the plugin journal before replay, so UUID dedup also covers repaired v1.7.21 logs.
+ * @param sessionSource - 可选的统一会话记录源(T3):非空时用
+ *   `listSessions(onlySessionIds)` 枚举 + `readRecords(id)` 读取(JSONL 文件或 SQLite
+ *   由适配器自动选择);为空时保持原有 `listSessionLogs` 文件枚举路径不变。
+ */
+async function* sessionBillingRecords(ledger, sessionsRoot, onlySessionIds = null, sessionSource = null) {
   const seen = new Set()
-  for (const path of listSessionLogs(sessionsRoot, onlySessionIds)) {
+  const hasSource = sessionSource !== null && sessionSource !== undefined
+  const sessions = hasSource ? await sessionSource.listSessions(onlySessionIds) : null
+  const paths = hasSource ? null : listSessionLogs(sessionsRoot, onlySessionIds)
+  for (const entry of sessions ?? paths) {
     let records
-    try { records = await readSessionRecordsAsync(path) } catch { yield null; continue }
-    const id = records.find(record => record.type === 'session')?.id
+    let id
+    try {
+      if (hasSource) {
+        id = typeof entry?.id === 'string' ? entry.id : ''
+        if (id.length === 0) continue
+        records = await sessionSource.readRecords(id)
+      } else {
+        records = await readSessionRecordsAsync(entry)
+        id = records.find(record => record.type === 'session')?.id
+      }
+    } catch { yield null; continue }
+    if (!Array.isArray(records)) { yield null; continue }
     if (typeof id === 'string') {
       seen.add(id)
       try { for (const record of await nativeSearchRecordsFor(ledger.path, id)) records.push(record) } catch { /* Keep the readable host prefix. */ }
@@ -291,8 +309,11 @@ async function* sessionBillingRecords(ledger, sessionsRoot, onlySessionIds = nul
   }
 }
 
-/** Recover only recent, fully covered days. Neither calls nor recorded costs change. */
-export async function repairPlanHourBuckets(ledger, sessionsRoot, { nowMs = Date.now(), isActive = () => true } = {}) {
+/**
+ * Recover only recent, fully covered days. Neither calls nor recorded costs change.
+ * @param sessionSource - 可选统一会话记录源(T3);为空时走原 JSONL 文件枚举。
+ */
+export async function repairPlanHourBuckets(ledger, sessionsRoot, { nowMs = Date.now(), isActive = () => true } = {}, sessionSource = null) {
   const config = structuredClone(ledger.config), fingerprint = planUsageFingerprint(config)
   const historyReset = structuredClone(ledger.historyReset ?? null)
   const from = nowMs - HOUR_BUCKET_RETENTION_MS
@@ -304,7 +325,7 @@ export async function repairPlanHourBuckets(ledger, sessionsRoot, { nowMs = Date
   }
   if (!sessionIds.size || !isActive() || ledger.closed) return { days: 0 }
   const byDay = new Map(), enabled = enabledPlanSetOf(config)
-  for await (const records of sessionBillingRecords(ledger, sessionsRoot, sessionIds)) {
+  for await (const records of sessionBillingRecords(ledger, sessionsRoot, sessionIds, sessionSource)) {
     if (!isActive() || ledger.closed || planUsageFingerprint(ledger.config) !== fingerprint) return { days: 0 }
     if (!records) continue
     const replay = replaySessionRecords(records, config, dates, true)
@@ -361,6 +382,24 @@ export async function repairPlanHourBuckets(ledger, sessionsRoot, { nowMs = Date
 export function replaySessionRecords(records, config, wantDates = null, collectSamples = false) {
   records = excludeBillionReportedUsage(records)
   const samples = collectSamples ? new Map() : null
+  // One replay has fixed classification settings. Price versions can differ per
+  // call: reuse a lookup only while its exact catalog and override objects match.
+  const enabledPlans = enabledPlanSetOf(config), classifications = new Map(), prices = new Map()
+  const resolvePrice = (provider, model, pricing) => {
+    const key = JSON.stringify([provider, model]), mode = pricing?.priceMatch === 'exact' ? 'exact' : 'auto'
+    let saved = prices.get(key)
+    if (!saved || saved.catalog !== pricing?.prices || saved.overrides !== pricing?.priceOverrides || saved.mode !== mode) {
+      saved = { catalog: pricing?.prices, overrides: pricing?.priceOverrides, mode,
+        value: providerPriceEntryFor(provider, model, pricing?.prices, { mode, overrides: pricing?.priceOverrides }) }
+      prices.set(key, saved)
+    }
+    return saved.value
+  }
+  const isPlan = (provider, model) => {
+    const key = JSON.stringify([provider, model])
+    if (!classifications.has(key)) classifications.set(key, billingClassOf(provider, model, config?.planBilling, enabledPlans, config?.prices) === 'plan')
+    return classifications.get(key)
+  }
   const zeroBuckets = () => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, calls: 0, cost: 0, apiCost: 0 })
   const num = value => {
     const n = Number(value)
@@ -552,10 +591,8 @@ export function replaySessionRecords(records, config, wantDates = null, collectS
     // 计价/归类/归因一律用改挂后的 effectiveProvider(包装层转发对挂语义上游)。
     const pricedAtMs = !isCompaction && !metered ? stepStarts.get(`${turn}:${step}`) ?? atMs : atMs
     const pricing = pricingConfigAt(config, pricedAtMs, sessionId, `${effectiveProvider}:${sampleModel}`)
-    const resolved = providerPriceEntryFor(effectiveProvider, sampleModel, pricing?.prices, {
-      mode: pricing?.priceMatch === 'exact' ? 'exact' : 'auto',
-      overrides: pricing?.priceOverrides,
-    })
+    const requestFee = isNativeSearch ? event.data.requestFee : undefined
+    const resolved = requestFee ? { priced: true, entry: {}, currency: 'CNY', billingMode: 'flat' } : resolvePrice(effectiveProvider, sampleModel, pricing)
     const peak = {
       enabled: ['deepseek-peak', 'utc-peak'].includes(resolved.billingMode) && pricing?.peakEnabled === true,
       effectiveAtMs: Date.parse(pricing?.peakEffectiveAt ?? ''),
@@ -564,13 +601,14 @@ export function replaySessionRecords(records, config, wantDates = null, collectS
     }
     // 官方价格币种为人民币(issue #47)时,DeepSeek 主表计出的成本为人民币,
     // 按展示汇率折算为美元入账——与 store.account() 完全同口径。
-    const priced = resolved.priced ? costOf(buckets, resolved.entry, pricedAtMs, peak) : 0
-    const canonical = usdFromCost(priced, resolved.currency, fxRatesOf(pricing).CNY)
-    const displayFactor = config._displayCurrency ? fxRatesOf(pricing)[config._displayCurrency] / config.exchangeRate : 1
+    const priced = requestFee ? requestFee.requests * requestFee.rateCny : resolved.priced ? costOf(buckets, resolved.entry, pricedAtMs, peak) : 0
+    const fxRates = fxRatesOf(pricing)
+    const canonical = usdFromCost(priced, resolved.currency, fxRates.CNY)
+    const displayFactor = config._displayCurrency ? fxRates[config._displayCurrency] / config.exchangeRate : 1
     const cost = canonical * displayFactor
     // Plan/API 双轨分类(issue #64):与 store.account() 同一分类器,回放条目
     // 的 apiCost 只含真金白银部分(plan 类金额仅记等值);传 prices 供路由判定。
-    const plan = billingClassOf(effectiveProvider, sampleModel, config?.planBilling, enabledPlanSetOf(config), config?.prices) === 'plan'
+    const plan = !requestFee && isPlan(effectiveProvider, sampleModel)
     const apiCost = plan ? 0 : cost
     const providerKey = `${effectiveProvider}:${sampleModel}`
     // 聚合目标按事件分段路由;被替换的旧样本从它当时所在的段扣回(与旧版
@@ -579,7 +617,7 @@ export function replaySessionRecords(records, config, wantDates = null, collectS
     const sample = { key, date, providerKey, buckets, cost, apiCost, ...frozenAmounts(cost, apiCost, pricing), seed: isSeed }
     if (samples) {
       if (prev) samples.delete(prev)
-      samples.set(sample, { ...sample, displayFactor, exchangeRate: fxRatesOf(pricing).CNY, fxRates: fxRatesOf(pricing), pricedAtMs, atMs, logSeq: !metered && Number.isSafeInteger(event.seq) && event.seq >= 0 ? event.seq : null, provider: effectiveProvider, model: sampleModel, resolved, peak, plan, kind: isCompaction ? 'compaction' : isNativeSearch ? 'search' : 'model',
+      samples.set(sample, { ...sample, ...(requestFee ? { requestFee } : {}), displayFactor, exchangeRate: fxRates.CNY, fxRates, pricedAtMs, atMs, logSeq: !metered && Number.isSafeInteger(event.seq) && event.seq >= 0 ? event.seq : null, provider: effectiveProvider, model: sampleModel, resolved, peak, plan, kind: isCompaction ? 'compaction' : requestFee ? requestFee.kind : isNativeSearch ? 'search' : 'model',
         ...(isBillion ? { metering: event.data.metering } : {}),
         turn: Number.isSafeInteger(event.data?.turn) && event.data.turn >= 0 ? event.data.turn : null,
         step: Number.isSafeInteger(event.data?.step) && event.data.step >= 0 ? event.data.step : null })
@@ -597,9 +635,10 @@ export function replaySessionRecords(records, config, wantDates = null, collectS
  *    写入该会话当日的回放拆分。
  * @param ledger - 已打开的账本。
  * @param sessionsRoot - 宿主会话根目录($DSH_HOME/sessions)。
+ * @param sessionSource - 可选统一会话记录源(T3,better-session/RDB);为空时走原 JSONL 文件枚举。
  * @returns { days, sessions, scanned, titles } 实际填补的日期/会话数、扫描文件数与补齐的会话标题数。
  */
-export async function backfillLegacyLedger(ledger, sessionsRoot) {
+export async function backfillLegacyLedger(ledger, sessionsRoot, sessionSource = null) {
   const result = { days: 0, sessions: 0, scanned: 0, titles: 0 }
   const needDates = new Set()
   for (const [date, day] of Object.entries(ledger.days ?? {})) {
@@ -647,7 +686,7 @@ export async function backfillLegacyLedger(ledger, sessionsRoot) {
       }
     }
   }
-  for await (const records of sessionBillingRecords(ledger, sessionsRoot, onlySessionIds)) {
+  for await (const records of sessionBillingRecords(ledger, sessionsRoot, onlySessionIds, sessionSource)) {
     // 会话日志多时逐份解压会长时间占住事件循环:每 8 份让出一次,不卡宿主 UI;
     // 单文件内部亦为流式读取(v1.7.7,issue #88:解压期间周期性让出,大日志不再卡死宿主)。
     if ((scannedCount += 1) % 8 === 0) await new Promise(resolve => setImmediate(resolve))
@@ -890,13 +929,14 @@ function sessionEntryOf(sessionId, info, totals, pm) {
  *  - 同一会话跨安装时刻:实时条目已存在,安装前用量不计入(无法安全拆分)。
  * @param ledger - 已打开的账本。
  * @param sessionsRoot - 宿主会话根目录($DSH_HOME/sessions)。
+ * @param sessionSource - 可选统一会话记录源(T3,better-session/RDB);为空时走原 JSONL 文件枚举。
  * @returns { days, sessions, scanned } 重建/追加的日期数、新增会话数与扫描文件数。
  */
-export async function importLegacyHistory(ledger, sessionsRoot) {
+export async function importLegacyHistory(ledger, sessionsRoot, sessionSource = null) {
   const result = { days: 0, sessions: 0, scanned: 0 }
   const bySession = new Map()
   let scannedCount = 0
-  for await (const records of sessionBillingRecords(ledger, sessionsRoot)) {
+  for await (const records of sessionBillingRecords(ledger, sessionsRoot, null, sessionSource)) {
     if ((scannedCount += 1) % 8 === 0) await new Promise(resolve => setImmediate(resolve))
     result.scanned += 1
     let replayed
@@ -987,9 +1027,13 @@ export async function importLegacyHistory(ledger, sessionsRoot) {
  * @param ledger - 已打开的账本(config 已是目标币种价格表)。
  * @param sessionsRoot - 宿主会话根目录($DSH_HOME/sessions)。
  * @param includeBucket - 可选的 (providerModelKey, date) 过滤器，仅修复目标价格路径。
+ * @param onlySessionIds - 可选:仅回放这些会话。
+ * @param explicit - 是否显式重定价(设置页 RPC),会记录前后金额与历史快照。
+ * @param model - 可选的单个 provider:model 键。
+ * @param sessionSource - 可选统一会话记录源(T3,better-session/RDB);为空时走原 JSONL 文件枚举。
  * @returns {{ scanned, recostedSessions, skippedSessions, recostedDays }}。
  */
-export async function recomputeLedgerPricingBasis(ledger, sessionsRoot, includeBucket, onlySessionIds = null, explicit = false, model = '') {
+export async function recomputeLedgerPricingBasis(ledger, sessionsRoot, includeBucket, onlySessionIds = null, explicit = false, model = '', sessionSource = null) {
   const result = { scanned: 0, recostedSessions: 0, skippedSessions: 0, recostedDays: 0 }
   const pricingConfig = explicit ? currentPricingConfig(ledger.config) : ledger.config
   if (explicit && model) pricingConfig._repriceFxConfig = ledger.config
@@ -998,7 +1042,7 @@ export async function recomputeLedgerPricingBasis(ledger, sessionsRoot, includeB
   const reset = JSON.stringify(ledger.historyReset ?? null)
   const startedAt = Date.now()
   const bySession = new Map()
-  for await (const records of sessionBillingRecords(ledger, sessionsRoot, onlySessionIds)) {
+  for await (const records of sessionBillingRecords(ledger, sessionsRoot, onlySessionIds, sessionSource)) {
     if ((result.scanned += 1) % 8 === 0) await new Promise(resolve => setImmediate(resolve))
     let replayed
     try {
@@ -1113,17 +1157,23 @@ function subtractBucketInto(target, source) {
  * 减法逐字段 clamp ≥ 0,即使账本未被污染(种子量为 0)也无副作用。
  * @param ledger - 已打开的账本。
  * @param sessionsRoot - 宿主会话根目录($DSH_HOME/sessions)。
+ * @param sessionSource - 可选统一会话记录源(T3,better-session/RDB);为空时走原 JSONL 文件枚举。
  * @returns { sessions, days, scanned } 受影响的 fork 会话数、扣除的日期数与扫描文件数。
  */
-export async function repairForkSeed(ledger, sessionsRoot) {
+export async function repairForkSeed(ledger, sessionsRoot, sessionSource = null) {
   const result = { sessions: 0, days: 0, scanned: 0 }
-  for (const path of listSessionLogs(sessionsRoot)) {
+  const hasSource = sessionSource !== null && sessionSource !== undefined
+  // 统一记录源(T3):RDB 下从数据库枚举会话;未传源时保持原 JSONL 文件枚举路径不变。
+  const entries = hasSource
+    ? (await sessionSource.listSessions()).map(row => (typeof row === 'string' ? row : row?.id)).filter(id => typeof id === 'string' && id.length > 0)
+    : listSessionLogs(sessionsRoot)
+  for (const entry of entries) {
     // 全量同步扫描会长时间占住事件循环:每 8 份让出一次(与回填/导入同策略);
     // 单文件内部亦为流式读取(v1.7.7,issue #88)。
     if ((result.scanned += 1) % 8 === 0) await new Promise(resolve => setImmediate(resolve))
     let records
     try {
-      records = await readSessionRecordsAsync(path)
+      records = hasSource ? await sessionSource.readRecords(entry) : await readSessionRecordsAsync(entry)
     } catch {
       continue // 单文件损坏(含解压预算超限)不阻断整体清洗。
     }

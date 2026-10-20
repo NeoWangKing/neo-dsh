@@ -1,6 +1,6 @@
 {
   "name": "cc-safety-net",
-  "version": "2.6.12",
+  "version": "2.6.16",
   "description": "A coding agent CLI hook - block destructive commands and secret file access",
   "keywords": [
     "amp",
@@ -135,5 +135,5 @@
       "./dist/pi/index.js"
     ]
   },
-  "gitHead": "8f62e92154f66854ad359aa963efaf6a8f9816cb"
+  "gitHead": "c2526afe39744f65281304687ba6e41de02559c4"
 }

@@ -1,4 +1,4 @@
-import { t as provideMemoryRuntime } from "./runtime-Bk6lFgxd.js";
+import { t as provideMemoryRuntime } from "./runtime-zuuBe8x1.js";
 //#region src/core/plugin.ts
 const name = "dsh-mnemon-core";
 const provide = ["mnemonMemory"];

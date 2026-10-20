@@ -1,15 +1,16 @@
 /** Starter Entry ids remain reserved when DSH nests them under an include. */
 export declare function isDefaultSourceInstance(instanceKey: string, sourceTypeId: string): boolean;
+/**
+ * The Source of one type a named tool works on: the Starter instance, the Entry
+ * `mnemon-source-<type>` also when nested under an include, or the only instance there
+ * is. Among several others there is none, and each keeps its exact offers.
+ */
+export declare function namedToolInstance<T extends {
+    sourceInstanceKey: string;
+}>(instances: readonly T[], sourceTypeId: string): T | undefined;
 export type MemoryParticipationMode = 'off' | 'manual' | 'automatic';
 export type MemoryParticipationChannel = 'recall' | 'write' | 'projection' | 'maintenance';
 export type MemoryLayerParticipation = Record<MemoryParticipationChannel, MemoryParticipationMode>;
-export interface MemoryTopologyDefinition {
-    id: string;
-    strategyId: string;
-    layers: Array<ResolvedMemoryLayerConfig & {
-        id: string;
-    }>;
-}
 export interface MemoryCompositionStatus {
     /** Whether a composition serves new turns. A rejected change can leave the previous one serving. */
     serving: boolean;
@@ -20,9 +21,11 @@ export interface MemoryCompositionStatus {
     configuration: ResolvedMemoryTopologyConfig;
 }
 import type { RecallQualityConfig, ResolvedRecallQualityConfig, MnemonEmbeddingConfig, ResolvedMnemonEmbeddingConfig } from 'dsh-mnemon-source-memory-spaces/contracts';
-import type { MemoryPersistenceStrategy, ResolvedMemoryPersistenceStrategy, MemoryProviderRuntimeStatus, MemoryBodyStats as MemorySpaceStats, MemoryBodyView as MemorySpaceView } from 'dsh-mnemon-source-memory-spaces/contracts';
+import type { MemoryPersistenceStrategy, ResolvedMemoryPersistenceStrategy, MemoryProviderRuntimeStatus, MemorySpaceStats, MemorySpaceView } from 'dsh-mnemon-source-memory-spaces/contracts';
 import type { ConnectionHandle as DshClientConnectionHandle } from '@deepseek-ai/dsh-client-connection/client';
-import type { DocumentSnapshot } from 'dsh-mnemon-source-documents/contracts';
+import type { DocumentMutationResult, DocumentSnapshot } from 'dsh-mnemon-source-documents/contracts';
+import type { RuntimeMemoryMutationResult } from 'dsh-mnemon-source-runtime/contracts';
+import type { MemoryMigrationLineage, MemoryMutationReceipt } from '../core/contracts/index.ts';
 export declare const MNEMON_READ_CHANNEL = "/dsh-mnemon-read";
 export declare const MNEMON_ACTIVATION_CHANNEL = "/dsh-mnemon-activation";
 export declare const MNEMON_WRITE_CHANNEL = "/dsh-mnemon-write";
@@ -66,6 +69,28 @@ export declare const MNEMON_REMOTE_REVIEW_ENDPOINT = "dshMnemon/review";
 export declare const MNEMON_SETTINGS_NAMESPACE = "mnemon";
 export declare const MNEMON_UI_SETTINGS_NAMESPACE = "mnemon-ui";
 export * from './view-protocol.ts';
+export * from './memory-tools.ts';
+export * from './sync-rules.ts';
+/**
+ * Every endpoint the Host serves on each channel, by the names both sides use: the client's calls
+ * are typed against this list, and tests/rpc-endpoints.spec.ts checks that each Host handler serves
+ * exactly these names.
+ */
+export declare const MNEMON_RPC_ENDPOINTS: {
+    readonly "/dsh-mnemon-read": readonly ["status", "status-summary", "memory-system", "versions", "task-agent-models", "runtime-memory", "documents", "document", "document-search", "graph", "bodies", "body-directory", "body-reconnect", "provider-services", "embedding-status", "list", "entities", "search", "agent-search", "related", "turn-activities", "turn-activity", "assistant-message", "source-management-catalog", "source-management-read", "source-assistance"];
+    readonly "/dsh-mnemon-activation": readonly ["body", "source-assistance"];
+    readonly "/dsh-mnemon-write": readonly ["runtime-memory", "document", "supervise", "remember", "link", "forget", "body-create", "body-update", "body-delete", "body-merge", "body-metadata-maintain", "provider-service-update", "embedding-fill", "source-management-mutate", "source-assistance", "version-update"];
+    readonly "/dsh-mnemon-pack": readonly ["target", "export", "inspect", "import"];
+    readonly "/dsh-mnemon-sync": readonly ["status", "configure", "push", "preview", "backups", "diff", "pull", "github-status", "github-start", "github-poll", "github-cancel", "github-signout", "github-repositories", "github-create"];
+    readonly "/dsh-mnemon-review": readonly ["view", "opinion", "decide", "reopen", "reconcile", "apply"];
+    readonly "/dsh-mnemon-settings": readonly ["get", "mutate"];
+    readonly "/dsh-mnemon-view": readonly ["dashboard", "preview", "inspect-plugin"];
+    readonly "/dsh-mnemon-view-settings": readonly ["apply", "install-plugin"];
+};
+/** A channel the Host serves. */
+export type MnemonRpcChannel = keyof typeof MNEMON_RPC_ENDPOINTS;
+/** An endpoint the Host serves on a channel, or on any of several. */
+export type MnemonRpcEndpoint<Channel extends MnemonRpcChannel = MnemonRpcChannel> = (typeof MNEMON_RPC_ENDPOINTS)[Channel][number];
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | {
     [key: string]: JsonValue;
@@ -200,6 +225,7 @@ export interface ResolvedRuntimeMemoryConfig {
     userLimitBytes: number;
     maintenanceMaxTokens: number;
 }
+export { STARTER_COMPONENT_ROWS } from './starter-components.ts';
 export { normalizeDisplayMode } from './display-mode.ts';
 export type MnemonDisplayMode = 'sidebar' | 'builtin';
 export declare const DEFAULT_IDLE_REVIEW: {
@@ -242,7 +268,7 @@ export interface Config {
     /** Optional DSH-owned overrides injected into every Mnemon CLI process. */
     embedding?: MnemonEmbeddingConfig;
     memoryTopology?: MemoryTopologyConfig;
-    /** Profile-owned plugin choices on DSH 0.1.7 and newer. */
+    /** Profile-owned plugin choices. */
     memoryView?: import('./view-protocol.ts').MemoryViewPreferences;
     /** Successful import of this profile's removed settings namespaces. */
     legacySettingsImported?: boolean;
@@ -260,6 +286,7 @@ export interface Config {
     idleReviewMs?: number;
     idleReview?: Partial<ResolvedIdleReviewConfig>;
     conversationInteraction?: {
+        /** @deprecated Switches nothing. Stored profiles may still hold it; the resolved config leaves it out. */
         toolviews?: boolean;
         turnBar?: boolean;
         saveAction?: boolean;
@@ -279,11 +306,20 @@ export interface TaskAgentModelConfig {
     mode?: 'inherit' | 'fixed';
     provider?: string;
     model?: string;
+    /**
+     * With `inherit`, run on the model the conversation that asked for the work
+     * last used, while that conversation is open. Off by default; a switch
+     * rather than a third mode, so a release that does not know it keeps
+     * reading `inherit` as before.
+     */
+    followConversation?: boolean;
 }
 export interface ResolvedTaskAgentModelConfig {
     mode: 'inherit' | 'fixed';
     provider?: string;
     model?: string;
+    /** Present, and true, only on an inherited route that follows its conversation. */
+    followConversation?: true;
 }
 export interface TaskAgentModelCatalogModel {
     id: string;
@@ -306,11 +342,30 @@ export interface TaskAgentModelCatalog {
     effective?: {
         provider: string;
         model: string;
-        source: 'fixed' | 'dsh-default' | 'active-agent';
+        source: 'fixed' | 'session' | 'dsh-default' | 'active-agent';
     };
     defaultSelection?: {
         provider: string;
         model: string;
+    };
+    /**
+     * The route the asking conversation's own delegated work takes while it is
+     * open: the model of its last request, or the one it was created with before
+     * its first. An inherited setting that follows its conversation takes it too;
+     * it is reported whether or not that switch is on.
+     */
+    session?: {
+        provider: string;
+        model: string;
+    };
+    /**
+     * The route an inherited setting takes without following a conversation: the
+     * DSH new-session default, else an open Agent's creation route.
+     */
+    inherited?: {
+        provider: string;
+        model: string;
+        source: 'dsh-default' | 'active-agent';
     };
     groups: TaskAgentModelCatalogGroup[];
     failures: TaskAgentModelCatalogFailure[];
@@ -343,7 +398,6 @@ export interface ResolvedConfig {
     idleReviewMs: number;
     idleReview: ResolvedIdleReviewConfig;
     conversationInteraction: {
-        toolviews: boolean;
         turnBar: boolean;
         saveAction: boolean;
     };
@@ -463,6 +517,60 @@ export interface SubagentCounters {
     lastOperation?: 'recall' | 'write' | 'review' | 'placement' | 'migration' | 'compaction' | 'document-archive' | 'metadata-maintenance' | 'reconcile';
     lastAt?: string;
 }
+/** What a delegated memory write did, as the write task Agent's receipts show it. */
+export interface DelegatedWriteResult {
+    delegated: true;
+    runId: string;
+    provider: string;
+    summary: string;
+    action: string;
+    /** Where the memory went: the spaces its receipts name, else what the writer reported. */
+    memoryBodyIds: string[];
+    /** Spaces that were inactive and that this write switched on. */
+    activatedMemoryBodyIds?: string[];
+    documentIds?: string[];
+    /** Memories saved without a vector, as the Provider's receipt says (#388). */
+    unembedded?: Array<{
+        memoryBodyId?: string;
+        id?: string;
+    }>;
+    hint?: string;
+}
+/** The `supervise` RPC result: a delegated write for the conversation that asked for it. */
+export interface SupervisedWritebackResult extends DelegatedWriteResult {
+    sessionId: string;
+}
+/** What a task Agent answered from the evidence a search recalled, as `agent-search` adds it to the results. */
+export interface DelegatedAnswerResult {
+    answer: string;
+    citations: string[];
+    delegation: {
+        runId: string;
+        provider: string;
+    };
+}
+/** A Document write or archive the Host ran: the Documents Source's result, and the archival it ran, for the archive or to make room for the write. */
+export type CoordinatedDocumentResult = DocumentMutationResult & {
+    lineage?: MemoryMigrationLineage[];
+    maintenance?: {
+        runId: string;
+        provider: string;
+        summary: string;
+        memoryBodyIds: string[];
+        archivedDocumentIds: string[];
+    };
+};
+/** A runtime memory write the Host ran: the Runtime Source's result, and the capacity maintenance that ran with it. */
+export type CoordinatedRuntimeMemoryResult = RuntimeMemoryMutationResult & {
+    revision?: string;
+    maintenance?: {
+        runId: string;
+        provider: string;
+        summary: string;
+        memoryBodyIds: string[];
+    };
+    memoryReceipt?: Pick<MemoryMutationReceipt, 'status' | 'completion' | 'committedAt'>;
+};
 export type LifecyclePhase = 'idle' | 'prime' | 'recall' | 'writeback' | 'review' | 'supervised' | 'error';
 export interface LifecycleCounters {
     primes: number;
@@ -646,8 +754,6 @@ export interface MnemonMachineIdentity {
  * which the name then follows, or a name a person typed, which stays as given.
  */
 export type MnemonMachineLabelSource = 'hostname' | 'custom';
-/** The longest name an installation carries; a host name past it is shortened. */
-export declare const MNEMON_MACHINE_LABEL_MAX = 120;
 /** Which machine wrote one runtime entry, so a merge can tell two installations apart. */
 export interface MnemonEntryOrigin {
     machine: string;
@@ -798,8 +904,6 @@ export interface MnemonSyncConfigView {
  * when neither is set: the order here is the order of resolution.
  */
 export type MnemonSyncCredentialSource = 'environment' | 'token' | 'github' | 'none';
-/** How far the browser step of a GitHub sign-in has come. */
-export type MnemonSyncGitHubFlowStatus = 'pending' | 'expired' | 'denied' | 'error';
 export interface MnemonSyncGitHubFlow {
     userCode: string;
     verificationUri: string;
@@ -1177,11 +1281,3 @@ export interface VersionUpdateResult {
     restartRequired: boolean;
     output?: string;
 }
-export declare const CATEGORIES: readonly ["preference", "decision", "fact", "insight", "context", "general"];
-export declare const SOURCES: readonly ["user", "agent", "external"];
-export declare const EDGE_TYPES: readonly ["temporal", "semantic", "causal", "entity"];
-export declare const INTENTS: readonly ["WHY", "WHEN", "ENTITY", "GENERAL"];
-export declare const DEFAULT_EMBEDDING_ENDPOINT = "http://localhost:11434";
-export declare const DEFAULT_EMBEDDING_MODEL = "nomic-embed-text";
-export declare const DEFAULT_EMBEDDING_PROTOCOL = "auto";
-export declare const MNEMON_EMBEDDING_PROTOCOLS: readonly ["auto", "ollama", "openai"];

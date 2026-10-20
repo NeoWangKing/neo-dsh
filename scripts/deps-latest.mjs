@@ -84,7 +84,8 @@ async function mapLimit(items, task) {
 }
 
 const pins = harnessPins()
-const payloads = vendorPayloads()
+const IGNORED_PAYLOADS = new Set(['dsh-ops'])
+const payloads = vendorPayloads().filter(([name]) => !IGNORED_PAYLOADS.has(name))
 console.log(`deps-latest: ${pins.length} harness pins, ${payloads.length} vendored payload(s)`)
 if (offline) {
   for (const [name, version] of [...pins, ...payloads]) console.log(`  ${name}  ${version}`)
@@ -132,7 +133,7 @@ const harnessRows = await mapLimit(pins, async ([name, version]) => {
 
 const payloadRows = await mapLimit(payloads, async ([name, version]) => {
   const published = await versionsOf(name)
-  if (published === null) return `  ${name}  pinned ${version}  →  not on npm (our own build?)`
+  if (published === null) return null // our own package: not on npm, nothing to compare against
   // Same rule as the harness: npm's own `latest` tag, never an alpha/next line.
   const tags = await distTagsOf(name)
   const latest = typeof tags?.latest === 'string' ? tags.latest : newest(published)

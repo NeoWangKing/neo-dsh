@@ -1,4 +1,4 @@
-import { t as prepareStarterResolution } from "./starter-resolution-CiUfOO4b.js";
+import { t as prepareStarterResolution } from "./starter-resolution-DoFp9FLr.js";
 //#region src/starter.ts
 const name = "dsh-mnemon-starter";
 const provide = ["mnemonStarterReady"];
