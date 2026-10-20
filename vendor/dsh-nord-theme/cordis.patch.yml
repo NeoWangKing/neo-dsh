@@ -1,2 +1,9 @@
-- id: dsh-nord-theme
-  name: dsh-nord-theme
+# dsh-nord-theme bundle patch
+#
+# Profile boot merges this as a single `insert` of the plugin row. The same row is the
+# `dsh.client` browser-roster entry the web modules half scans for the client bundle
+# (exports["./client"] -> client.js). A bare list of rows does NOT work: the harness reports the
+# package as containing no components and silently registers nothing.
+- insert:
+    - id: nord-theme
+      name: 'dsh-nord-theme'

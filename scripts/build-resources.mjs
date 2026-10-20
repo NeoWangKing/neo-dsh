@@ -117,6 +117,36 @@ function copyTree(from, to, { keepNodeModules = false } = {}) {
 }
 
 /**
+ * A package that declares `dsh.client` is served to the browser as a classic
+ * script. If its client entry never calls `__ModuleLoader__.load`, the harness
+ * evaluates it, reports "loaded without registering", and skips the whole
+ * client module graph — v0.2.9's Nord theme shipped exactly that, and every page
+ * showed "Failed to load plugins" while the host log stayed clean. Catch it at
+ * assemble time.
+ */
+function assertClientRegisters(dir, name) {
+  let pkg
+  try {
+    pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
+  } catch {
+    return
+  }
+  if (!pkg.dsh?.client) return
+  const declared = pkg.exports?.['./client'] ?? pkg.dsh.client.entry ?? './client.js'
+  // `exports` entries may be conditional objects ({ default, import, require }).
+  const entry =
+    typeof declared === 'string' ? declared : (declared?.default ?? declared?.import ?? declared?.require)
+  if (typeof entry !== 'string') return
+  const file = join(dir, entry)
+  if (!existsSync(file)) throw new Error(`build-resources: ${name}: dsh.client entry ${entry} is missing`)
+  if (!readFileSync(file, 'utf8').includes('__ModuleLoader__')) {
+    throw new Error(
+      `build-resources: ${name}: ${entry} never registers with __ModuleLoader__.load — the web client would fail with "Failed to load plugins"`,
+    )
+  }
+}
+
+/**
  * Give every file under `root` a mode that survives packaging and copying:
  * directories and scripts keep an execute bit, everything else becomes 0644.
  * @param root - directory to walk.
@@ -202,6 +232,7 @@ rmSync(join(RES, 'presets'), { recursive: true, force: true })
 //    `keepNodeModules`). The first launch materialises the plugin into the seeded
 //    profile's node_modules from this copy (see src/main.mjs seedHome).
 for (const plugin of PLUGINS) {
+  assertClientRegisters(plugin.dir, plugin.name)
   copyTree(plugin.dir, join(RES, 'profile-web', 'vendor', plugin.name))
   steps.push(`profile-web/vendor/${plugin.name}`)
 }
@@ -224,6 +255,7 @@ for (const [name, entries] of optionalByName) {
     steps.push(`profile-web/vendor/${name} (skipped on ${process.platform})`)
     continue
   }
+  assertClientRegisters(chosen.dir, name)
   copyTree(chosen.dir, target, { keepNodeModules: chosen.keepNodeModules === true })
   steps.push(`profile-web/vendor/${name} ← ${relative(REPO, chosen.dir)}`)
 }

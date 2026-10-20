@@ -89,13 +89,46 @@ const NORD_TOKENS = {
   '--dsw-static-amber-100': '#F3DDA8',
 }
 
-exports.name = 'dsh-nord-theme'
-exports.inject = ['theme']
+const apply = (ctx) => {
+  ctx.effect(() => {
+    const dispose = ctx.theme.register({
+      id: 'nord',
+      colorScheme: 'dark',
+      tokens: NORD_TOKENS,
+    })
+    // Registering (or setTheme('nord')) is not enough: the persisted preference
+    // schema only accepts light/dark/system, and the settings load that follows
+    // boot resets the preference to the built-in one. Stack the palette as a
+    // token layer — it composes onto whatever theme is active and survives that.
+    const overrides = Object.fromEntries(
+      Object.entries(NORD_TOKENS).map(([name, value]) => [name, { light: value, dark: value }]),
+    )
+    const remove = ctx.theme.overrideTokens('dsh-nord-theme', overrides)
+    return () => {
+      remove()
+      dispose()
+    }
+  }, 'dsh-nord-theme: register')
+}
 
-exports.apply = (ctx) => {
-  ctx.effect(() => ctx.theme.register({
-    id: 'nord',
-    colorScheme: 'dark',
-    tokens: NORD_TOKENS,
-  }), 'dsh-nord-theme: register')
+// The harness serves client bundles as classic scripts and expects each one to
+// register itself; a bare `exports.*` module is evaluated and then dropped with
+// "loaded without registering … via __ModuleLoader__.load". Same contract as
+// neo-dsh's plugins/activity-line/client.js.
+if (typeof window !== 'undefined' && window.__ModuleLoader__ !== undefined) {
+  window.__ModuleLoader__.load({
+    id: 'dsh-nord-theme',
+    factory: () => {
+      const module = { exports: {} }
+      module.exports.name = 'dsh-nord-theme'
+      module.exports.inject = ['theme']
+      module.exports.apply = apply
+      return module.exports
+    },
+  })
+}
+
+// Node-side handle for a sanity check; the browser never defines `module` here.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { name: 'dsh-nord-theme', inject: ['theme'], apply, tokens: NORD_TOKENS }
 }

@@ -15,5 +15,16 @@
     "deepseek-harness",
     "theme",
     "nord"
-  ]
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  }
 }
