@@ -128,7 +128,9 @@ const harnessRows = await mapLimit(pins, async ([name, version]) => {
 const payloadRows = await mapLimit(payloads, async ([name, version]) => {
   const published = await versionsOf(name)
   if (published === null) return `  ${name}  pinned ${version}  →  not on npm (our own build?)`
-  const latest = newest(published)
+  // Same rule as the harness: npm's own `latest` tag, never an alpha/next line.
+  const tags = await distTagsOf(name)
+  const latest = typeof tags?.latest === 'string' ? tags.latest : newest(published)
   return latest === version ? null : `  ${name}  pinned ${version}  →  newest ${latest}`
 })
 
