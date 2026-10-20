@@ -182,6 +182,11 @@
          只重映射 --dsw-static-* 色板；--dsw-alias-* 全都引用这一层，会跟着变。
          色值取自 Nord 官方调色板：Polar Night / Snow Storm / Frost / Aurora。
          不认识的 token 不动，保证不会把某个状态色映射成透明或消失。 */
+      /* The harness defines the palette on body[data-ds-dark-theme], not :root. Custom
+         properties resolve from the nearest ancestor that sets them, so a :root-level override
+         is shadowed by that body rule no matter how specific it is — target the same element,
+         with doubled attribute selectors so we win the tie. */
+      body[data-ds-dark-theme][data-ds-dark-theme],
       :root:root {
         --dsw-static-neutral-00: #2E3440;
         --dsw-static-neutral-bluish-00: #2E3440;
