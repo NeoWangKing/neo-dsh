@@ -1,4 +1,4 @@
-import { t as prepareStarterResolution } from "./starter-resolution-DoFp9FLr.js";
+import { t as prepareStarterResolution } from "./starter-resolution-CiUfOO4b.js";
 //#region src/bundle.ts
 const groupKey = Symbol.for("cordis.group");
 const init = Symbol.for("cordis.init");

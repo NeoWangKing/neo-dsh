@@ -17,13 +17,13 @@
 
 <p align="center">
   <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#in-a-conversation">
-    <img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.32/en/recall.gif" alt="A question answered from working memory and Project Documents; the expanded turn memory bar opens the document it read in Project Documents" width="880" />
+    <img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.19/en/recall.gif" alt="A question answered from working memory, Project Documents and Memory Spaces; the expanded turn memory bar opens the document it read in Project Documents" width="880" />
   </a>
 </p>
 
 <p align="center">
   <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/installation.md"><strong>Install and start</strong></a> ·
-  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/assets/webui-v0.5.32/README.md">Watch the demo</a> ·
+  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/assets/webui-v0.5.19/README.md">Watch the demo</a> ·
   <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/README.md">Documentation</a> ·
   <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/development/extensions.md">Build a plugin</a>
 </p>
@@ -36,7 +36,7 @@ An Agent that starts every session from scratch keeps asking what it was already
 - **You can see what a turn used.** Under each reply, the turn memory bar lists the documents and memories the turn read and wrote, and one click opens each in the Memory System. The Memory System shows everything that is stored and lets you edit it.
 - **Save to memory in one click.** When a conversation turns up a fact worth keeping, the brain mark under the reply hands it to a task Agent, which removes duplicates, distils it and writes it to the right Memory Space, or saves it where you choose: working memory, your profile or a Memory Space. The receipt says where it went.
 - **Compose it on the Plugins page.** Choose a main strategy and optional enhancements, and switch them without moving any data. Every component has its own page for its settings.
-- **Keep data where you want it.** Local by default with Mnemon Native, or one of eight third-party Providers. Storage can be global, per workspace, centralized or in a directory you choose, with ZIP backup.
+- **Keep data where you want it.** Local by default with Mnemon Native, or one of eight third-party Providers. Storage can be global, per workspace or centralized, with ZIP backup.
 - **Extend it.** Sources and Strategies are ordinary DSH plugins built on public SDKs. An installed component gets the same pages and switches as the shipped ones.
 
 ## See it in action
@@ -46,22 +46,22 @@ These recordings come from a real WebUI with the live DeepSeek model answering, 
 **Save a new fact to memory.** A reply reports a new measurement. Select the brain mark under it, cut the candidate down to the sentence worth keeping and send it to the task Agent; the receipt names the Memory Space it went to and opens it in one click.
 
 <p align="center">
-  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#save-to-memory"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.32/en/save.gif" alt="Save to memory: edit the candidate, look at where it can go and keep Let the Agent decide, send it to the task Agent, then view the new memory from the Saved receipt" width="880" /></a>
+  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#save-to-memory"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.19/en/save.gif" alt="Save to memory: edit the candidate, send it to the task Agent, then view the new memory from the Saved receipt" width="880" /></a>
 </p>
 
 **See all memory in one place.** Status, runtime memory, Project Documents and Memory Spaces live in the Memory System. The graph links memories through the entities they mention, and Ask Agent answers with the memories it cites, by content.
 
 <p align="center">
-  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#the-memory-system"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.32/en/memory.gif" alt="The Memory System: status, runtime memory, a document, the Memory Spaces graph, then an Agent answer with citations" width="880" /></a>
+  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#the-memory-system"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.19/en/memory.gif" alt="The Memory System: status, runtime memory, a document, the Memory Spaces graph, then an Agent answer with citations" width="880" /></a>
 </p>
 
 **Compose memory on the Plugins page.** One main strategy, its memory sources and optional enhancements, each switch applying at once. Every component has its own page, and storage, backup and interface settings live here too.
 
 <p align="center">
-  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#on-the-plugins-page"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.32/en/plugins.gif" alt="DSH's Plugins page, then dsh-mnemon's page: memory composition, the main strategy menu, the Layered strategy's and Memory Spaces' pages, then storage and interface" width="880" /></a>
+  <a href="https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md#on-the-plugins-page"><img src="https://raw.githubusercontent.com/omdsh-dev/dsh-mnemon/main/docs/assets/webui-v0.5.19/en/plugins.gif" alt="The Plugins page: memory composition, the main strategy menu, the Layered strategy's and Memory Spaces' pages, then storage and interface" width="880" /></a>
 </p>
 
-Every step is explained in the [UI guide](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md); all screens, recordings and the capture environment are in the [v0.5.32 gallery](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/assets/webui-v0.5.32/README.md).
+Every step is explained in the [UI guide](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/ui-guide.md); all screens, recordings and the capture environment are in the [v0.5.19 gallery](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/assets/webui-v0.5.19/README.md).
 
 ## Three kinds of memory
 
@@ -92,7 +92,7 @@ npx @deepseek-ai/dsh web
 4. For Memory Spaces, install the Mnemon CLI for Mnemon Native with `npm install --global @mnemon-dev/mnemon`, or enable another Provider on the Memory Spaces page.
 5. Choose the main strategy and enhancements under **Plugins → dsh-mnemon**.
 
-dsh-mnemon supports DSH `0.2.1-rc.2` (npm `latest` and `next`) and `0.2.0-rc.2`. The same package serves the desktop app's Plugins page, `dsh plugin --profile web add dsh-mnemon` on the command line, and Headless with `dsh plugin --profile headless add dsh-mnemon`; older hosts keep the release [compatibility and upgrades](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/reference/compatibility.md) names for them. [Getting started](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/getting-started.md) continues from here, and [compatibility and upgrades](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/reference/compatibility.md) covers existing installations.
+dsh-mnemon supports DSH `0.2.0-rc.2` (npm `latest` and `next`) and `0.1.7-rc.2`. The same package serves the desktop app's Plugins page, `dsh plugin --profile web add dsh-mnemon` on the command line, and Headless with `dsh plugin --profile headless add dsh-mnemon`; keep `v0.5.16` on older hosts. [Getting started](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/getting-started.md) continues from here, and [compatibility and upgrades](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/reference/compatibility.md) covers existing installations.
 
 ## How it works
 
@@ -110,7 +110,7 @@ The Starter pins a tested combination of independently versioned packages. One m
 
 | Package | Role | Default |
 |---|---|---|
-| [dsh-mnemon-source-runtime](https://github.com/omdsh-dev/dsh-mnemon/blob/main/plugins/dsh-mnemon-source-runtime/README.md) | Runtime memory: USER.md, MEMORY.md, revisions and local storage | On |
+| [dsh-mnemon-source-runtime](https://github.com/omdsh-dev/dsh-mnemon/blob/main/plugins/dsh-mnemon-source-runtime/README.md) | Runtime memory: USER.md, MEMORY.md, revisions and local hot storage | On |
 | [dsh-mnemon-source-documents](https://github.com/omdsh-dev/dsh-mnemon/blob/main/plugins/dsh-mnemon-source-documents/README.md) | Project Documents: Markdown, search, revisions and archiving | On |
 | [dsh-mnemon-source-memory-spaces](https://github.com/omdsh-dev/dsh-mnemon/blob/main/plugins/dsh-mnemon-source-memory-spaces/README.md) | Memory Spaces: durable evidence and their Providers | On |
 | [dsh-mnemon-strategy-default-three-tier](https://github.com/omdsh-dev/dsh-mnemon/blob/main/plugins/dsh-mnemon-strategy-default-three-tier/README.md) | Layered strategy: resident runtime memory, the rest on demand | Selected |
@@ -125,17 +125,17 @@ Memory Spaces Providers: [Mnemon Native](https://github.com/omdsh-dev/dsh-mnemon
 
 Define a Source or Strategy with `dsh-mnemon/extension-sdk`, add an enhancement through the standard slots, or write a Memory Spaces driver with `dsh-mnemon-source-memory-spaces/provider-sdk`. A component can also add its own settings and Status card to the pages dsh-mnemon shows. Your repository owns its manifest, dependencies, tests and build; DSH installs and mounts it, and choosing it as the main strategy is a separate decision.
 
-Start with the [plugin author guide](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/development/extensions.md). Discuss new capabilities and Providers in an Issue before a pull request; see [CONTRIBUTING](https://github.com/omdsh-dev/dsh-mnemon/blob/main/CONTRIBUTING.md).
+Start with the [plugin author guide](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/development/extensions.md). Discuss new capabilities and Providers in an Issue before a pull request; see [CONTRIBUTING](https://github.com/omdsh-dev/dsh-mnemon/blob/8466e3560a3b9de4e9f4b7302cbf005c84e8e69f/CONTRIBUTING.md).
 
 ## Data and trust
 
 - Runtime memory and Project Documents are local files; Mnemon Native is local. Third-party Providers use their own services and scopes.
 - Turning a component off does not erase its memory, and changing the storage location does not move data. Use ZIP backup to carry it.
-- Git sync publishes the same Mnemon Pack payload as readable files to a repository you own, so another machine can pull it, with **Sync now**, **Check remote** before anything is written, or **Automatic sync**. When two machines wrote one subject differently, both wordings stay until you accept and apply a **Memory reconciliation** plan; see [Git repository sync](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/operations.md#git-repository-sync).
+- Git sync publishes the same Mnemon Pack payload to a repository you own, as readable files, so another machine can pull it. Connect a repository by signing in with GitHub (search, pick or create a private one; a public one asks first) or by its address, with a token field only for HTTPS. **Sync now** merges the repository into this machine and pushes the result, **Check remote** shows what a sync would change before anything is written, and **Automatic sync** repeats the same sync at an interval from an hour to a week. When the repository cannot be read, the row says why (credentials, not found, network or timeout) and how to fix it, and **Backup history** lists every machine's versions by time and computer. Both directions are refused where `writeEnabled` is false. Two machines that wrote one subject differently keep both wordings until **Reconcile** under **Memory reconciliation** proposes a plan, which arrives as a pending proposal to **Accept** and then **Apply**, or to annotate with an opinion first; a rejected plan has to be **reopened** before your words reach the next run. Reconciliation takes your own words as guidance, and an accepted plan is applied operation by operation, so you can take part of it.
 - Saved Provider credentials stay on the Host and are never exported. Backups still contain private memory; protect them.
 - Sources and Strategies are trusted in-process JavaScript, not sandboxed code. Remembered history never outranks current instructions.
 
-[Backup and recovery](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/operations.md) · [Security policy](https://github.com/omdsh-dev/dsh-mnemon/blob/main/SECURITY.md) · [Release history](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/releases/README.md) · [Roadmap](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/roadmap.md)
+[Backup and recovery](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/guides/operations.md) · [Security policy](https://github.com/omdsh-dev/dsh-mnemon/blob/8466e3560a3b9de4e9f4b7302cbf005c84e8e69f/SECURITY.md) · [Release history](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/releases/README.md) · [Roadmap](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/roadmap.md)
 
 ## Develop and verify
 
@@ -146,17 +146,3 @@ pnpm verify:plugins
 ```
 
 Use Node.js `^22.19.0 || >=24.0.0` and pnpm. `node scripts/serve-e2e.mjs` starts a disposable real WebUI; add `--docs-demo` for the seeded project behind these screenshots, and `--live-model` to have the DeepSeek API answer, with the key read from `DEEPSEEK_API_KEY`. Mechanical tests are not claims about model accuracy or live cloud Providers. [Development and verification](https://github.com/omdsh-dev/dsh-mnemon/blob/main/docs/en/development/README.md).
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=omdsh-dev%2Fdsh-mnemon&type=timeline&legend=bottom-right">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=omdsh-dev/dsh-mnemon&type=timeline&theme=dark&legend=bottom-right" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=omdsh-dev/dsh-mnemon&type=timeline&legend=bottom-right" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=omdsh-dev/dsh-mnemon&type=timeline&legend=bottom-right" />
- </picture>
-</a>
-
-## License
-
-[MIT](https://github.com/omdsh-dev/dsh-mnemon/blob/main/LICENSE). Third-party providers keep their own licenses and terms; see [Third-party notices](https://github.com/omdsh-dev/dsh-mnemon/blob/main/THIRD_PARTY_NOTICES.md).

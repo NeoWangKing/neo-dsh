@@ -40,21 +40,12 @@ export type WriteOutcome = 'written' | 'updated' | 'pending' | 'skipped' | 'part
 export declare function writeOutcome(action: string): WriteOutcome;
 /**
  * What a task Agent did with a candidate: the outcome, the Agent's own
- * summary, and, when something was written, a way to see it. A memory saved
- * without a vector says so on a line of its own (#388).
+ * summary, and, when something was written, a way to see it.
  */
 export declare function WriteReceipt(props: {
     action?: string | undefined;
     summary?: string | undefined;
     error?: string | undefined;
-    unembedded?: boolean | undefined;
-    /**
-     * Whether DSH manages the Mnemon Native embedding settings. Left at their
-     * default (`false`), they set up no embedding service, so a memory without a
-     * vector gets a neutral note; managed, or when this is omitted, it gets the
-     * caution that embedding did not succeed.
-     */
-    embeddingManaged?: boolean | undefined;
     t?: MnemonTranslate | undefined;
     onView?: (() => void) | undefined;
     viewLabel?: string | undefined;

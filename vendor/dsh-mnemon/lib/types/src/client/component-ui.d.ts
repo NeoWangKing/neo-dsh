@@ -1,23 +1,9 @@
 import { type ReactNode } from 'react';
-import type { MemoryJsonValue } from "../core/contracts/index.js";
 /**
  * A component's own settings, on its page: keyed by the component's package
  * name, rendered after the page's generated state, relations and options.
  */
 export declare const MNEMON_COMPONENT_SETTINGS_SLOT: "mnemon.component.settings";
-/**
- * The priority at which dsh-mnemon keeps the settings of a shipped component
- * that once had no settings of its own (today Memory Spaces). DSH renders, for
- * each key, the registration with the lowest priority, so the component's own
- * registration, at the default 0, replaces dsh-mnemon's while it lasts.
- *
- * Exporting this is a promise to those components, and a component may rely on
- * it alone: dsh-mnemon keeps their settings at this priority, so registering
- * their own does not collide with it, and lends their settings `host` (see
- * {@link MemoryComponentSettingsProps.host}). dsh-mnemon 0.5.31 and earlier
- * export neither and draw those settings at the default priority.
- */
-export declare const MNEMON_COMPONENT_FALLBACK_PRIORITY = 100;
 /**
  * What a component's card on the Memory System's Status page says while it
  * runs, keyed by the component's package name. A card that is not running
@@ -44,53 +30,6 @@ export interface MemoryComponentSettingsProps {
         id: string;
         label?: string;
     };
-    /**
-     * What the page lends the settings registered under the key of a shipped
-     * component whose settings dsh-mnemon used to draw (today Memory Spaces):
-     * the configuration keys and Host operations dsh-mnemon serves it. It goes
-     * with the key, not with who registered: settings under any other key
-     * receive none.
-     */
-    host?: MemoryComponentHost;
-}
-/** dsh-mnemon's configuration as a component's settings read it. */
-export interface MemoryComponentConfigurationSnapshot {
-    status: 'loading' | 'ready' | 'unavailable';
-    /** The configuration keys the page shares with this component. */
-    value?: Readonly<Record<string, unknown>>;
-    /** Moves with every saved change, made on this page or anywhere else. */
-    revision?: number;
-    /** Whether the Host takes a write now. */
-    writable: boolean;
-}
-/**
- * dsh-mnemon's configuration and Host operations, bound to one component and
- * to the page's conversation and workspace, as Source pages get a scoped
- * management client: never the settings service or the transport itself.
- */
-export interface MemoryComponentHost {
-    configuration: {
-        getSnapshot(): MemoryComponentConfigurationSnapshot;
-        subscribe(listener: () => void): () => void;
-        /** Save one key the component owns, fenced by the revision the page read like every settings write. */
-        set(key: string, value: MemoryJsonValue): Promise<void>;
-    };
-    /** The Host operations dsh-mnemon serves this component; absent while the page has no Host connection. */
-    operations?: {
-        read(operation: string, input?: MemoryJsonValue): Promise<unknown>;
-        write(operation: string, input: MemoryJsonValue): Promise<unknown>;
-    };
-    /** The component changed its data here, so the Memory System reads its pages again. */
-    changed(): void;
-    /**
-     * What the settings keep for as long as the page's client runs, one store per
-     * component, conversation and workspace like the host itself. The settings
-     * can mount again under an open page: dsh-mnemon draws a shipped component's
-     * settings until the component's own client registers them, so turning the
-     * component on swaps one for the other. What the first mount kept here lets
-     * the next start where it was.
-     */
-    readonly retained: Map<string, unknown>;
 }
 export type MemoryComponentSettingsComponent = (props: MemoryComponentSettingsProps) => ReactNode;
 /** What the Status page tells a component's card: the component it is about. */
@@ -139,13 +78,6 @@ export interface MemoryComponentUIContext {
  * is released by the returned function.
  */
 export declare function installMemoryComponentUI(ctx: MemoryComponentUIContext, contribution: MemoryComponentUIContribution): () => void;
-/**
- * dsh-mnemon's own registration of a shipped component's interface, kept for
- * that component's versions that register none: at
- * MNEMON_COMPONENT_FALLBACK_PRIORITY, so the component's own replaces it. Not
- * part of `dsh-mnemon/client`.
- */
-export declare function installMemoryComponentFallbackUI(ctx: MemoryComponentUIContext, contribution: MemoryComponentUIContribution): () => void;
 interface ComponentRegionDirectoryContext {
     slots: {
         getVersion(name: ComponentRegion): number;
