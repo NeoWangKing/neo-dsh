@@ -141,6 +141,11 @@ If you add a third channel that publishes a release, it must not look like a ver
 #    line newer than `latest` is reported as a note and never taken automatically: moving the
 #    whole app onto an alpha is the operator's call, not a preflight's.
 #
+# 4a. VERSION GATE — the tag must equal both package.json versions:
+#        node scripts/check-version.mjs vX.Y.Z
+#     electron-builder names artifacts from apps/desktop/package.json, not from the git tag, so a
+#     stale version there ships correctly-tagged but wrongly-named builds (0.2.7 shipped 0.2.5 files).
+#
 # 4b. BOOT GATE — a window that renders is not a product that works.
 #     Before tagging, capture the host's boot log and require it clean:
 #        node scripts/check-boot.mjs <logfile>      # "✓ every plugin activated" or exit 1
