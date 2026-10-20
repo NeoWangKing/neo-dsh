@@ -31,6 +31,12 @@ directories:
 
 asar: false
 
+# electron-builder's pnpm collector silently drops packages pnpm marks as
+# deduplicated (v0.2.8 lost @deepseek-ai/dsh-app-boot and 56 more). The hook
+# restores everything Node can resolve and fails the build if the packaged host
+# cannot start. See scripts/after-pack.cjs.
+afterPack: ./scripts/after-pack.cjs
+
 # Space-free, predictable artifact names for release uploads.
 artifactName: neo-dsh-${version}-${os}-${arch}.${ext}
 
@@ -65,8 +71,6 @@ extraResources:
     to: icon.png
   - from: resources/profile-web
     to: profile-web
-  - from: resources/presets
-    to: presets
   - from: resources/settings.defaults.yaml
     to: settings.defaults.yaml
 

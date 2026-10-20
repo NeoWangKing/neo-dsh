@@ -73,6 +73,14 @@ jobs:
           # notarization variables) to sign, and drop this line.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: pnpm --dir apps/desktop exec electron-builder ${{ env.BUILD_ARGS }} --publish never
+      # The packaged tree is what users get, and it is the only place the
+      # collector's dropped packages showed up: v0.2.8 shipped without
+      # @deepseek-ai/dsh-app-boot on every platform. scripts/after-pack.cjs
+      # restores what Node can resolve and gates on the host starting; this
+      # goes one step further and requires every plugin to activate.
+      - name: Boot the packaged host
+        if: runner.os == 'Linux'
+        run: node scripts/smoke-packaged.mjs apps/desktop/release/linux-unpacked
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

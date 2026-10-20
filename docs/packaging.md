@@ -11,11 +11,13 @@ version is in the [README](../README.en.md).
 | Harness + deps | `apps/desktop/node_modules` (the app's own `pnpm install`) | `resources/app/node_modules` |
 | Node runtime | `scripts/fetch-node.mjs` (official build, SHA256-verified) | `resources/node` |
 | Web profile | `apps/desktop/resources/profile-web` + `plugins/activity-line` | `resources/profile-web` |
-| Agent preset | `presets/liangshen` | `resources/presets/liangshen` |
+| Agent preset | `presets/liangshen` (assembled by `build-resources.mjs`) | `resources/profile-web/vendor/dsh-liangshen-preset` + `resources/profile-web/presets/liangshen.patch.yml` |
 | Default settings | `apps/desktop/resources/settings.defaults.yaml` | `resources/settings.defaults.yaml` |
 
-`scripts/fetch-node.mjs` and `scripts/build-resources.mjs` produce the last four;
-both are idempotent and run in CI before electron-builder.
+`scripts/fetch-node.mjs` and `scripts/build-resources.mjs` produce the last four
+(the preset lives inside the profile since the 0.2 harness removed
+`$DSH_HOME/.agent-presets/`); both are idempotent and run in CI before
+electron-builder.
 
 ## Decisions and why
 
@@ -31,6 +33,21 @@ A workspace-root install would hoist `node_modules` to the repo root, where
 electron-builder cannot see it — it packs the *app* directory. Hoisted linking
 is required because electron-builder walks real directories, not pnpm's symlink
 farm.
+
+**The packaged tree is verified, not assumed.** electron-builder 26's pnpm
+collector reads `dedupedDependenciesCount` from `pnpm list --json` as "this
+entry is a duplicate reference" and skips it. With pnpm 11 and this dependency
+graph every occurrence of a shared package can carry that flag, so the collector
+never records a path for it and silently leaves it out of
+`resources/app/node_modules`. v0.2.8 shipped 57 packages short — including
+`@deepseek-ai/dsh-app-boot`, which the host imports before anything else — and
+every platform refused to start. `apps/desktop/scripts/after-pack.cjs` runs as
+the `afterPack` hook: it asks pnpm for the production dependency names, resolves
+each with Node from `apps/desktop` (the same resolution the host uses), copies
+what the collector missed, and then runs the packaged host's `--version`. A
+package it cannot restore, or a host that cannot start, fails the build. It uses
+`packager.getResourcesDir()`, so macOS's `Contents/Resources` layout is handled
+too, and `apps/desktop/test/after-pack.test.mjs` pins its behaviour.
 
 **The plugin ships as `vendor/`, not `node_modules/`.** electron-builder filters
 `node_modules` out of `extraResources` (it assumes the dependency walk already
@@ -108,7 +125,7 @@ Windows shows a SmartScreen warning.
 
 ```sh
 DSH_HOME=/tmp/suite-check DSH_DESKTOP_PORT=3199 DSH_DESKTOP_SMOKE=1 \
-  apps/desktop/release/linux-unpacked/dsh-suite-desktop
+  apps/desktop/release/linux-unpacked/neo-dsh
 ```
 
 It prints one line (`SMOKE OK: <url> rootChildren=… window=…`) and exits
@@ -121,6 +138,17 @@ built:
   seeding ran;
 - fetching the host's `?token=` URL and grepping the served manifest for
   `dsh-activity-line` proves the bundled plugin composed into the client graph.
+
+The window check is not enough on its own. To boot the host that ships, without
+a display, against a throwaway home and require every plugin to activate:
+
+```sh
+node scripts/smoke-packaged.mjs apps/desktop/release/linux-unpacked
+```
+
+It starts the packaged host on a free loopback port, waits for its ready line,
+stops it, and fails on any `did not activate` / `import failed` line. CI runs the
+same command after packaging on Linux.
 
 ## Troubleshooting
 
