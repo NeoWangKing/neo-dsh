@@ -240,19 +240,28 @@ async function readThemedIcon(directory, theme, name) {
 }
 `
 
+const tabify = (text) => text.split('\n').map((line) => {
+  const indent = line.length - line.trimStart().length
+  const levels = Math.floor(indent / 4)
+  return '\t'.repeat(levels) + ' '.repeat(indent % 4) + line.trimStart()
+}).join('\n')
+
+const gtkIconThemeHelpersTabbed = tabify(gtkIconThemeHelpers)
+const gtkThemedLookup = (unit) => `${unit}for (const theme of await iconThemesInUse()) {
+${unit}    for (const directory of directories) {
+${unit}        const themed = await readThemedIcon(directory, theme, name);
+${unit}        if (themed !== null)
+${unit}            return themed;
+${unit}    }
+${unit}}
+`
+
 const desktopEntryPatches = [
   {
     id: 'gtk-icon-theme',
     why: 'the open-in-app menu ignores the icon theme the desktop is actually using',
     find: /( *if \(isAbsolute\(name\)\)\n *return readIcon\(name\);\n)/,
-    replace: (match) => `${match}    for (const theme of await iconThemesInUse()) {
-        for (const directory of directories) {
-            const themed = await readThemedIcon(directory, theme, name);
-            if (themed !== null)
-                return themed;
-        }
-    }
-`,
+    replace: (match) => `${match}${gtkThemedLookup('    ')}`,
     applied: /for \(const theme of await iconThemesInUse\(\)\)/,
   },
   {
@@ -261,6 +270,23 @@ const desktopEntryPatches = [
     find: /(\n\/\*\*\n \* Resolve an absolute icon path or an installed hicolor\/pixmaps icon name\.)/,
     replace: (match) => `${gtkIconThemeHelpers}${match.slice(1)}`,
     applied: /root, 'apps', 'scalable'/,
+  },
+]
+
+const bundledDesktopEntryPatches = [
+  {
+    id: 'gtk-icon-theme-bundle',
+    why: 'the packaged entry inlines its own copy of the icon lookup',
+    find: /(\tif \(isAbsolute\(name\)\) return readIcon\(name\);\n)/,
+    replace: (match) => `${match}${gtkThemedLookup('\t')}`,
+    applied: /for \(const theme of await iconThemesInUse\(\)\)/,
+  },
+  {
+    id: 'gtk-icon-theme-helpers-bundle',
+    why: 'the inlined copy needs the same theme discovery helpers',
+    find: /(\n\/\*\*\n\* Resolve an absolute icon path or an installed hicolor\/pixmaps icon name\.)/,
+    replace: (match) => `${gtkIconThemeHelpersTabbed}${match.slice(1)}`,
+    applied: /function iconThemesInUse\(\)/,
   },
 ]
 
@@ -275,6 +301,12 @@ const targets = [
     files: ['lib/types/desktop-entry.js'],
     linuxOnly: true,
     patches: desktopEntryPatches,
+  },
+  {
+    package: 'dsh-native-command',
+    files: ['lib/index.js'],
+    linuxOnly: true,
+    patches: bundledDesktopEntryPatches,
   },
   {
     package: 'dsh-terminal-bash',

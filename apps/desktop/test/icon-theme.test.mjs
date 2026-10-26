@@ -9,7 +9,7 @@
  *
  *   node apps/desktop/test/icon-theme.test.mjs
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -80,6 +80,19 @@ try {
 
   rmSync(join(home, '.config', 'gtk-3.0', 'settings.ini'))
   check('no GTK settings falls back to hicolor', body(await resolver('plain-app', roots)) === '<svg>plain</svg>')
+  // The host imports the package entry, which inlines its own copy of this lookup — a patch to
+  // the split sources alone would never reach the running app.
+  const bundled = join(here, '..', 'node_modules', '@deepseek-ai', 'dsh-native-command', 'lib', 'index.js')
+  const bundledSource = readFileSync(bundled, 'utf8')
+  check('the bundled package entry carries the patch too', bundledSource.includes('iconThemesInUse()'))
+
+  process.env.HOME = home
+  process.env.XDG_CONFIG_HOME = join(home, '.config')
+  process.env.XDG_DATA_HOME = data
+  write(join(home, '.config', 'gtk-3.0', 'settings.ini'), 'gtk-icon-theme-name = TestNord\n')
+  write(join(data, 'icons', theme, 'apps', 'scalable', 'entry-app.svg'), '<svg>entry</svg>')
+  const entry = await import(bundled)
+  check('package entry resolves themed artwork', body(await entry.desktopApplicationIcon('entry-app', roots)) === '<svg>entry</svg>')
 } finally {
   for (const [key, value] of Object.entries(previous)) {
     if (value === undefined) delete process.env[key]
