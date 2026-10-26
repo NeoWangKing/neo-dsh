@@ -154,11 +154,127 @@ const terminalPatches = [
   },
 ]
 
+/**
+ * Linux icon lookup only reads `hicolor` and `pixmaps`, which is what the freedesktop spec
+ * guarantees — but every GTK desktop in practice sets `gtk-icon-theme-name`, and a theme the
+ * user installed (WhiteSur, Papirus, breeze) lives nowhere else. The open-in-app menu therefore
+ * showed stock Adwaita artwork while the rest of the session used the chosen theme, which reads
+ * as "this app ignores my icon theme". Preferring the theme in use is what a GTK file picker
+ * does, and `hicolor` stays the fallback.
+ */
+const gtkIconThemeHelpers = String.raw`
+async function iconThemesInUse() {
+    const config = process.env.XDG_CONFIG_HOME ?? (process.env.HOME === undefined ? undefined : join(process.env.HOME, '.config'));
+    if (config === undefined)
+        return [];
+    const names = [];
+    for (const version of ['gtk-4.0', 'gtk-3.0']) {
+        let text;
+        try {
+            text = await readFile(join(config, version, 'settings.ini'), 'utf8');
+        }
+        catch {
+            continue;
+        }
+        const match = /^\s*gtk-icon-theme-name\s*=\s*(\S.*)$/m.exec(text);
+        const name = match?.[1].trim();
+        if (name !== undefined && name !== '' && !names.includes(name))
+            names.push(name);
+    }
+    const ordered = [];
+    for (const name of names) {
+        ordered.push(name);
+        for (const parent of await inheritedThemes(name))
+            if (!ordered.includes(parent))
+                ordered.push(parent);
+    }
+    return ordered.filter((name) => name !== 'hicolor');
+}
+async function inheritedThemes(name) {
+    const roots = [
+        process.env.XDG_DATA_HOME,
+        process.env.HOME === undefined ? undefined : join(process.env.HOME, '.local', 'share'),
+        '/usr/share',
+    ].filter((root) => root !== undefined);
+    for (const root of roots) {
+        let text;
+        try {
+            text = await readFile(join(root, 'icons', name, 'index.theme'), 'utf8');
+        }
+        catch {
+            continue;
+        }
+        const match = /^\s*Inherits\s*=\s*(.+)$/m.exec(text);
+        if (match?.[1] !== undefined)
+            return match[1].split(',').map((value) => value.trim()).filter((value) => value !== '');
+    }
+    return [];
+}
+async function readThemedIcon(directory, theme, name) {
+    const root = join(directory, 'icons', theme);
+    for (const size of ['512x512', '256x256', '128x128', '64x64', '48x48', '32x32']) {
+        for (const extension of ['png', 'svg']) {
+            const square = await readIcon(join(root, size, 'apps', name + '.' + extension));
+            if (square !== null)
+                return square;
+        }
+    }
+    for (const size of ['512', '256', '128', '64', '48', '32', '24', '22', '16']) {
+        for (const extension of ['png', 'svg']) {
+            const flat = await readIcon(join(root, 'apps', size, name + '.' + extension));
+            if (flat !== null)
+                return flat;
+        }
+    }
+    for (const extension of ['svg', 'png']) {
+        const modern = await readIcon(join(root, 'apps', 'scalable', name + '.' + extension));
+        if (modern !== null)
+            return modern;
+    }
+    for (const extension of ['svg', 'png']) {
+        const legacy = await readIcon(join(root, 'scalable', 'apps', name + '.' + extension));
+        if (legacy !== null)
+            return legacy;
+    }
+    return null;
+}
+`
+
+const desktopEntryPatches = [
+  {
+    id: 'gtk-icon-theme',
+    why: 'the open-in-app menu ignores the icon theme the desktop is actually using',
+    find: /( *if \(isAbsolute\(name\)\)\n *return readIcon\(name\);\n)/,
+    replace: (match) => `${match}    for (const theme of await iconThemesInUse()) {
+        for (const directory of directories) {
+            const themed = await readThemedIcon(directory, theme, name);
+            if (themed !== null)
+                return themed;
+        }
+    }
+`,
+    applied: /for \(const theme of await iconThemesInUse\(\)\)/,
+  },
+  {
+    id: 'gtk-icon-theme-helpers',
+    why: 'the lookup above needs the theme discovery helpers',
+    find: /(\n\/\*\*\n \* Resolve an absolute icon path or an installed hicolor\/pixmaps icon name\.)/,
+    replace: (match) => `${gtkIconThemeHelpers}${match.slice(1)}`,
+    applied: /root, 'apps', 'scalable'/,
+  },
+]
+
 const targets = [
   {
     package: 'dsh-host-open-in-app',
     files: ['lib/index.js', 'lib/types/catalog.js'],    linuxOnly: true,
     patches: openInAppPatches,
+  },
+  {
+    package: 'dsh-native-command',
+    files: ['lib/types/desktop-entry.js'],
+    linuxOnly: true,
+    patches: desktopEntryPatches,
   },
   {
     package: 'dsh-terminal-bash',

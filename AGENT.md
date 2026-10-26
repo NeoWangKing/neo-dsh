@@ -45,6 +45,15 @@ see "The 0.2 harness migration" below before touching those versions).
    give verification runs their own `DSH_HOME` (see `docs/development*.md`).
 6. **Both languages, or neither.** Docs and release notes exist in Chinese and English;
    update both in the same commit.
+   **Carried harness patches** (each one documents its anchor and fails loudly when it moves):
+   * `dsh-host-open-in-app` — desktop ids for Android Studio / the file manager, so those rows
+     get an icon at all.
+   * `dsh-terminal-bash` — a sandbox-mode switch retires warm terminal sessions instead of
+     refusing.
+   * `dsh-native-command` — Linux icon lookup prefers the theme named in the GTK settings
+     (`gtk-icon-theme-name`, both the `size/apps` and the `apps/<size>` + `apps/scalable`
+     layouts) before falling back to the spec-guaranteed `hicolor`/`pixmaps`. Without it the
+     open-in-app menu ignored an installed icon theme and showed stock Adwaita artwork.
 7. **Config before patches.** Prefer a profile patch row (`plugins/*/cordis.patch.yml`,
    `resources/profile-web/cordis.patch.yml`) over editing vendored code. Patch the harness
    only when there is no seam, keep the patch small, and make it fail loudly when its anchor
